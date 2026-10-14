@@ -1,0 +1,56 @@
+{
+ "value": [
+  {
+   "Id": 12045,
+   "NoDossier": "02978",
+   "UrlDDS": "http://www.dds.transports.gouv.qc.ca/Default.aspx?iCoordXMin=334828&iCoordYMin=230914&iCoordXMax=348828&iCoordYMax=244914&sModeAppel=CAMNG&sNumDossr=02978",
+   "Municipalite": "Lac-Sainte-Marie",
+   "Route": "Chemin Lemens",
+   "Obstacle": "Ruisseau Paul-Émile",
+   "Panneau": "28t* 44t**58t***",
+   "DirectionTerritoriale": "Outaouais",
+   "Diffusion511": "O",
+   "DateMAJ": "2026-10-10",
+   "Cle": "12045"
+  },
+  {
+   "Id": 11771,
+   "NoDossier": "17439",
+   "UrlDDS": "http://www.dds.transports.gouv.qc.ca/Default.aspx?iCoordXMin=460314&iCoordYMin=231628&iCoordXMax=474314&iCoordYMax=245628&sModeAppel=CAMNG&sNumDossr=17439",
+   "Municipalite": "Sainte-Agathe-des-Monts",
+   "Route": "Parc Linéaire le P'tit Train du Nord",
+   "Obstacle": "Ruisseau",
+   "Panneau": "5t* ",
+   "DirectionTerritoriale": "Laurentides - Lanaudière",
+   "Diffusion511": "O",
+   "DateMAJ": "2026-10-10",
+   "Cle": "11771"
+  },
+  {
+   "Id": 11737,
+   "NoDossier": "03869",
+   "UrlDDS": "http://www.dds.transports.gouv.qc.ca/Default.aspx?iCoordXMin=511594&iCoordYMin=204841&iCoordXMax=525594&iCoordYMax=218841&sModeAppel=CAMNG&sNumDossr=03869",
+   "Municipalite": "Saint-Roch-de-l'Achigan",
+   "Route": "Rang du Ruisseau-des-Anges Sud",
+   "Obstacle": "Ruisseau des Anges",
+   "Panneau": "Charges légales",
+   "DirectionTerritoriale": "Laurentides - Lanaudière",
+   "Diffusion511": "O",
+   "DateMAJ": "2026-10-10",
+   "Cle": "11737"
+  },
+  {
+   "Id": 9528,
+   "NoDossier": "08815",
+   "UrlDDS": "http://www.dds.transports.gouv.qc.ca/Default.aspx?iCoordXMin=81177&iCoordYMin=387956&iCoordXMax=95177&iCoordYMax=401956&sModeAppel=CAMNG&sNumDossr=08815",
+   "Municipalite": "Saint-Édouard-de-Fabre",
+   "Route": "Chemin de la Baie-des-Rochers",
+   "Obstacle": "Ruisseau Cresson",
+   "Panneau": "18t* 24t**",
+   "DirectionTerritoriale": "Abitibi-Témiscamingue",
+   "Diffusion511": "O",
+   "DateMAJ": "2026-10-10",
+   "Cle": "9528"
+  }
+ ]
+}

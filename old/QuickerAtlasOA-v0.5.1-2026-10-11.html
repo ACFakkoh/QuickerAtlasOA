@@ -1,0 +1,2025 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QuickerAtlasOA v0.5.1 · Atlas des ouvrages d’art du Québec</title>
+<meta name="description" content="Proposition de visualisation de l'inventaire des structures (ponts, ponceaux, murs, tunnels) du ministère des Transports et de la Mobilité durable du Québec.">
+<meta name="theme-color" content="#102d41">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='9' fill='%23102d41'/%3E%3Cg fill='%2373e4c2'%3E%3Cpath d='M20 4c3 3.6 3.9 7.4 0 12.6-3.9-5.2-3-9 0-12.6z'/%3E%3Cpath d='M18.6 17.4c-3.6.9-7.5.2-8.6-3-.9-2.6.9-4.6 3-4.1-1.6.5-2 2.3-.8 3.4 1.4 1.3 3.9 1.3 6.4.6z'/%3E%3Cpath d='M21.4 17.4c3.6.9 7.5.2 8.6-3 .9-2.6-.9-4.6-3-4.1 1.6.5 2 2.3.8 3.4-1.4 1.3-3.9 1.3-6.4.6z'/%3E%3Crect x='14' y='17.3' width='12' height='2' rx='1'/%3E%3Cpath d='M18.4 19.3h3.2l-.5 2.7h-2.2z'/%3E%3Crect x='3' y='24' width='34' height='2.4' rx='1'/%3E%3C/g%3E%3Cpath d='M6 37c1.5-6.4 7-10.6 14-10.6S32.5 30.6 34 37' fill='none' stroke='%2373e4c2' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+<style>
+/* Tokens repris de QuickerBridge pour que les deux applications forment une même suite */
+:root{--navy:#102d41;--ink:#17374b;--muted:#566e7c;--focus:#007f78;--line:#dce5eb;--paper:#fff;--bg:#f0f4f7;--teal:#007f78;--mint:#d9f5eb;--amber:#b66c16;--shadow:0 2px 7px #15354a08;--ico:#1660ab;--topbar-h:78px;font-family:"Segoe UI",Arial,sans-serif;color:var(--ink);font-size:16px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg)}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:6px;padding:7px 12px;font-size:.875rem;font-weight:600;transition:background .15s}
+button:hover:not(:disabled){background:#eef5f7}
+input,select{width:100%;min-height:36px;border:1px solid #cbd8e1;border-radius:5px;background:#fff;color:var(--ink);padding:6px 8px;font-size:.875rem;font-variant-numeric:tabular-nums}
+input[type=checkbox]{width:17px;min-height:17px;accent-color:var(--teal)}
+label{font-size:.875rem}
+
+/* Barre du haut */
+.topbar{height:var(--topbar-h);background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 28px}
+.brand{display:flex;align-items:center;gap:12px;font-size:1.48rem;font-weight:650;letter-spacing:-.6px}
+.brand>div>span{font-weight:350;color:#9cdfcf}
+.brand small{display:block;font-weight:500;letter-spacing:1.1px;font-size:.625rem;color:#92adbc;margin-top:4px;text-transform:uppercase}
+.brand-mark{display:block;flex:none}
+.header-right{display:flex;gap:24px;align-items:center}
+.release-info{display:flex;flex-direction:column;gap:4px;font-size:.8rem;text-align:right;color:#ecf6f5}.release-info small{font-size:.75rem;color:#b5cbd6}
+
+/* Espace de travail */
+.workspace{display:grid;grid-template-columns:340px minmax(0,1fr);gap:22px;max-width:1780px;margin:0 auto;padding:22px 28px;height:calc(100vh - var(--topbar-h))}
+.inputs{align-self:start;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);max-height:100%;display:flex;flex-direction:column;min-height:0}
+.panel-heading{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 12px}
+.panel-heading h1{font-size:1.25rem;letter-spacing:-.005em;margin:0}
+.text-button{border:0;padding:4px 0;background:none;color:var(--muted);font-size:.75rem}
+.collapse-inputs{display:none;font-size:1.25rem;padding:0 12px}
+#input-content{padding:0 18px 18px;overflow:auto;scrollbar-width:thin}
+.inputs.collapsed #input-content,.inputs.collapsed .input-footer{display:none}
+.input-footer{border-top:1px solid var(--line);color:var(--muted);font-size:.75rem;padding:12px 18px}
+.input-footer button{width:100%}
+
+.input-group{margin:0 0 10px;border:1px solid var(--line);border-radius:9px;background:#fff;overflow:hidden}
+.input-group>summary{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;list-style:none;background:#f3f7f9;user-select:none}
+.input-group>summary::-webkit-details-marker{display:none}
+.input-group>summary::before{content:"";flex:none;width:7px;height:7px;border-right:2px solid #5d7d8c;border-bottom:2px solid #5d7d8c;transform:rotate(-45deg);transition:transform .15s;margin-right:2px}
+.input-group[open]>summary::before{transform:rotate(45deg)}
+.input-group>summary:hover{background:#e8f0f4}
+.input-group[open]>summary{border-bottom:1px solid var(--line)}
+.group-title{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.group-body{padding:12px}
+.field{display:block;margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field>span{display:block;margin-bottom:6px;color:var(--muted);font-size:.8125rem}
+.check{display:flex;align-items:center;gap:8px;margin-bottom:0}
+.check span{margin:0;color:var(--ink);font-size:.875rem}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.field-row .field{margin-bottom:0}
+
+.field-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.field-head>span{color:var(--muted);font-size:.8125rem}
+.typelist{max-height:236px;overflow:auto;border:1px solid var(--line);border-radius:7px;scrollbar-width:thin}
+.tchk{display:grid;grid-template-columns:16px 40px minmax(0,1fr) auto auto;gap:6px;align-items:center;padding:4px 8px;font-size:.78rem;cursor:pointer;border-top:1px solid #edf2f5}
+.tchk:first-child{border-top:0}
+.tchk:hover{background:#f3f7f9}
+.tchk.on{background:#e9f6f3}
+.tchk input{margin:0}
+.tchk .ico{color:var(--ico)}
+.tchk .tl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tchk .tc{font-size:.68rem;color:var(--muted);font-variant-numeric:tabular-nums;background:#f0f4f7;border-radius:4px;padding:0 4px}
+.tchk .tn{font-size:.7rem;color:var(--muted);font-variant-numeric:tabular-nums;min-width:30px;text-align:right}
+.tnone{padding:8px;color:var(--muted);font-size:.8rem}
+
+/* Contrôle segmenté */
+.segmented{display:flex;flex-wrap:wrap;gap:4px;padding:3px;background:#f3f7f9;border:1px solid var(--line);border-radius:8px}
+.segmented button{flex:1 1 auto;border:0;background:none;color:var(--muted);padding:6px 8px;font-size:.8125rem;border-radius:5px}
+.segmented button:hover:not(.active){background:#e8f0f4}
+.segmented button.active{background:#fff;color:var(--teal);box-shadow:0 1px 3px #15354a22}
+
+/* Colonne principale */
+.main{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+.view-tabs{display:flex;gap:20px;border-bottom:1px solid var(--line);flex:none}
+.view-tabs button{border:0;border-radius:0;background:none;padding:8px 1px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.view-tabs button:hover:not(.active){background:none;color:var(--ink)}
+.view-tabs button.active{color:var(--teal);border-bottom-color:var(--teal)}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.metric{background:#fff;padding:12px 15px;min-width:0;text-align:left}
+.metric-label{font-size:.6875rem;letter-spacing:.8px;font-weight:600;text-transform:uppercase;color:var(--muted)}
+.metric-value{display:flex;gap:7px;align-items:baseline;margin-top:4px;font-size:1.48rem;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.6px}
+.metric-value small{font-size:.75rem;font-weight:400;letter-spacing:0;color:var(--muted)}
+.metric:nth-child(1) .metric-value{color:var(--teal)}
+.metric:nth-child(2) .metric-value{color:var(--amber)}
+.view[hidden]{display:none!important}
+
+.map-wrap{position:relative;flex:1;min-height:320px;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;background:#dfe8ed}
+#map{position:absolute;inset:0;font-family:inherit}
+.notice{position:absolute;top:12px;right:12px;z-index:1000;max-width:min(340px,calc(100% - 70px));display:flex;gap:10px;align-items:flex-start;background:#fff6e5;color:#7a4b00;border:1px solid #efcf8f;border-radius:6px;padding:8px 10px;font-size:.8125rem;line-height:1.5;box-shadow:0 2px 8px #15354a22}
+.notice[hidden]{display:none}
+.notice code{font-family:Consolas,monospace;font-size:.78rem;background:#fff;border:1px solid #efcf8f;border-radius:3px;padding:0 4px;white-space:nowrap}
+.notice button{border:0;background:none;padding:0 4px;font-size:1.1rem;line-height:1;color:#7a4b00;min-height:24px}
+.leaflet-container{font-family:inherit}
+.map-empty{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:1000;background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 14px;font-size:.8125rem;color:var(--muted);box-shadow:0 2px 8px #15354a22}
+.map-empty[hidden]{display:none}
+.legend{background:#fffffff2;border:1px solid var(--line);border-radius:8px;box-shadow:0 2px 8px #15354a22;padding:7px 9px;font-size:.75rem;line-height:1.5;color:var(--ink);min-width:220px;max-width:300px}
+.lg-head{display:flex;align-items:center;gap:6px}
+.lg-head label{font-size:.66rem;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:650;white-space:nowrap}
+.lg-head select{min-height:26px;padding:2px 4px;font-size:.75rem;flex:1;min-width:0}
+.lg-tog{border:0;background:none;padding:0 4px;color:var(--muted);font-size:.85rem;min-height:24px}
+.lg-body{margin-top:5px;max-height:min(46vh,380px);overflow:auto;scrollbar-width:thin}
+.legend.collapsed .lg-body{display:none}
+.lg-row{display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:7px;align-items:center}
+.lg-row.zero{opacity:.45}
+.lg-row i{display:inline-block;width:11px;height:11px;border-radius:50%;border:1px solid #ffffffcc;box-shadow:0 0 0 1px #15354a22}
+.lg-row i.closed{background:#fff;border:2px solid #0b1c28;box-shadow:none}
+.lg-row i.sw-x{font-style:normal;font-weight:800;border:0;box-shadow:none;width:auto;height:auto;line-height:1;text-align:center}
+.lg-chips{display:flex;flex-wrap:wrap;gap:1px 9px;font-size:.7rem;line-height:1.45}
+.lg-chips span{white-space:nowrap}
+.lg-chips i.ln{display:inline-block;border-radius:2px;width:12px;margin-right:4px;vertical-align:middle}
+.lg-chips i.sw-geo{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px;vertical-align:-1px;border:1.2px solid var(--c);background:conic-gradient(var(--c) 0 25%,#fff 0 50%,var(--c) 0 75%,#fff 0)}
+.lg-chips i.sw-diamond{display:inline-block;width:9px;height:9px;margin:0 5px 0 2px;vertical-align:0;transform:rotate(45deg);background:linear-gradient(135deg,#1f9d7a 50%,#e3b23c 50%);border:1.4px solid #102d41}
+.lg-chips i.sw-square{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px;background:#8a5cc2;border:1.4px solid #102d41}
+.lg-chips span{white-space:normal}
+.geo-tip{font-size:.75rem;line-height:1.45}
+.geo-tip small{color:var(--muted)}
+.lg-n{font-variant-numeric:tabular-nums;color:var(--muted)}
+.lg-sub{margin-top:6px;font-size:.66rem;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:650}
+.leaflet-tooltip{font-family:"Segoe UI",Arial,sans-serif;font-size:.78rem;color:var(--ink);border-color:var(--line)}
+
+/* Icônes de types */
+.ico{display:block;flex:none}
+
+/* Fiche détaillée : panneau paysage à droite, la carte se réduit à sa gauche */
+.map-wrap{--dw:min(820px,64%)}
+.map-wrap.fiche-open #map{right:var(--dw)}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:var(--dw);max-width:100%;z-index:1100;background:#fff;border-left:1px solid var(--line);box-shadow:-6px 0 22px #102d4118;display:flex;flex-direction:column;transform:translateX(102%);visibility:hidden;transition:transform .2s ease,visibility 0s linear .2s}
+.drawer.open{transform:none;visibility:visible;transition-delay:0s}
+.dr-head{display:flex;gap:12px;align-items:center;padding:10px 10px 10px 14px;border-bottom:1px solid var(--line);background:#f3f7f9;flex:none}
+.dr-ico{flex:none;width:64px;height:40px;border-radius:8px;background:#fff;border:1px solid var(--line);color:var(--ico);display:grid;place-items:center}
+.dr-title{min-width:0;flex:1}
+.dr-title h2{margin:0;font-size:1rem;font-weight:650;letter-spacing:-.2px;line-height:1.25;overflow-wrap:anywhere}
+.dr-num{font-size:.75rem;color:var(--muted);margin-top:2px}
+.dr-badges{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end;max-width:46%}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:1px 8px;border-radius:999px;font-size:.72rem;font-weight:600;border:1px solid var(--line);background:#fff;line-height:1.5;white-space:nowrap}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 0 1px #15354a33}
+.dr-close{flex:none;border:0;background:none;font-size:1.4rem;line-height:1;padding:2px 8px;color:var(--muted);min-height:32px}
+.dr-body{overflow:auto;flex:1;padding:14px 18px 6px;scrollbar-width:thin}
+.dr-top{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;margin-bottom:12px}
+.dr-flow{columns:260px 2;column-gap:22px}
+.dr-side{display:flex;flex-direction:column;gap:8px;min-width:0}
+#dr-extra>.dr-sec{break-inside:avoid}
+.dr-photo{display:block;border-radius:10px;overflow:hidden;background:#e7eef2;position:relative;border:1px solid var(--line)}
+.dr-photo img{display:block;width:100%;height:250px;object-fit:cover}
+.dr-photo figcaption{position:absolute;right:6px;bottom:6px;background:#102d41cc;color:#fff;font-size:.65rem;padding:1px 6px;border-radius:4px}
+.dr-nophoto{height:200px;border-radius:8px;border:1px dashed #cbd8e1;background:#f6f9fb;color:var(--ico);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:.72rem}
+.dr-nophoto span{color:var(--muted)}
+.dr-links{display:flex;flex-wrap:wrap;gap:5px}
+.dr-links a,.dr-links button{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:.75rem;font-weight:600;color:var(--teal);text-decoration:none;background:#fff;line-height:1.4}
+.dr-links a:hover,.dr-links button:hover{background:#eef5f7}
+.dr-links button{color:var(--ink)}
+.dr-sec{break-inside:avoid;margin-bottom:14px}
+.dr-sec h3{margin:0 0 6px;font-size:.68rem;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:650;border-bottom:1px solid var(--line);padding-bottom:3px}
+.dr-grid{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;margin:0;font-size:.8rem;line-height:1.4}
+.dr-grid dt{color:var(--muted);white-space:nowrap}
+.dr-grid dd{margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dr-grid .dot{width:8px;height:8px;margin-right:4px;vertical-align:-0.5px}
+.dr-side .dr-sec button{font-size:.75rem;padding:4px 9px}
+.muted{color:var(--muted);font-size:.75rem;margin:0}
+.geo-n{font-size:.75rem;margin:0 0 6px}
+.deb{border:1px solid var(--line);border-radius:7px;padding:4px 8px;margin-bottom:5px;font-size:.72rem}
+.deb-h{font-size:.66rem;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:650}
+.deb-v b{font-size:.95rem;font-variant-numeric:tabular-nums}
+.deb-v small,.deb-h small{color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0}
+.deb-row{display:flex;align-items:center;justify-content:space-between;gap:6px;line-height:1.25}
+.spark{display:block;flex:none}
+.deb-t summary{cursor:pointer;color:var(--teal);font-weight:600;font-size:.7rem}
+.deb-t .tbl{font-size:.7rem}.deb-t .tbl td{padding:2px 6px}
+.deb-t a{font-size:.7rem;color:var(--teal)}
+
+/* Infobulle de survol des structures */
+.leaflet-tooltip.mtip-wrap{padding:0;border-radius:8px;overflow:hidden;box-shadow:0 4px 14px #102d4133}
+.mtip{display:flex;flex-direction:column;min-width:220px;max-width:460px;font-size:.75rem;line-height:1.35}
+.mtip img{display:block;width:100%;height:130px;object-fit:cover;background:#e7eef2}
+.mtip b{font-variant-numeric:tabular-nums}
+.mtip-l{padding:5px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtip-l small{color:var(--muted)}
+.line-tip{font-size:.72rem;padding:2px 7px}
+/* Numéros au-dessus des points (zoom ≥ 14) */
+.num-lbl{background:none;border:0}
+.num-lbl span{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font:600 11px/1 "Segoe UI",Arial,sans-serif;color:#102d41;background:#ffffffd9;border-radius:3px;padding:1px 3px;box-shadow:0 0 0 1px #102d4122}
+.home-ctl a{display:grid!important;place-items:center;color:var(--ink)}
+
+/* Vue Défilement */
+.defile{position:relative;flex:1;min-height:0;border-radius:12px;overflow:hidden;background:#0d2333;box-shadow:var(--shadow)}
+.defile[hidden]{display:none}
+.df-scroll{position:absolute;inset:0;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none;overscroll-behavior:contain}
+.df-scroll::-webkit-scrollbar{display:none}
+.df-scroll:focus-visible{outline:3px solid var(--focus);outline-offset:-3px}
+.df-card{height:100%;scroll-snap-align:start;scroll-snap-stop:always;position:relative;overflow:hidden}
+.df-photo{position:absolute;inset:0;background:#102d41;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.df-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+.df-ph-ico{display:flex;flex-direction:column;align-items:center;gap:10px;color:#73e4c2;font-size:.8rem;margin-bottom:22vh}
+.df-ph-ico span{color:#9db4c2}
+/* Carte d'identité superposée en bas de la photo, voile clair légèrement transparent */
+.df-info{position:absolute;left:18px;right:74px;bottom:18px;z-index:2;max-height:64%;overflow:auto;scrollbar-width:thin;background:#ffffffc7;-webkit-backdrop-filter:blur(7px) saturate(1.2);backdrop-filter:blur(7px) saturate(1.2);border:1px solid #ffffff99;border-radius:14px;box-shadow:0 8px 28px #0b1c2840;padding:14px 18px 14px;display:flex;flex-direction:column;gap:4px}
+.df-top{display:flex;align-items:center;gap:12px;min-width:0}
+.df-ico{color:var(--ico);flex:none}
+.df-titles{min-width:0;flex:1}
+.df-count{font-size:.7rem;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.6px;white-space:nowrap;align-self:flex-start}
+.df-info h2{margin:0;font-size:1.3rem;letter-spacing:-.4px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.df-num{color:var(--muted);font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.df-kv{display:flex;flex-wrap:wrap;gap:6px 22px;margin:8px 0 2px;font-size:.84rem}
+.df-kv>div{display:flex;flex-direction:column;min-width:0}
+.df-kv span{font-size:.66rem;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:650}
+.df-kv>div{max-width:100%}
+.df-kv b{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.df-kv .dot{margin-right:5px}
+.df-actions{display:flex;flex-wrap:wrap;gap:6px;padding-top:8px}
+.df-actions a,.df-actions button{border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:.8rem;font-weight:600;color:var(--teal);text-decoration:none;background:#fff}
+.df-actions .primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.df-actions .primary:hover:not(:disabled){background:#006b65}
+.df-nav{position:absolute;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:3}
+.df-nav button{width:40px;height:40px;border-radius:50%;padding:0;font-size:1.1rem;line-height:1;box-shadow:0 2px 8px #102d4130}
+.df-empty{color:#fff;padding:40px;text-align:center}
+
+/* Infobulle des graphiques */
+#tip{position:fixed;z-index:3000;pointer-events:none;background:#fff;border:1px solid var(--line);border-radius:6px;padding:6px 10px;box-shadow:0 4px 14px #102d4130;font-size:.75rem;color:var(--muted);max-width:240px}
+#tip[hidden]{display:none}
+#tip .tip-v{font-size:.9rem;font-weight:650;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* Vue Statistiques */
+.stats{overflow:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;scrollbar-width:thin}
+.stats[hidden]{display:none}
+.stats .metrics{margin:0}
+.stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:14px 16px;min-width:0}
+.card h2{margin:0 0 2px;font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.card .sub{font-size:.75rem;color:var(--muted);margin:0 0 12px}
+.card.wide{grid-column:1/-1}
+.sbar{display:flex;gap:2px;height:22px}
+.sbar>span{display:block;min-width:2px}
+.sbar>span:first-child{border-radius:4px 0 0 4px}
+.sbar>span:last-child{border-radius:0 4px 4px 0}
+.sbar>span:only-child{border-radius:4px}
+.lg{display:grid;grid-template-columns:12px minmax(0,1fr) auto auto;gap:5px 10px;align-items:center;margin-top:12px;font-size:.8125rem}
+.lg .n{font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+.lg .p{font-variant-numeric:tabular-nums;color:var(--muted);text-align:right;min-width:48px}
+.key{display:flex;gap:14px;flex-wrap:wrap;font-size:.75rem;color:var(--muted);margin-bottom:8px}
+.key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.hist{position:relative;height:190px;margin:14px 0 0 34px}
+.hist .gl{position:absolute;left:0;right:0;border-top:1px solid var(--line)}
+.hist .gl span{position:absolute;left:-36px;top:-8px;width:30px;text-align:right;font-size:.6875rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.hcols{position:absolute;inset:0;display:flex;gap:4px}
+.hcol{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.hcol:hover .hbar,.hcol:focus-visible .hbar{filter:brightness(1.12)}
+.hbar{position:relative;width:100%;max-width:24px;display:flex;flex-direction:column;gap:2px}
+.hbar>span{display:block;min-height:1px}
+.hbar>span:first-child{border-radius:4px 4px 0 0}
+.hbar .hv{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);padding-bottom:2px;font-size:.6875rem;font-weight:600;color:var(--ink);background:none;border-radius:0;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hx{display:flex;gap:4px;margin:6px 0 0 34px}
+.hx span{flex:1;min-width:0;text-align:center;font-size:.6875rem;color:var(--muted);white-space:nowrap}
+details.tbl-twin{margin-top:12px;font-size:.8125rem}
+details.tbl-twin summary{cursor:pointer;color:var(--teal);font-weight:600}
+.trow{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:3px 10px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:.8125rem}
+.trow:first-of-type{border-top:0}
+.trow .ti{grid-row:1/3;color:var(--ico)}
+.trow .tl{overflow-wrap:anywhere}
+.trow .tn{font-weight:650;font-variant-numeric:tabular-nums;text-align:right}
+.trow .tb{height:6px;border-radius:0 3px 3px 0;background:var(--teal);min-width:2px}
+.trow .tm{font-size:.75rem;color:var(--muted);text-align:right;white-space:nowrap}
+.tscroll{overflow:auto}
+table.tbl{width:100%;border-collapse:collapse;font-size:.8125rem}
+.tbl th{padding:8px 10px;text-align:right;font-size:.6875rem;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.tbl tfoot td{font-weight:650;border-bottom:0}
+.empty{padding:28px;text-align:center;color:var(--muted);font-size:.875rem}
+
+/* Vue Liste */
+.listview{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px}
+.listview[hidden]{display:none}
+.list-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;flex:none}
+.list-bar .cnt{font-size:.8125rem;color:var(--muted)}
+.tablewrap{flex:1;min-height:0;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+table.list{min-width:980px}
+table.list thead th{position:sticky;top:0;background:#f3f7f9;z-index:1;padding:0;text-align:left}
+.th-btn{display:flex;align-items:center;gap:4px;width:100%;border:0;border-radius:0;background:none;padding:9px 10px;font-size:.6875rem;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:left;white-space:nowrap}
+.th-btn:hover:not(:disabled){background:#e8f0f4}
+th[aria-sort] .th-btn{color:var(--teal)}
+th[aria-sort=ascending] .th-btn::after{content:"▲";font-size:.6rem}
+th[aria-sort=descending] .th-btn::after{content:"▼";font-size:.6rem}
+table.list td{text-align:left;vertical-align:middle}
+table.list td.num,table.list th.num .th-btn{justify-content:flex-start}
+table.list td.r{text-align:right}
+table.list tbody tr{cursor:pointer}
+table.list tbody tr:hover{background:#eef5f7}
+.tcell{display:flex;align-items:center;gap:8px;color:var(--ink)}
+.tcell .ico{color:var(--ico)}
+.more{padding:12px;text-align:center}
+
+@media(min-width:1500px){.workspace{grid-template-columns:365px minmax(0,1fr)}.metric-value{font-size:1.7rem}}
+@media(max-width:1100px){.workspace{grid-template-columns:300px minmax(0,1fr);gap:14px;padding:18px}.metric{padding:10px}.metric-value{font-size:1.2rem}.topbar{padding:0 20px}.stats-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:800px){
+  :root{--topbar-h:70px}
+  .workspace{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);padding:14px;gap:14px;height:auto;min-height:calc(100vh - var(--topbar-h))}
+  .inputs{max-height:340px}
+  .topbar{padding:0 16px}
+  .brand{font-size:1.25rem}
+  .collapse-inputs{display:inline-block}
+  .metrics{grid-template-columns:repeat(4,1fr)}
+  .metric-label{letter-spacing:.4px}
+  .metric-value{font-size:1.2rem}
+  .map-wrap{min-height:62vh}
+  .stats{overflow:visible}
+  .listview{min-height:60vh}
+  .tablewrap{max-height:70vh}
+  .drawer{top:auto;left:0;right:0;bottom:0;width:100%;max-height:72%;border-left:0;border-top:1px solid var(--line);border-radius:14px 14px 0 0;box-shadow:0 -8px 28px #102d4122;transform:translateY(102%)}
+  .drawer.open{transform:none}
+  .map-wrap.fiche-open #map{right:0}
+  .dr-head{flex-wrap:wrap}
+  .dr-badges{max-width:none;justify-content:flex-start;order:3;flex-basis:100%}
+  .dr-flow{columns:auto}
+  .dr-top{grid-template-columns:minmax(0,1fr)}
+  .dr-photo img{height:190px}
+  .defile{min-height:72vh}
+  .df-info{left:10px;right:62px;bottom:10px;padding:10px 12px;max-height:70%}
+  .df-info h2{font-size:1.1rem}
+  .df-kv{font-size:.78rem;gap:4px 14px}
+  .brand small{letter-spacing:.4px;font-size:.55rem}
+}
+@media(max-width:500px){
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .metric-value{font-size:1.4rem}
+  .release-info{font-size:.65rem}.release-info small{font-size:.6rem}
+  .brand small{font-size:.5rem;letter-spacing:1px}
+  .legend{font-size:.6875rem;padding:6px 8px}
+  .hx span:nth-child(even){visibility:hidden}
+  .hist{margin-left:28px}.hx{margin-left:28px}
+  .hist .gl span{left:-30px;width:24px}
+}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg class="brand-mark" viewBox="0 0 40 40" width="44" height="44" aria-hidden="true" focusable="false">
+      <g fill="#73e4c2">
+        <path d="M20 4c3 3.6 3.9 7.4 0 12.6-3.9-5.2-3-9 0-12.6z"/>
+        <path d="M18.6 17.4c-3.6.9-7.5.2-8.6-3-.9-2.6.9-4.6 3-4.1-1.6.5-2 2.3-.8 3.4 1.4 1.3 3.9 1.3 6.4.6z"/>
+        <path d="M21.4 17.4c3.6.9 7.5.2 8.6-3 .9-2.6-.9-4.6-3-4.1 1.6.5 2 2.3.8 3.4-1.4 1.3-3.9 1.3-6.4.6z"/>
+        <rect x="14" y="17.3" width="12" height="2" rx="1"/><path d="M18.4 19.3h3.2l-.5 2.7h-2.2z"/>
+        <rect x="3" y="24" width="34" height="2.4" rx="1"/>
+        <path d="M11 26.4v4.6M15.5 26.4v2.5M24.5 26.4v2.5M29 26.4v4.6" stroke="#73e4c2" stroke-width="1.4"/>
+      </g>
+      <path d="M5 37c1.6-6.6 7.4-10.6 15-10.6S33.4 30.4 35 37" fill="none" stroke="#73e4c2" stroke-width="2.4" stroke-linecap="round"/>
+    </svg>
+    <div>Quicker<span>AtlasOA</span><small>Atlas des ouvrages d’art du Québec · proposition de visualisation de l’inventaire du MTMD</small></div>
+  </div>
+  <div class="header-right">
+    <div class="release-info"><b id="release-version"></b><small id="release-date"></small></div>
+  </div>
+</header>
+
+<div class="workspace">
+  <aside class="inputs" id="inputs" aria-label="Filtres">
+    <div class="panel-heading">
+      <h1>Filtres</h1>
+      <button type="button" class="text-button collapse-inputs" id="collapse-inputs" aria-expanded="true" aria-controls="input-content" aria-label="Réduire ou développer les filtres">−</button>
+    </div>
+    <div id="input-content">
+      <details class="input-group" open>
+        <summary><span class="group-title">Recherche</span></summary>
+        <div class="group-body">
+          <label class="field"><span>Texte libre</span>
+            <input type="search" id="q" aria-label="Recherche" placeholder="Rechercher (nom, route, obstacle, municipalité)…" autocomplete="off">
+          </label>
+        </div>
+      </details>
+
+      <details class="input-group" open>
+        <summary><span class="group-title">Type de structure</span></summary>
+        <div class="group-body">
+          <div class="segmented" id="famille" role="group" aria-label="Famille de structures">
+            <button type="button" class="active" data-famille="pont" aria-pressed="true">Pont</button>
+            <button type="button" data-famille="ponceau" aria-pressed="false">Ponceau</button>
+            <button type="button" data-famille="mur" aria-pressed="false">Mur</button>
+            <button type="button" data-famille="tunnel" aria-pressed="false">Tunnel</button>
+            <button type="button" data-famille="tous" aria-pressed="false">Tous</button>
+          </div>
+          <div class="field" style="margin-top:12px">
+            <div class="field-head"><span id="type-lbl">Type précis</span><button type="button" class="text-button" id="type-clear" hidden>Tout afficher</button></div>
+            <div class="typelist" id="type" role="group" aria-labelledby="type-lbl"></div>
+          </div>
+          <label class="field check" style="margin-top:12px"><input type="checkbox" id="hors-public"><span>Inclure les structures hors inventaire public</span></label>
+        </div>
+      </details>
+
+      <details class="input-group" open>
+        <summary><span class="group-title">Localisation et réseau</span></summary>
+        <div class="group-body">
+          <label class="field"><span>Région administrative</span>
+            <select id="region"><option value="">Toutes</option></select>
+          </label>
+          <label class="field"><span>Réseau</span>
+            <select id="reseau">
+              <option value="">Tous</option>
+              <option value="superieur">Supérieur</option>
+              <option value="municipal">Municipal</option>
+            </select>
+          </label>
+          <label class="field"><span>Type d’obstacle franchi</span>
+            <select id="obst"><option value="">Tous</option></select>
+          </label>
+        </div>
+      </details>
+
+      <details class="input-group" open>
+        <summary><span class="group-title">État et caractéristiques</span></summary>
+        <div class="group-body">
+          <label class="field"><span>ICG</span>
+            <select id="icg">
+              <option value="">Tous</option>
+              <option value="4">4 — Aucune intervention</option>
+              <option value="3">3 — Réparations</option>
+              <option value="2">2 — Travaux majeurs</option>
+              <option value="1">1 — Travaux majeurs / remplacement</option>
+              <option value="AC">AC — Analyse en cours</option>
+              <option value="SO">S. O.</option>
+            </select>
+          </label>
+          <label class="field"><span>IAS</span>
+            <select id="ias">
+              <option value="">Tous</option>
+              <option value="vert">Aucune restriction</option>
+              <option value="jaune">Certaines restrictions</option>
+              <option value="rouge">Fermée</option>
+              <option value="SO">S. O.</option>
+            </select>
+          </label>
+          <div class="field-row">
+            <label class="field"><span>Construite dès</span>
+              <input type="number" id="annee-min" min="1800" max="2100" step="1" inputmode="numeric" placeholder="ex. 1950">
+            </label>
+            <label class="field"><span>Construite avant</span>
+              <input type="number" id="annee-max" min="1800" max="2100" step="1" inputmode="numeric" placeholder="ex. 1975">
+            </label>
+          </div>
+          <label class="field"><span>Longueur du tablier min. (m)</span>
+            <input type="number" id="long-min" min="0" step="1" inputmode="decimal" placeholder="ex. 20">
+          </label>
+          <label class="field"><span>Hauteur libre inférieure à (m)</span>
+            <input type="number" id="hauteur-max" min="0" step="0.1" inputmode="decimal" placeholder="ex. 4,2">
+          </label>
+          <label class="field check"><input type="checkbox" id="lim-poids"><span>Limitation de poids</span></label>
+        </div>
+      </details>
+    </div>
+    <div class="input-footer"><button type="button" id="reset-filtres">Réinitialiser les filtres</button></div>
+  </aside>
+
+  <main class="main">
+    <nav class="view-tabs" id="view-tabs" aria-label="Vues">
+      <button type="button" class="active" data-view="carte" aria-current="page">Carte</button>
+      <button type="button" data-view="stats">Statistiques</button>
+      <button type="button" data-view="liste">Liste</button>
+      <button type="button" data-view="defile">Défilement</button>
+    </nav>
+    <section class="metrics" aria-label="Indicateurs">
+      <div class="metric"><div class="metric-label">Structures</div><div class="metric-value" id="m-count">—</div></div>
+      <div class="metric"><div class="metric-label">ICG 1–2</div><div class="metric-value" id="m-icg-bad">—</div></div>
+      <div class="metric"><div class="metric-label">Fermées</div><div class="metric-value" id="m-fermees">—</div></div>
+      <div class="metric"><div class="metric-label">Âge moyen</div><div class="metric-value" id="m-age">—</div></div>
+    </section>
+
+    <div class="map-wrap view" id="view-carte">
+      <div id="map" role="application" aria-label="Carte des structures"></div>
+      <div class="map-empty" id="map-empty" role="status" hidden>Aucune structure ne correspond aux filtres.</div>
+      <div class="notice" id="notice" role="status" hidden>
+        <span>Données absentes — exécuter <code>python -m etl update</code></span>
+        <button type="button" id="notice-close" aria-label="Fermer l'avis">×</button>
+      </div>
+      <aside class="drawer" id="drawer" aria-label="Fiche de la structure" aria-hidden="true"></aside>
+    </div>
+
+    <div class="stats view" id="view-stats" hidden></div>
+
+    <div class="defile view" id="view-defile" hidden>
+      <div class="df-scroll" id="df-scroll" tabindex="0" aria-label="Défilement des structures, une à la fois"></div>
+      <div class="df-nav">
+        <button type="button" id="df-prev" aria-label="Structure précédente" title="Précédente (↑)">↑</button>
+        <button type="button" id="df-next" aria-label="Structure suivante" title="Suivante (↓)">↓</button>
+        <button type="button" id="df-shuffle" aria-label="Mélanger" title="Nouveau tirage">⤮</button>
+      </div>
+    </div>
+
+    <div class="listview view" id="view-liste" hidden>
+      <div class="list-bar">
+        <span class="cnt" id="list-count" role="status"></span>
+        <button type="button" id="export-csv">Exporter CSV</button>
+      </div>
+      <div class="tablewrap">
+        <table class="tbl list" id="list-table">
+          <thead><tr id="list-head"></tr></thead>
+          <tbody id="list-body"></tbody>
+        </table>
+        <div class="more" id="list-more" hidden><button type="button" id="list-more-btn">Afficher 200 de plus</button></div>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="tip" role="tooltip" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="data/structures.js"></script>
+<script src="data/details.js"></script>
+<script>window.PQ_META={"version": "0.5.1", "date": "2026-10-11", "author": "Anthony Chéruel"};</script>
+<script>
+(function(){
+  'use strict';
+  var $ = function(s){ return document.querySelector(s); };
+  var nf = new Intl.NumberFormat('fr-CA');
+  var nf1 = new Intl.NumberFormat('fr-CA', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  var nf2 = new Intl.NumberFormat('fr-CA', { maximumFractionDigits: 2 });
+  var nf5 = new Intl.NumberFormat('fr-CA', { minimumFractionDigits: 5, maximumFractionDigits: 5 });
+  var collator = new Intl.Collator('fr', { numeric: true, sensitivity: 'base' });
+  var YEAR = new Date().getFullYear();
+  var isMobile = function(){ return window.innerWidth <= 800; };
+
+  // ---------- Carte ----------
+  var map = null, canvas = null, group = null;
+  if (window.L) {
+    // Zoom molette continu : le niveau visé suit la molette et la carte s'en approche à chaque image
+    // (interpolation), sans animation de Leaflet ni redessin du canevas avant la fin du geste.
+    L.Map.SmoothWheel = L.Handler.extend({
+      addHooks: function(){ L.DomEvent.on(this._map._container, 'wheel', this._onWheel, this); },
+      removeHooks: function(){ L.DomEvent.off(this._map._container, 'wheel', this._onWheel, this); },
+      _onWheel: function(e){
+        var map = this._map;
+        L.DomEvent.preventDefault(e);
+        var dy = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1);
+        if (!this._active) {
+          map._stop();
+          this._active = true; this._moved = false;
+          this._goal = map.getZoom();
+          this._raf = L.Util.requestAnimFrame(this._step, this);
+        }
+        this._goal = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), this._goal - dy / 220));
+        this._mouse = map.mouseEventToContainerPoint(e);
+        this._anchor = map.containerPointToLatLng(this._mouse);
+        this._idle = false;
+        clearTimeout(this._end);
+        this._end = setTimeout(L.bind(function(){ this._idle = true; }, this), 120);
+      },
+      _step: function(){
+        var map = this._map, z = map.getZoom(), dz = this._goal - z;
+        if (Math.abs(dz) > 0.001) {
+          var nz = Math.abs(dz) < 0.01 ? this._goal : z + dz * 0.3;
+          // garde le point sous le curseur immobile
+          var off = this._mouse.subtract(map.getSize().divideBy(2));
+          var c = map.unproject(map.project(this._anchor, nz).subtract(off), nz);
+          if (!this._moved) { map._moveStart(true, false); this._moved = true; }
+          map._move(c, nz);
+        } else if (this._idle) {
+          // molette au repos et niveau atteint : un seul redessin complet
+          this._active = false;
+          if (this._moved) map._moveEnd(true);
+          return;
+        }
+        this._raf = L.Util.requestAnimFrame(this._step, this);
+      }
+    });
+    L.Map.addInitHook('addHandler', 'smoothWheel', L.Map.SmoothWheel);
+    map = L.map('map', {
+      preferCanvas: true, center: [47.0, -71.5], zoom: 6, minZoom: 4, maxZoom: 18,
+      zoomSnap: 0, zoomDelta: 0.5, scrollWheelZoom: false, smoothWheel: true
+    });
+    // Tuiles Esri : aucune clé ni en-tête Referer requis (OSM et CARTO refusent les pages file://)
+    var ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+    var esri = function(service, maxNative, attribution){
+      return L.tileLayer(ESRI + service + '/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: maxNative, maxZoom: 18, attribution: attribution });
+    };
+    var SRC_DATA = ' · Données : MTMD / <a href="https://www.donneesquebec.ca/">Données Québec</a> (CC-BY 4.0)';
+    var FONDS = {
+      'Plan': esri('World_Topo_Map', 18, 'Fond © Esri, HERE, Garmin, USGS, Ressources naturelles Canada' + SRC_DATA),
+      'Gris clair': L.layerGroup([
+        esri('Canvas/World_Light_Gray_Base', 16, 'Fond © Esri, HERE, Garmin' + SRC_DATA),
+        esri('Canvas/World_Light_Gray_Reference', 16, '')
+      ]),
+      'Satellite': L.layerGroup([
+        esri('World_Imagery', 18, 'Imagerie © Esri, Maxar, Earthstar Geographics' + SRC_DATA),
+        esri('Reference/World_Boundaries_and_Places', 18, '')
+      ])
+    };
+    var fondNom = 'Plan';
+    try { if (FONDS[localStorage.getItem('pq-fond')]) fondNom = localStorage.getItem('pq-fond'); } catch (e) { /* stockage indisponible */ }
+    FONDS[fondNom].addTo(map);
+    var layersCtl = L.control.layers(FONDS, null, { position: 'topright', collapsed: true }).addTo(map);
+    map.createPane('reseaux').style.zIndex = 350;                     // sous les structures
+    var lp = map.createPane('labels'); lp.style.zIndex = 450; lp.style.pointerEvents = 'none';
+    map.on('baselayerchange', function(e){ try { localStorage.setItem('pq-fond', e.name); } catch (err) { /* idem */ } });
+    map.attributionControl.setPrefix(false);
+    canvas = L.canvas({ padding: 0.5 });
+    group = L.layerGroup().addTo(map);
+  } else {
+    $('#map').textContent = 'Impossible de charger la carte (Leaflet indisponible).';
+    $('#map').style.cssText += ';display:flex;align-items:center;justify-content:center;color:#566e7c';
+  }
+
+  // ---------- Interface (indépendante des données) ----------
+  $('#notice-close').addEventListener('click', function(){ $('#notice').hidden = true; });
+  $('#collapse-inputs').addEventListener('click', function(){
+    var collapsed = $('#inputs').classList.toggle('collapsed');
+    this.textContent = collapsed ? '+' : '−';
+    this.setAttribute('aria-expanded', String(!collapsed));
+  });
+  function setFamilleUI(val){
+    $('#famille').querySelectorAll('button').forEach(function(x){
+      var on = x.getAttribute('data-famille') === val;
+      x.classList.toggle('active', on);
+      x.setAttribute('aria-pressed', String(on));
+    });
+  }
+
+  var D = window.STRUCTURES;
+  var META = window.PQ_META || {};
+  $('#release-version').textContent = 'v' + META.version + ' · ' + META.author;
+  $('#release-date').textContent = 'Mise à jour : ' + META.date + ' · Données : ' + ((D && D.generated) || '—');
+  if (!D || !D.rows) { $('#notice').hidden = false; return; }
+
+  // ---------- Constantes ----------
+  var ICG_COLOR = { '4': '#1f9d7a', '3': '#e3b23c', '2': '#d9742b', '1': '#c93a2b', 'AC': '#5b7fa8', 'SO': '#9aa8b1' };
+  var ICG_LABEL = { '4': 'Aucune intervention', '3': 'Réparations', '2': 'Travaux majeurs', '1': 'Travaux majeurs / remplacement', 'AC': 'Analyse en cours', 'SO': 'S. O.' };
+  var ICG_ORDER = ['4', '3', '2', '1', 'AC', 'SO'];
+  var IAS_COLOR = { vert: '#1f9d7a', jaune: '#e3b23c', rouge: '#c93a2b', SO: '#9aa8b1' };
+  var IAS_LABEL = { vert: 'Aucune restriction', jaune: 'Certaines restrictions', rouge: 'Fermée', SO: 'S. O.' };
+  var IAS_ORDER = ['vert', 'jaune', 'rouge', 'SO'];
+  var FAM_LABEL = { pont: 'Pont', ponceau: 'Ponceau', mur: 'Mur', tunnel: 'Tunnel', station: 'Station de pompage' };
+  var OUTLINE = '#0b1c28';
+  var C_TEAL = '#007f78', C_BAD = '#d9742b';   // histogramme : ICG 1–2 (orange) vs autres (teal)
+  // Palette catégorielle (types, régions) : teintes distinctes, lisibles sur fond topo et satellite
+  var PAL = ['#1f6fb4', '#d62728', '#2a9d3a', '#f28e1c', '#8a5cc2', '#8c564b', '#e377c2', '#13a3b8', '#b5b21d', '#393b79', '#5f7a1f', '#a26b15', '#843c39', '#7b4173', '#58a7e8', '#6b7780'];
+
+  function icgKey(v){ return (v == null || !ICG_COLOR[v]) ? 'SO' : v; }
+  function iasKey(v){ return (v == null || !IAS_COLOR[v]) ? 'SO' : v; }
+  function norm(s){ return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pct(a, b){ return b ? nf1.format(100 * a / b) + ' %' : '—'; }
+
+  // ---------- Pictogrammes : coupes transversales à la manière des icônes de l'outil du MTMD ----------
+  // viewBox 64 × 24, aplats en couleur courante ; les traits fins sont des contours.
+  var S = function(w){ return ' fill="none" stroke="currentColor" stroke-width="' + (w || 1.6) + '"'; };
+  var VIDE = ' fill="#fff"';                                  // vides et câbles de précontrainte (fond clair)
+  var DECK = '<rect x="1" y="5" width="62" height="2.4"/>';
+  var PLANCHES = (function(){ var s = ''; for (var i = 0; i < 15; i++) s += '<rect x="' + (1 + i * 4.15) + '" y="5" width="3.3" height="2.4"/>'; return s; })();
+  function rep(n, x0, dx, f){ var s = ''; for (var i = 0; i < n; i++) s += f(x0 + i * dx); return s; }
+  function ib(x, y, h){ return '<path d="M' + (x - 2) + ' ' + y + 'h4v.9h-1.55v' + (h - 1.8) + 'h1.55v.9h-4v-.9h1.55v' + (1.8 - h) + 'h-1.55z"/>'; }
+  function bulbe(x, y, h){ return '<path d="M' + (x - 3) + ' ' + y + 'h6v1.3h-2.2v' + (h - 3.1) + 'h1.4v1.8h-4.4v-1.8h1.4v' + (3.1 - h) + 'h-2.2z"/>'; }
+  // Courbe quadratique symétrique de (x0, yb) à (x1, yb), sommet à yt : ordonnée en x
+  function quadY(x, x0, x1, yb, yt){ var t = (x - x0) / (x1 - x0), yc = 2 * yt - yb; return (1 - t) * (1 - t) * yb + 2 * t * (1 - t) * yc + t * t * yb; }
+  function arc(x0, x1, yb, yt, w){ return '<path d="M' + x0 + ' ' + yb + 'Q' + ((x0 + x1) / 2) + ' ' + (2 * yt - yb) + ' ' + x1 + ' ' + yb + '"' + S(w) + '/>'; }
+  function montants(xs, yFrom, x0, x1, yb, yt, w){   // suspentes / montants entre une droite et un arc
+    return '<path d="' + xs.map(function(x){ return 'M' + x + ' ' + yFrom + 'V' + quadY(x, x0, x1, yb, yt).toFixed(2); }).join('') + '"' + S(w || 1.2) + '/>';
+  }
+  var PRATT = '<path d="M11 8v9M21.5 8v9M32 8v9M42.5 8v9M53 8v9M11 8l10.5 9M21.5 8L32 17M53 8l-10.5 9M42.5 8L32 17"' + S(1.2) + '/>';
+  var TREILLIS_SOUS = '<path d="M2 7.4h60v11.6H2zM12 7.4v11.6M22 7.4v11.6M32 7.4v11.6M42 7.4v11.6M52 7.4v11.6M2 19L12 7.4M12 19L22 7.4M22 19L32 7.4M42 7.4L52 19M32 7.4L42 19M52 7.4L62 19"' + S(1.2) + '/>';
+  var POUTRE_BOIS = function(x){ return '<rect x="' + x + '" y="7.9" width="5" height="6"' + S(1.1) + '/><path d="M' + x + ' 7.9l5 6M' + (x + 5) + ' 7.9l-5 6"' + S(.8) + '/>'; };
+  var DALLE = '<path d="M8 5h48v16h-3.6V8.6H11.6V21H8z"/>';
+  var PORTIQUE = '<path d="M8 5h48v16h-3.6v-9.4q-1-3-5-3H16.6q-4 0-5 3V21H8z"/>';
+  var VIDES = rep(8, 14.5, 5, function(x){ return '<circle cx="' + x + '" cy="6.8" r="1.05"' + VIDE + '/>'; });
+  var TENDON = '<path d="M12 7.6h40"' + S(.8).replace('currentColor', '#fff') + '/>';
+  var BEQ = DECK + '<path d="M20.6 7.4h2.4l-.4 11h-1.6zM41 7.4h2.4l-.4 11h-1.6z"/>';
+  var ARC_SOUS = DECK + arc(3, 61, 21, 9, 1.8) + montants([12, 22, 32, 42, 52], 7.4, 3, 61, 21, 9) + '<path d="M3 7.4V21M61 7.4V21"' + S(1.4) + '/>';
+  var ARC_MI = '<path d="M2 12h60v2H2z"/>' + arc(3, 61, 21, 4, 1.8) + montants([13, 22.5, 32, 41.5, 51], 12, 3, 61, 21, 4);
+  var BOWSTRING = '<path d="M2 17h60v2.2H2z"/>' + arc(3, 61, 17.5, 4, 2) + montants([12, 22, 32, 42, 52], 17, 3, 61, 17.5, 4);
+  var ICONS = {
+    11: '<path d="M19 3h26v19h-3.4V6.4H22.4V22H19z"/>',
+    12: '<path d="M18 3h28v19h-3.4v-12q-.8-2.6-4-2.6H25.4q-3.2 0-4 2.6v12H18z"/>',
+    13: '<path fill-rule="evenodd" d="M18 2h28v20H18zM22.5 6.5h19v11h-19z"/>',
+    14: '<circle cx="32" cy="12" r="9" ' + S(3) + '/>',
+    15: '<circle cx="32" cy="12" r="9.5"' + S(1.6) + '/><circle cx="32" cy="12" r="7.9"' + S(.7) + ' stroke-dasharray="1 1.1"/>',
+    16: '<circle cx="32" cy="12" r="9.5"' + S(1.3) + '/><circle cx="32" cy="12" r="7.7"' + S(1.3) + '/>',
+    17: '<ellipse cx="32" cy="12" rx="13" ry="7"' + S(1.6) + '/>',
+    18: '<path d="M20 16.5Q19 4 32 3.5T44 16.5Q32 21 20 16.5z"' + S(1.6) + '/>',
+    19: '<path d="M20 20A12 12 0 0 1 44 20"' + S(2.6) + '/><path d="M16 19h7v3h-7zM41 19h7v3h-7z"/>',
+    20: '<path d="M17 20A15 15 0 0 1 47 20"' + S(1.6) + '/><path d="M14 19h6v3h-6zM44 19h6v3h-6z"/>',
+    21: '<path d="M18 2h28v20H18z"' + S(1.4) + '/><path d="M18 6.5h28M18 11h28M18 15.5h28M22.5 2v20M41.5 2v20"' + S(.8) + '/>',
+    31: DALLE, 32: DALLE + TENDON, 33: DALLE + VIDES, 34: DALLE + VIDES + TENDON,
+    35: PORTIQUE, 47: PORTIQUE,
+    36: PORTIQUE + '<path d="M6 2.4h52"' + S(1.1) + ' stroke-dasharray="1.2 1.5"/>',
+    37: '<rect x="2" y="5" width="60" height="2.6"/><path d="M3 7.6v12.4M23 7.6v10M41 7.6v10M61 7.6v12.4"' + S(1.6) + '/>' + TENDON,
+    38: BEQ, 50: BEQ, 39: BEQ + TENDON,
+    51: DECK + '<path d="M16 7.4L7 19M48 7.4L57 19"' + S(2) + '/>',
+    41: DECK + rep(4, 8.5, 13.5, function(x){ return '<rect x="' + x + '" y="7.4" width="5" height="6.6"/>'; }),
+    42: DECK + rep(3, 14, 18, function(x){ return bulbe(x, 7.4, 7); }),
+    43: DECK + rep(3, 10, 18, function(x){ return '<path d="M' + x + ' 7.4h8v7.6h-8z"/>'; }),
+    44: DECK + rep(4, 10, 14.7, function(x){ return ib(x, 7.4, 7); }),
+    45: PLANCHES + rep(4, 10, 14.7, function(x){ return ib(x, 7.4, 7); }),
+    46: PLANCHES + rep(4, 8.5, 13.5, POUTRE_BOIS),
+    52: DECK + rep(3, 12, 18, function(x){ return '<rect x="' + x + '" y="8" width="7" height="7"' + S(1.3) + '/>' + ib(x + 3.5, 9.2, 4.6); }),
+    56: DECK + rep(2, 9, 32, function(x){ return '<path fill-rule="evenodd" d="M' + x + ' 7.4h14v8.6h-14zM' + (x + 2.2) + ' 7.4h9.6v6.4h-9.6z"/>'; }),
+    57: DECK + '<path d="M18 7.4l3 8.6h22l3-8.6"' + S(2.2) + '/>',
+    58: DECK + '<path d="M10 7.4l2.4 8h9.2l2.4-8M40 7.4l2.4 8h9.2l2.4-8"' + S(1.3) + '/>',
+    61: '<path d="M2 17h60v2H2z"/><path d="M3 18L11 8h42l8 10"' + S(1.8) + '/>' + PRATT,
+    62: '<path d="M2 18h60v1.8H2zM2 12.6h60v1.6H2z"/>' + arc(3, 61, 19, 3.5, 1.8) + montants([12, 22, 32, 42, 52], 19, 3, 61, 19, 3.5) +
+        '<path d="M12 19L22 ' + quadY(22, 3, 61, 19, 3.5).toFixed(1) + 'M52 19L42 ' + quadY(42, 3, 61, 19, 3.5).toFixed(1) + 'M22 19L32 4M42 19L32 4"' + S(1) + '/>',
+    63: '<path d="M2 18h60v1.8H2z"/><path d="M12 10.5H52"' + S(2) + '/><path d="M3 18L12 10.5L22 18L32 10.5L42 18L52 10.5L61 18"' + S(1.6) + '/>',
+    64: '<path d="M2 8h60v11H2z"' + S(1.6) + '/>' + rep(6, 2, 10, function(x){ return '<path d="M' + x + ' 8l10 11M' + (x + 10) + ' 8l-10 11"' + S(1) + '/>'; }),
+    65: DECK + TREILLIS_SOUS, 77: PLANCHES + TREILLIS_SOUS,
+    67: '<path d="M1 3.4h62v2.6H1z"/><path fill-rule="evenodd" d="M4 6h56v15H4zM7 9.5h50v2.6H7z"/>',
+    71: BOWSTRING, 72: BOWSTRING,
+    73: ARC_MI, 74: ARC_MI,
+    75: ARC_SOUS, 76: ARC_SOUS,
+    81: '<path d="M1 15h62v2H1zM15.5 3h2v19h-2zM46.5 3h2v19h-2z"/><path d="M1 10Q9 12.5 16.5 3.5Q32 17 47.5 3.5Q55 12.5 63 10"' + S(1.1) + '/>' +
+        '<path d="M6 11.4V15M11 10V15M22 9.6V15M27 12.4V15M32 13.2V15M37 12.4V15M42 9.6V15M53 10V15M58 11.4V15"' + S(.8) + '/>',
+    82: '<path d="M1 15h62v2H1zM17 2h2v20h-2zM45 2h2v20h-2z"/><path d="M18 3L4 15M18 3L9 15M18 3L13.5 15M18 3L22.5 15M18 3L27 15M18 3L31.5 15M46 3L32.5 15M46 3L37 15M46 3L41.5 15M46 3L50.5 15M46 3L55 15M46 3L60 15"' + S(.8) + '/>',
+    85: '<path d="M2 13h15v2H2zM47 13h15v2H47z"/><path d="M17 14L25.5 3M47 14L38.5 3"' + S(2.2) + '/><path d="M4 15v7M16 15v7M48 15v7M60 15v7"' + S(1.6) + '/>' +
+        '<path d="M22 20.5q2-1.6 4 0t4 0 4 0 4 0 4 0"' + S(.9) + '/>',
+    94: '<path fill-rule="evenodd" d="M17 3h30v19H17zM20.5 21V10q0-3.4 3.4-3.4h16.2q3.4 0 3.4 3.4v11z"/>',
+    97: '<path d="M37 2h3.6v16H37zM30 18h18v4H30z"/><path d="M2 2h35M40.6 15.5H62"' + S(.8) + '/>' +
+        rep(7, 5, 4.5, function(x){ return '<circle cx="' + x + '" cy="7" r=".55"/><circle cx="' + (x + 2.2) + '" cy="11.5" r=".55"/><circle cx="' + x + '" cy="16" r=".55"/><circle cx="' + (x + 2.2) + '" cy="20.5" r=".55"/>'; }),
+    98: '<path fill-rule="evenodd" d="M21 3h22v18H21zM24 6h16v12H24z"/><path d="M12 16h9M43 7h9"' + S(1.8) + '/>',
+    g: DECK + '<path d="M20 7.4h3v12h-3zM41 7.4h3v12h-3z"/>'
+  };
+  function icon(code, h){
+    h = h || 16;
+    var k = ICONS[code] ? code : 'g';
+    return '<svg class="ico" viewBox="0 0 64 24" width="' + Math.round(h * 64 / 24) + '" height="' + h + '" fill="currentColor" aria-hidden="true" focusable="false">' + ICONS[k] + '</svg>';
+  }
+
+  // ---------- Décodage unique des lignes ----------
+  var ci = {};
+  D.cols.forEach(function(c, i){ ci[c] = i; });
+  var E = D.enums || {};
+  function en(name, v){ return (v == null || !E[name]) ? null : (E[name][v] == null ? null : E[name][v]); }
+  var DET = window.STRUCTURE_DETAILS || null;
+  var detData = (DET && DET.data) || {};
+  var data = new Array(D.rows.length), byNum = {};
+  D.rows.forEach(function(r, k){
+    var t = D.types[r[ci.type]];
+    var o = {
+      num: r[ci.num], nom: r[ci.nom], tc: r[ci.type] == null ? null : String(r[ci.type]), tl: t ? t[0] : null, fam: t ? t[1] : null,
+      reseau: en('reseau', r[ci.reseau]), region: en('region', r[ci.region]),
+      muncp: r[ci.muncp], route: r[ci.route], obstacle: r[ci.obstacle],
+      annee: r[ci.annee], voies: r[ci.voies], long: r[ci.long], larg: r[ci.larg],
+      lat: r[ci.lat], lon: r[ci.lon], icg: r[ci.icg], ias: r[ci.ias], travaux: r[ci.travaux],
+      rapport: r[ci.rapport], limH: r[ci.limH], limP: r[ci.limP], charge: en('charge', r[ci.charge]),
+      hmin: r[ci.hmin], ide: r[ci.ide], cs: r[ci.cs], pub: r[ci.public], obst: en('obst', r[ci.obst]), m: null, on: false
+    };
+    for (var key in o) if (o[key] === undefined) o[key] = null;
+    // Longueur du tablier (ponts) : valeur OData de la fiche, sinon celle du WFS (val_longr, aussi le tablier)
+    var dd = detData[o.num];
+    o.ltb = o.fam !== 'pont' ? null : (dd && dd.ltb != null ? dd.ltb : o.long);
+    o.s = norm([o.num, o.nom, o.route, o.obstacle, o.muncp, o.tl].filter(function(x){ return x != null; }).join(' | '));
+    data[k] = o;
+    if (o.num != null) byNum[o.num] = o;
+  });
+  function typeLabel(o){ return o.tl ? o.tl + ' — type ' + o.tc : null; }
+  function photoUrl(o){
+    var d = detData[o.num];
+    return (d && d.photo === 1 && o.ide != null && DET.photoUrl) ? DET.photoUrl.replace('{ide}', encodeURIComponent(o.ide)) : null;
+  }
+
+  // ---------- Modes de couleur des points (légende paramétrable) ----------
+  var TYPE_CAT = [
+    ['Dalle', [31, 32, 33, 34]], ['Portique', [35, 36, 37, 47]], ['Béquilles', [38, 39, 50, 51]],
+    ['Poutres en béton', [41, 42, 43]], ['Poutres en acier', [44, 52]], ['Acier-bois', [45]], ['Bois', [46, 77]],
+    ['Poutres-caissons', [56, 57, 58]], ['Treillis et arcs', [61, 62, 63, 64, 65, 71, 72, 73, 74, 75, 76]], ['Pont couvert', [67]],
+    ['Suspendu, haubans, mobile', [81, 82, 85]], ['Ponceau', [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]],
+    ['Mur', [97]], ['Tunnel', [94]], ['Station de pompage', [98]]
+  ];
+  var CAT_OF = {};
+  TYPE_CAT.forEach(function(c, i){ c[1].forEach(function(code){ CAT_OF[code] = i; }); });
+  var REGIONS = (E.region || []).slice().sort(function(a, b){ return a.localeCompare(b, 'fr'); });
+  var OBST_ORDER = ["Cours d'eau", 'Route', 'Chemin de fer', 'Mixte', 'Piétons, cyclistes, VTT', 'Faune', 'Autre'];
+  var OBST_COLOR = { "Cours d'eau": '#1f78c8', Route: '#e07b24', 'Chemin de fer': '#7b3fa0', Mixte: '#d6339a', 'Piétons, cyclistes, VTT': '#2a9d3a', Faune: '#8c6d31', Autre: '#6b7780' };
+  var NA = '#9aa8b1';
+  function catMode(label, keys, colors, keyFn){
+    return { label: label, keys: keys.concat(['—']), key: function(o){ var k = keyFn(o); return k == null ? '—' : k; },
+      color: function(k){ return k === '—' ? NA : colors[k]; }, lab: function(k){ return k === '—' ? 'Non précisé' : k; } };
+  }
+  var MODES = {
+    icg: { label: 'ICG (condition)', keys: ICG_ORDER, key: function(o){ return icgKey(o.icg); }, color: function(k){ return ICG_COLOR[k]; },
+      lab: function(k){ return k === 'SO' ? 'S. O. / inconnu' : k + ' — ' + ICG_LABEL[k]; }, closed: true },
+    ias: { label: 'IAS (accessibilité)', keys: IAS_ORDER, key: function(o){ return iasKey(o.ias); }, color: function(k){ return IAS_COLOR[k]; },
+      lab: function(k){ return IAS_LABEL[k]; } },
+    mtmd: { label: 'Restrictions (style MTMD)', keys: ['s', 'h', 'c'],
+      key: function(o){ return o.limP === 1 ? 'c' : o.limH === 1 ? 'h' : 's'; },
+      color: function(k){ return { s: '#12a4f0', h: '#2fd23a', c: '#e8503a' }[k]; },
+      lab: function(k){ return { s: 'Structures', h: 'Structures avec hauteur libre limitée', c: 'Structures avec limitation de charge' }[k]; },
+      shape: function(k){ return k === 'c' ? 'x' : 'circle'; }, rmul: function(k){ return k === 's' ? 1.25 : k === 'h' ? 0.8 : 1; }, prio: function(k){ return { s: 0, h: 1, c: 2 }[k]; } },
+    reseau: catMode('Réseau', ['Supérieur', 'Municipal'], { 'Supérieur': '#1f6fb4', 'Municipal': '#f28e1c' }, function(o){ return o.reseau; }),
+    type: (function(){
+      var cols = {}; TYPE_CAT.forEach(function(c, i){ cols[c[0]] = PAL[i]; });
+      return catMode('Type de structure', TYPE_CAT.map(function(c){ return c[0]; }), cols, function(o){ var i = CAT_OF[o.tc]; return i == null ? null : TYPE_CAT[i][0]; });
+    })(),
+    region: (function(){
+      var cols = {}; REGIONS.forEach(function(r, i){ cols[r] = PAL[i % PAL.length]; });
+      return catMode('Région administrative', REGIONS, cols, function(o){ return o.region; });
+    })(),
+    obst: catMode('Type d’obstacle', OBST_ORDER, OBST_COLOR, function(o){ return o.obst; })
+  };
+  var MODE_ORDER = ['icg', 'ias', 'mtmd', 'reseau', 'type', 'region', 'obst'];
+  var colorMode = 'icg';
+  try { if (MODES[localStorage.getItem('pq-couleur')]) colorMode = localStorage.getItem('pq-couleur'); } catch (e) { /* stockage indisponible */ }
+
+  // ---------- Filtres : valeurs par défaut, état, hash ----------
+  var DEFAULTS = { q: '', famille: 'pont', types: [], region: '', reseau: '', ob: '', icg: '', ias: '', amin: '', amax: '', lmin: '', h: '', lp: false, hp: false };
+  var state = {}, view = 'carte', selNum = null;
+  function copyDefaults(){ for (var k in DEFAULTS) state[k] = Array.isArray(DEFAULTS[k]) ? DEFAULTS[k].slice() : DEFAULTS[k]; }
+  copyDefaults();
+
+  var rsel = $('#region');
+  REGIONS.forEach(function(r){ var o = document.createElement('option'); o.value = r; o.textContent = r; rsel.appendChild(o); });
+  OBST_ORDER.forEach(function(r){ var o = document.createElement('option'); o.value = r; o.textContent = r; $('#obst').appendChild(o); });
+
+  var HASH_KEYS = { q: 'q', famille: 'f', types: 't', region: 'r', reseau: 'n', ob: 'o', icg: 'icg', ias: 'ias', amin: 'a0', amax: 'a1', lmin: 'l', h: 'h', lp: 'p', hp: 'hp' };
+  var VIEWS = ['carte', 'stats', 'liste', 'defile'];
+  function numOk(v){ return v != null && v !== '' && isFinite(parseFloat(v)); }
+  function stateToHash(){
+    var p = new URLSearchParams();
+    for (var k in HASH_KEYS) {
+      var v = state[k];
+      if (Array.isArray(v)) { if (v.length) p.set(HASH_KEYS[k], v.join('.')); continue; }
+      if (v === DEFAULTS[k]) continue;
+      p.set(HASH_KEYS[k], typeof v === 'boolean' ? '1' : v);
+    }
+    if (colorMode !== 'icg') p.set('c', colorMode);
+    if (view !== 'carte') p.set('v', view);
+    if (selNum != null) p.set('s', selNum);
+    return p.toString();
+  }
+  function hashToState(){
+    copyDefaults();
+    var p = new URLSearchParams(location.hash.replace(/^#/, ''));
+    var get = function(k){ return p.get(HASH_KEYS[k]); };
+    if (get('q') != null) state.q = get('q');
+    if (['pont', 'ponceau', 'mur', 'tunnel', 'tous'].indexOf(get('famille')) >= 0) state.famille = get('famille');
+    if (get('types')) state.types = get('types').split('.').filter(function(c){ return D.types[c]; });
+    if (get('region') != null && REGIONS.indexOf(get('region')) >= 0) state.region = get('region');
+    if (['superieur', 'municipal'].indexOf(get('reseau')) >= 0) state.reseau = get('reseau');
+    if (OBST_ORDER.indexOf(get('ob')) >= 0) state.ob = get('ob');
+    if (get('icg') != null && ICG_COLOR[get('icg')]) state.icg = get('icg');
+    if (get('ias') != null && IAS_COLOR[get('ias')]) state.ias = get('ias');
+    ['amin', 'amax', 'lmin', 'h'].forEach(function(k){ if (numOk(get(k))) state[k] = get(k); });
+    state.lp = get('lp') === '1';
+    state.hp = get('hp') === '1';
+    if (MODES[p.get('c')]) colorMode = p.get('c');
+    var v = p.get('v');
+    view = VIEWS.indexOf(v) >= 0 ? v : 'carte';
+    selNum = p.get('s');
+  }
+  function stateToUI(){
+    $('#q').value = state.q;
+    setFamilleUI(state.famille);
+    buildTypeOptions();
+    $('#region').value = state.region;
+    $('#reseau').value = state.reseau;
+    $('#obst').value = state.ob;
+    $('#icg').value = state.icg;
+    $('#ias').value = state.ias;
+    $('#annee-min').value = state.amin;
+    $('#annee-max').value = state.amax;
+    $('#long-min').value = state.lmin;
+    $('#hauteur-max').value = state.h;
+    $('#lim-poids').checked = state.lp;
+    $('#hors-public').checked = state.hp;
+  }
+  function uiToState(){
+    state.q = $('#q').value;
+    state.types = Array.prototype.map.call($('#type').querySelectorAll('input:checked'), function(x){ return x.value; });
+    state.region = $('#region').value;
+    state.reseau = $('#reseau').value;
+    state.ob = $('#obst').value;
+    state.icg = $('#icg').value;
+    state.ias = $('#ias').value;
+    state.amin = $('#annee-min').value;
+    state.amax = $('#annee-max').value;
+    state.lmin = $('#long-min').value;
+    state.h = $('#hauteur-max').value;
+    state.lp = $('#lim-poids').checked;
+    state.hp = $('#hors-public').checked;
+  }
+
+  // « Type précis » : cases à cocher (pictogramme, libellé, n° de type, effectif) pour la famille choisie
+  function buildTypeOptions(){
+    var cnt = {};
+    data.forEach(function(o){
+      if (o.tc == null) return;
+      if (!state.hp && o.pub !== 1) return;
+      if (state.famille !== 'tous' && o.fam !== state.famille) return;
+      cnt[o.tc] = (cnt[o.tc] || 0) + 1;
+    });
+    var codes = Object.keys(cnt).sort(function(a, b){ return a - b; });
+    state.types = state.types.filter(function(c){ return cnt[c]; });
+    $('#type').innerHTML = codes.map(function(c){
+      var on = state.types.indexOf(c) >= 0;
+      return '<label class="tchk' + (on ? ' on' : '') + '" title="' + esc(D.types[c][0] + ' — type ' + c) + '"><input type="checkbox" value="' + c + '"' + (on ? ' checked' : '') + '>' +
+        icon(c, 15) + '<span class="tl">' + esc(D.types[c][0]) + '</span><span class="tc">' + c + '</span><span class="tn">' + nf.format(cnt[c]) + '</span></label>';
+    }).join('') || '<div class="tnone">Aucun type</div>';
+    $('#type-clear').hidden = !state.types.length;
+  }
+
+  // ---------- Filtrage ----------
+  var RESEAU_LABEL = { superieur: 'Supérieur', municipal: 'Municipal' };
+  function matches(o, c){
+    if (!c.hp && o.pub !== 1) return false;
+    if (c.famille === 'tous') { /* tout, stations incluses */ }
+    else if (o.fam !== c.famille) return false;
+    if (c.types && !c.types[o.tc]) return false;
+    if (c.region && o.region !== c.region) return false;
+    if (c.reseau && o.reseau !== RESEAU_LABEL[c.reseau]) return false;
+    if (c.ob && o.obst !== c.ob) return false;
+    if (c.icg && icgKey(o.icg) !== c.icg) return false;
+    if (c.ias && iasKey(o.ias) !== c.ias) return false;
+    if (c.amin != null && !(o.annee != null && o.annee >= c.amin)) return false;
+    if (c.amax != null && !(o.annee != null && o.annee < c.amax)) return false;
+    if (c.lmin != null && !(o.ltb != null && o.ltb >= c.lmin)) return false;
+    if (c.hmax != null && !(o.hmin != null && o.hmin < c.hmax)) return false;
+    if (c.lp && o.limP !== 1) return false;
+    if (c.qn && o.s.indexOf(c.qn) < 0) return false;
+    return true;
+  }
+
+  // ---------- Marqueurs ----------
+  // Rayon continu selon le zoom (plus de paliers visibles)
+  function radiusFor(z){ return Math.min(7, Math.max(2.5, 2.5 + (z - 6) * 0.7)); }
+  var radius = map ? radiusFor(map.getZoom()) : 3;
+  // Point de la carte : cercle, ou croix (mode « Restrictions ») dessinée sur le même canevas
+  var Pin = window.L ? L.CircleMarker.extend({
+    _updatePath: function(){
+      if (this.options.shape !== 'x') return L.CircleMarker.prototype._updatePath.call(this);
+      var r = this._renderer;
+      if (!r._drawing || this._empty()) return;
+      var p = this._point, ctx = r._ctx, s = Math.max(2.6, this._radius * 0.95);
+      ctx.beginPath();
+      ctx.moveTo(p.x - s, p.y - s); ctx.lineTo(p.x + s, p.y + s);
+      ctx.moveTo(p.x + s, p.y - s); ctx.lineTo(p.x - s, p.y + s);
+      ctx.globalAlpha = 1; ctx.lineWidth = 2.3; ctx.lineCap = 'round'; ctx.strokeStyle = this.options.fillColor;
+      ctx.stroke();
+    }
+  }) : null;
+
+  function styleFor(o){
+    var M = MODES[colorMode], k = M.key(o), closed = M.closed && o.ias === 'rouge';
+    return {
+      fillColor: M.color(k), shape: M.shape ? M.shape(k) : 'circle', rmul: M.rmul ? M.rmul(k) : 1,
+      color: closed ? OUTLINE : '#ffffff', weight: closed ? 2 : 0.6, opacity: closed ? 1 : 0.8, fillOpacity: 0.9
+    };
+  }
+  function prioOf(o){ var M = MODES[colorMode]; return M.prio ? M.prio(M.key(o)) : (o.ias === 'rouge' && M.closed ? 1 : 0); }
+
+  function tipHtml(o){
+    var ph = photoUrl(o);
+    return '<div class="mtip">' + (ph ? '<img src="' + esc(ph) + '" alt="" width="200" height="120" referrerpolicy="no-referrer" onerror="this.remove()">' : '') +
+      '<div class="mtip-l"><b>' + esc(o.num) + '</b>' + esc([o.tl, o.annee].filter(function(x){ return x != null; }).map(function(x){ return ' · ' + x; }).join('')) + '</div></div>';
+  }
+  function makeMarker(o){
+    var st = styleFor(o);
+    st.renderer = canvas; st.radius = radius * st.rmul;
+    var m = new Pin([o.lat, o.lon], st);
+    m.bindTooltip(function(){ return tipHtml(o); }, { sticky: false, direction: 'top', offset: [0, -6], className: 'mtip-wrap' });
+    m.on('click', function(){ select(o, { pan: true }); });
+    return m;
+  }
+  function restyleAll(){
+    data.forEach(function(o){
+      if (!o.m) return;
+      var st = styleFor(o);
+      o.m.options.shape = st.shape;
+      o.m.options.rmul = st.rmul;
+      o.m.setStyle(st);
+      o.m.setRadius(radius * st.rmul);
+    });
+    // ordre de superposition : catégories prioritaires dessinées en dernier
+    if (group) { group.clearLayers(); data.forEach(function(o){ o.on = false; }); }
+    apply();
+  }
+
+  // Numéros des structures au-dessus des points (zoom ≥ 14, partie visible seulement)
+  var labelLayer = window.L ? L.layerGroup() : null, LABEL_ZOOM = 14, LABEL_MAX = 500;
+  function updateLabels(){
+    if (!map) return;
+    labelLayer.clearLayers();
+    if (map.getZoom() < LABEL_ZOOM || view !== 'carte') { if (map.hasLayer(labelLayer)) map.removeLayer(labelLayer); return; }
+    var b = map.getBounds().pad(0.1), n = 0;
+    for (var i = 0; i < visible.length && n < LABEL_MAX; i++) {
+      var o = visible[i];
+      if (!b.contains([o.lat, o.lon])) continue;
+      n++;
+      L.marker([o.lat, o.lon], { interactive: false, keyboard: false, pane: 'labels',
+        icon: L.divIcon({ className: 'num-lbl', html: '<span>' + esc(o.num) + '</span>', iconSize: null, iconAnchor: [0, radius * styleFor(o).rmul + 3] }) }).addTo(labelLayer);
+    }
+    if (!map.hasLayer(labelLayer)) labelLayer.addTo(map);
+  }
+
+  // ---------- Couches complémentaires (chargées à la demande : `data/couche-*.js`, `data/debits.js`) ----------
+  var loading = {};
+  function loadScript(src){
+    if (!loading[src]) loading[src] = new Promise(function(res, rej){
+      var s = document.createElement('script');
+      s.src = src; s.onload = function(){ res(); }; s.onerror = function(){ delete loading[src]; rej(new Error(src)); };
+      document.head.appendChild(s);
+    });
+    return loading[src];
+  }
+  function couche(key){ return (window.PQ_COUCHES || {})[key] || null; }
+  // Lignes encodées [classe, libellé, drapeau, lat0, lon0, dlat1, dlon1, …] (entiers, degrés × 1e5)
+  function decodeLine(a){
+    var pts = [], lat = 0, lon = 0;
+    for (var i = 3; i + 1 < a.length; i += 2) { lat += a[i]; lon += a[i + 1]; pts.push([lat / 1e5, lon / 1e5]); }
+    return pts;
+  }
+  // Un seul canevas pour tout ce qui est cliquable (réseaux, sondages, villes, structures) : avec plusieurs
+  // canevas, le dernier ajouté capte tous les événements de souris et ceux du dessous deviennent inertes.
+  // L'ordre de dessin est rétabli par restack() : réseaux, sondages, villes, puis structures du MTMD.
+  function buildLines(key, filter){
+    var C = couche(key), g = L.layerGroup();
+    if (!C) return g;
+    C.lines.forEach(function(a){
+      if (filter && !filter(a)) return;
+      var cl = C.classes[a[0]] || {};
+      var pl = L.polyline(decodeLine(a), { renderer: canvas, color: filter && key === 'rtss' ? '#c2185b' : cl.color, weight: filter ? (cl.weight || 2) + 1.5 : (cl.weight || 2), opacity: 0.85, interactive: true });
+      pl.bindTooltip(esc((C.labels && C.labels[a[1]]) || cl.label || ''), { sticky: true, className: 'line-tip' });
+      g.addLayer(pl);
+    });
+    return g;
+  }
+
+  // ---------- Fiche détaillée ----------
+  var drawer = $('#drawer'), selRing = null, geoCircle = null, geoNear = null;
+
+  function fmtDet(v, f){
+    if (typeof v === 'boolean') return v ? 'Oui' : 'Non';
+    if (typeof v === 'number') {
+      if (f.unit) return nf2.format(v) + ' ' + f.unit;
+      if (Math.floor(v) === v && v >= 1800 && v <= 2100) return String(v);
+      return nf2.format(v);
+    }
+    return String(v) + (f.unit ? ' ' + f.unit : '');
+  }
+  function badgeIcg(o){
+    if (o.icg == null) return null;
+    var k = icgKey(o.icg);
+    return '<span class="dot" style="background:' + ICG_COLOR[k] + '"></span>' + esc(k === 'SO' ? 'ICG S. O.' : 'ICG ' + o.icg + ' — ' + ICG_LABEL[k]);
+  }
+  function badgeIas(o){
+    if (o.ias == null) return null;
+    var k = iasKey(o.ias);
+    return '<span class="dot" style="background:' + IAS_COLOR[k] + '"></span>' + esc(k === 'SO' ? 'IAS S. O.' : IAS_LABEL[k]);
+  }
+  function gmapsUrl(o){ return 'https://www.google.com/maps/search/?api=1&query=' + o.lat + ',' + o.lon; }
+  function ficheLinks(o){
+    var links = [];
+    if (o.cs && o.ide != null && D.ficheUrl) {
+      links.push('<a href="' + esc(D.ficheUrl.replace('{ide}', encodeURIComponent(o.ide)).replace('{cs}', encodeURIComponent(o.cs))) + '" target="_blank" rel="noopener">Fiche MTMD ↗</a>');
+    }
+    if (o.rapport === 1 && D.rapportUrl) {
+      links.push('<a href="' + esc(D.rapportUrl.replace('{num}', encodeURIComponent(o.num))) + '" target="_blank" rel="noopener">Rapport d’inspection ↗</a>');
+    }
+    if (o.lat != null) links.push('<a href="' + esc(gmapsUrl(o)) + '" target="_blank" rel="noopener">Google Maps ↗</a>');
+    return links;
+  }
+
+  // Débits de circulation sur et sous la structure (data/debits.js)
+  function sparkline(vals, years){
+    var pts = [], mx = 0, mn = Infinity;
+    vals.forEach(function(v){ if (v != null) { mx = Math.max(mx, v); mn = Math.min(mn, v); } });
+    if (!isFinite(mn)) return '';
+    var n = vals.length, W = 84, H = 28, lo = mn * 0.9, hi = mx * 1.05 || 1;
+    for (var i = n - 1; i >= 0; i--) {            // années décroissantes dans les données : on trace de gauche (ancien) à droite
+      var v = vals[i]; if (v == null) continue;
+      pts.push(((n - 1 - i) / (n - 1) * (W - 4) + 2).toFixed(1) + ',' + (H - 2 - (v - lo) / (hi - lo || 1) * (H - 4)).toFixed(1));
+    }
+    return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="Évolution du DJMA ' + years[n - 1] + '–' + years[0] + '">' +
+      '<polyline points="' + pts.join(' ') + '" fill="none" stroke="#007f78" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+  }
+  function debitsHtml(o){
+    var DB = window.PQ_DEBITS;
+    if (!DB) return '';
+    var m = DB.match && DB.match[o.num];
+    if (!m) return '';
+    var h = '';
+    [['sur', 'Sur la structure'], ['sous', 'Sous la structure']].forEach(function(p){
+      (m[p[0]] || []).slice(0, 1).forEach(function(id){
+        var s = DB.sections[id]; if (!s || !s.djma) return;
+        var i = s.djma.findIndex(function(v){ return v != null; });
+        if (i < 0) return;
+        var cam = s.cam && s.cam.find(function(v){ return v != null; });
+        h += '<div class="deb" title="' + esc('Section de trafic ' + id + ' : ' + (s.de || '') + (s.a ? ' → ' + s.a : '')) + '"><div class="deb-h">' + esc(p[1]) + (m.approx && p[0] === 'sur' ? ' <small>(approx.)</small>' : '') + '</div>' +
+          '<div class="deb-row"><div class="deb-v"><b>' + nf.format(s.djma[i]) + '</b> véh./j<br><small>DJMA ' + DB.years[i] + (cam != null ? ' · ' + nf1.format(cam) + ' % cam.' : '') + '</small></div>' +
+          sparkline(s.djma, DB.years) + '</div>' +
+          '<details class="deb-t"><summary>Historique</summary><table class="tbl"><tbody>' +
+          DB.years.map(function(y, j){ return s.djma[j] == null ? '' : '<tr><td>' + y + '</td><td>' + nf.format(s.djma[j]) + '</td><td>' + (s.cam && s.cam[j] != null ? nf1.format(s.cam[j]) + ' %' : '') + '</td></tr>'; }).join('') +
+          '</tbody></table>' + (s.xlsx ? '<a href="' + esc((DB.xlsxBase || '') + s.xlsx) + '" target="_blank" rel="noopener">Données détaillées (xlsx) ↗</a>' : '') + '</details></div>';
+      });
+    });
+    return h ? '<section class="dr-sec"><h3>Débits de circulation</h3>' + h + '</section>' : '';
+  }
+
+  // Sondages géotechniques à moins de 10 km (couche-geotech.js)
+  var GEO_R = 10000;
+  function distM(a, b, c, d){
+    var x = (d - b) * Math.cos((a + c) / 2 * Math.PI / 180) * 111320, y = (c - a) * 110540;
+    return Math.sqrt(x * x + y * y);
+  }
+  function geoNearby(o){
+    var G = couche('geotech');
+    if (!G || o.lat == null) return null;
+    var res = [], la = o.lat * 1e5, lo = o.lon * 1e5, dLat = GEO_R / 1.1054, dLon = GEO_R / (1.1132 * Math.cos(o.lat * Math.PI / 180));
+    G.points.forEach(function(p){
+      if (Math.abs(p[0] - la) > dLat || Math.abs(p[1] - lo) > dLon) return;
+      var dm = distM(o.lat, o.lon, p[0] / 1e5, p[1] / 1e5);
+      if (dm <= GEO_R) res.push({ p: p, d: dm });
+    });
+    res.sort(function(a, b){ return a.d - b.d; });
+    return res;
+  }
+  function geoHtml(o){
+    if (o.lat == null) return '';
+    var near = geoNearby(o);
+    var h = '<section class="dr-sec"><h3>Géotechnique (rayon de ' + GEO_R / 1000 + ' km)</h3>';
+    if (!near) h += '<button type="button" data-act="geo">Chercher les sondages à proximité</button>';
+    else if (!near.length) h += '<p class="muted">Aucun sondage du MTMD à moins de ' + GEO_R / 1000 + ' km.</p>';
+    else {
+      var sites = {}; near.forEach(function(x){ sites[x.p[3]] = 1; });
+      h += '<p class="geo-n"><b>' + nf.format(near.length) + '</b> sondage' + (near.length > 1 ? 's' : '') + ' · ' + nf.format(Object.keys(sites).length) + ' site' + (Object.keys(sites).length > 1 ? 's' : '') +
+        ' · le plus proche à ' + (near[0].d < 1000 ? nf.format(Math.round(near[0].d / 10) * 10) + ' m' : nf1.format(near[0].d / 1000) + ' km') + '</p>' +
+        '<button type="button" data-act="geo-show">' + (geoCircle ? 'Masquer sur la carte' : 'Voir sur la carte') + '</button>';
+    }
+    return h + '</section>';
+  }
+
+  function ficheHtml(o){
+    var secs = [], byName = {};
+    function sec(name){
+      if (!byName[name]) { byName[name] = { name: name, rows: [] }; secs.push(byName[name]); }
+      return byName[name];
+    }
+    function add(name, label, val, raw){
+      if (val == null || val === '') return;
+      sec(name).rows.push('<dt>' + esc(label) + '</dt><dd' + (raw ? '' : ' title="' + esc(val) + '"') + '>' + (raw ? val : esc(val)) + '</dd>');
+    }
+    ['Identification', 'Localisation', 'Dimensions', 'Circulation', 'État et interventions', 'Restrictions', 'Inspections'].forEach(sec);
+    // le type est dans l'en-tête de la fiche
+    add('Identification', 'Réseau', o.reseau);
+    add('Identification', 'Région', o.region);
+    add('Identification', 'Municipalité', o.muncp);
+    add('Identification', 'Construction', o.annee);
+    add('Localisation', 'Route', o.route);
+    add('Localisation', 'Obstacle', o.obstacle);
+    if (o.lat != null && o.lon != null) add('Localisation', 'Coordonnées', nf5.format(o.lat) + ', ' + nf5.format(o.lon));
+    // Les détails (OData) donnent des dimensions plus complètes : on n'affiche alors pas les valeurs de base
+    var d = detData[o.num];
+    if (!d) {
+      add('Dimensions', 'Longueur', o.long != null ? nf2.format(o.long) + ' m' : null);
+      add('Dimensions', 'Largeur', o.larg != null ? nf2.format(o.larg) + ' m' : null);
+      add('Dimensions', 'Voies', o.voies);
+    }
+    add('État et interventions', 'ICG', badgeIcg(o), true);
+    add('État et interventions', 'IAS', badgeIas(o), true);
+    add('État et interventions', 'Travaux prévus', o.travaux);
+    if (!(d && d.p)) add('Restrictions', 'Limite de charge', o.charge);   // sinon : panneau détaillé
+    add('Restrictions', 'Hauteur libre min.', o.hmin != null ? nf2.format(o.hmin) + ' m' : null);
+    if (o.limH === 1) add('Restrictions', 'Limitation de hauteur', 'Oui');
+    if (o.limP === 1) add('Restrictions', 'Limitation de poids', 'Oui');
+    // Détails (details.js) : rendu générique selon l'ordre de `fields`, libellés raccourcis pour la fiche compacte
+    var SHORT = { 'Débit journalier moyen annuel (DJMA)': 'DJMA', 'Circonscription électorale': 'Circonscription', 'Fréquence des inspections générales': 'Fréquence',
+      'Dernière inspection générale': 'Inspection générale', 'Dernière inspection sommaire': 'Inspection sommaire', 'Prochaine inspection générale': 'Prochaine générale',
+      'Panneau de limitation de poids': 'Panneau', 'Limitation mise à jour le': 'Mise à jour', 'Hauteurs libres mesurées': 'Hauteurs mesurées',
+      'Classe de la route franchie': 'Classe franchie', 'Description des travaux': 'Travaux' };
+    if (DET && d) {
+      (DET.fields || []).forEach(function(f){
+        var v = d[f.key];
+        if (v == null || v === '') return;
+        add(f.section || 'Détails', SHORT[f.label] || f.label || f.key, fmtDet(v, f));
+      });
+    }
+    var photo = photoUrl(o), links = ficheLinks(o);
+    var badges = [badgeIcg(o), badgeIas(o)].filter(Boolean).map(function(b){ return '<span class="badge">' + b + '</span>'; }).join('');
+    var h = '<div class="dr-head"><div class="dr-ico">' + icon(o.tc, 20) + '</div>' +
+      '<div class="dr-title"><h2>' + esc(o.nom || o.tl || 'Structure') + '</h2><div class="dr-num">N° ' + esc(o.num) + (o.tl ? ' · ' + esc(typeLabel(o)) : '') + '</div></div>' +
+      (badges ? '<div class="dr-badges">' + badges + '</div>' : '') +
+      '<button type="button" class="dr-close" data-act="close" aria-label="Fermer la fiche" title="Fermer (Échap)">×</button></div>' +
+      '<div class="dr-body"><div class="dr-top"><div class="dr-side">';
+    if (photo) {
+      h += '<a class="dr-photo" href="' + esc(photo) + '" target="_blank" rel="noopener" aria-label="Ouvrir la photo en grand">' +
+        '<img src="' + esc(photo) + '" alt="Photo de la structure ' + esc(o.num) + '" referrerpolicy="no-referrer"><figcaption>Photo : MTMD</figcaption></a>';
+    } else {
+      h += '<div class="dr-nophoto">' + icon(o.tc, 30) + '<span>Pas de photo</span></div>';
+    }
+    h += '<div class="dr-links">' + links.join('') + (o.lat != null ? '<button type="button" data-act="center">Centrer la carte</button>' : '') + '</div>';
+    h += '</div>';
+    // Photo en grand à gauche, identification à droite ; le reste sur deux colonnes en dessous
+    function secHtml(s){ return s.rows.length ? '<section class="dr-sec"><h3>' + esc(s.name) + '</h3><dl class="dr-grid">' + s.rows.join('') + '</dl></section>' : ''; }
+    h += '<div class="dr-id">' + secHtml(secs[0]) + '</div></div><div class="dr-flow">';
+    secs.slice(1).forEach(function(s){ h += secHtml(s); });
+    return h + '<div id="dr-extra">' + debitsHtml(o) + geoHtml(o) + '</div></div></div>';
+  }
+  function refreshExtra(){
+    var o = selNum != null && byNum[selNum], el = $('#dr-extra');
+    if (o && el) el.innerHTML = debitsHtml(o) + geoHtml(o);
+  }
+
+  function setFicheLayout(open){
+    var wrap = $('#view-carte'), was = wrap.classList.contains('fiche-open');
+    wrap.classList.toggle('fiche-open', open);
+    if (map && was !== open) map.invalidateSize({ pan: false });
+  }
+  function select(o, opt){
+    opt = opt || {};
+    selNum = o.num; selVille = null;
+    clearGeo();
+    drawer.innerHTML = ficheHtml(o);
+    var img = drawer.querySelector('.dr-photo img');
+    if (img) img.addEventListener('error', function(){ var a = img.closest('.dr-photo'); if (a) a.outerHTML = '<div class="dr-nophoto">' + icon(o.tc, 30) + '<span>Photo indisponible</span></div>'; });
+    drawer.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    setFicheLayout(!isMobile());
+    var body = drawer.querySelector('.dr-body'); if (body) body.scrollTop = 0;
+    if (map && o.lat != null) {
+      var ll = [o.lat, o.lon];
+      if (!selRing) selRing = L.circleMarker(ll, { renderer: canvas, interactive: false, fill: false, color: '#102d41', weight: 3, opacity: 0.95 }).addTo(map);
+      selRing.setLatLng(ll).setRadius(radius + 5);
+      if (opt.center) centerOn(o); else if (opt.pan) ensureVisible(o);
+    }
+    var cb = drawer.querySelector('.dr-close');
+    if (cb && opt.focus !== false && !opt.pan) cb.focus({ preventScroll: true });
+    if (!opt.noHash) writeHash();
+  }
+  function closeFiche(){
+    if (selNum == null && !selVille) return;
+    selNum = null; selVille = null;
+    clearGeo();
+    drawer.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    setFicheLayout(false);
+    if (selRing && map) { map.removeLayer(selRing); selRing = null; }
+    writeHash();
+  }
+  // Garde la structure sélectionnée dans la partie visible de la carte (réduite à gauche de la fiche sur grand écran)
+  function ensureVisible(o){
+    if (!map) return;
+    var sz = map.getSize(), p = map.latLngToContainerPoint([o.lat, o.lon]);
+    if (isMobile()) {
+      var fh = sz.y * 0.28;
+      if (p.y > fh || p.y < 24) map.panBy([0, p.y - fh / 2], { animate: true });
+    } else if (p.x < 30 || p.y < 30 || p.x > sz.x - 30 || p.y > sz.y - 30) {
+      map.panTo([o.lat, o.lon], { animate: true });
+    }
+  }
+  function centerOn(o){
+    if (!map) return;
+    map.invalidateSize({ pan: false });
+    map.setView([o.lat, o.lon], Math.max(map.getZoom(), 14), { animate: false });
+    ensureVisible(o);
+  }
+  function clearGeo(){
+    if (geoCircle && map) { map.removeLayer(geoCircle); map.removeLayer(geoNear); }
+    geoCircle = geoNear = null;
+  }
+  function showGeo(o){
+    var near = geoNearby(o);
+    if (!near || !map) return;
+    geoCircle = L.circle([o.lat, o.lon], { renderer: canvas, radius: GEO_R, color: '#0070ff', weight: 1.5, dashArray: '5 5', fill: true, fillOpacity: 0.04, interactive: false }).addTo(map);
+    geoNear = L.layerGroup(near.map(function(x){ return geoMarker(x.p, true); })).addTo(map);
+    restack();
+    map.fitBounds(geoCircle.getBounds(), { padding: [20, 20] });
+  }
+  drawer.addEventListener('click', function(e){
+    var b = e.target.closest('[data-act]');
+    if (!b) return;
+    var act = b.getAttribute('data-act'), o = selNum != null && byNum[selNum];
+    if (act === 'close') closeFiche();
+    else if (act === 'center' && selVille) centerOn(selVille.p);
+    else if (act === 'center' && o) centerOn(o);
+    else if (act === 'mtmd' && byNum[b.getAttribute('data-num')]) select(byNum[b.getAttribute('data-num')], { center: true });
+    else if (act === 'geo' && o) {
+      b.disabled = true; b.textContent = 'Chargement…';
+      loadScript('data/couche-geotech.js').then(refreshExtra, function(){ b.textContent = 'Couche indisponible (python -m etl.geotech)'; });
+    } else if (act === 'geo-show' && o) {
+      if (geoCircle) clearGeo(); else showGeo(o);
+      refreshExtra();
+    }
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && (selNum != null || selVille)) { closeFiche(); }
+  });
+
+  // Marqueur de sondage géotechnique : symbole de la carte du MTMD (cercle à quadrants alternés et croix de
+  // repère ; bleu = sondages, gris = Banque de données géotechniques). Clic = rapport PDF.
+  var GEO_COLOR = ['#0070ff', '#6b6b6b'];
+  var GeoPin = window.L ? L.CircleMarker.extend({
+    _updatePath: function(){
+      var r = this._renderer;
+      if (!r._drawing || this._empty()) return;
+      var p = this._point, ctx = r._ctx, s = this._radius, c = this.options.fillColor, t = s + Math.max(1.5, s * 0.45);
+      ctx.globalAlpha = 1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, s, 0, 2 * Math.PI); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y); ctx.arc(p.x, p.y, s, -Math.PI / 2, 0); ctx.closePath();
+      ctx.moveTo(p.x, p.y); ctx.arc(p.x, p.y, s, Math.PI / 2, Math.PI); ctx.closePath();
+      ctx.fillStyle = c; ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, s, 0, 2 * Math.PI);
+      ctx.moveTo(p.x - t, p.y); ctx.lineTo(p.x - s, p.y); ctx.moveTo(p.x + s, p.y); ctx.lineTo(p.x + t, p.y);
+      ctx.moveTo(p.x, p.y - t); ctx.lineTo(p.x, p.y - s); ctx.moveTo(p.x, p.y + s); ctx.lineTo(p.x, p.y + t);
+      ctx.lineWidth = 1.1; ctx.lineCap = 'butt'; ctx.strokeStyle = c; ctx.stroke();
+    }
+  }) : null;
+  function geoMarker(p, strong){
+    var G = couche('geotech'), ll = [p[0] / 1e5, p[1] / 1e5];
+    var m = new GeoPin(ll, { renderer: canvas, radius: strong ? 5.5 : 3.6, fillColor: GEO_COLOR[p[8] ? 1 : 0] });
+    // url : 1 = adresse par défaut (base selon la couche + site_sondage.pdf), sinon nom de fichier, ou null
+    var base = (G.urlBase || [])[p[8] ? 1 : 0] || '';
+    var url = p[7] === 1 ? base + encodeURI(p[3] + '_' + p[4] + '.pdf') : (p[7] ? base + encodeURI(p[7]) : null);
+    m.bindTooltip('<b>' + esc('Sondage ' + (p[4] || '') + (p[3] ? ' · site ' + p[3] : '')) + '</b> · ' + esc((G.types || [])[p[2]] || '') + (p[8] ? ' <small>(BDG)</small>' : '') +
+      '<br>Élévation du sol : ' + (p[6] != null ? '<b>' + esc(nf1.format(p[6])) + ' m</b>' : 'non disponible') + (p[5] != null ? ' · profondeur ' + esc(nf1.format(p[5])) + ' m' : ''),
+      { direction: 'top', className: 'geo-tip' });
+    if (url) m.on('click', function(){ window.open(url, '_blank', 'noopener'); });
+    return m;
+  }
+
+  // ---------- Structures des autres gestionnaires (Ville de Montréal, Ville de Sherbrooke) ----------
+  // Couches distinctes, hors filtres : losange = Montréal (couleur = catégorie ICG de la Ville), carré = Sherbrooke.
+  var VILLES = {
+    mtl: { shape: 'diamond', color: function(p){ return p.cat && ICG_COLOR[p.cat] ? ICG_COLOR[p.cat] : NA; } },
+    sherbrooke: { shape: 'square', color: function(){ return '#8a5cc2'; } }
+  };
+  var villeMarkers = [], selVille = null;
+  var ShapePin = window.L ? L.CircleMarker.extend({
+    _updatePath: function(){
+      var r = this._renderer;
+      if (!r._drawing || this._empty()) return;
+      var p = this._point, ctx = r._ctx, o = this.options, s = this._radius + 0.8;
+      ctx.beginPath();
+      if (o.shape === 'diamond') { var d = s * 1.3; ctx.moveTo(p.x, p.y - d); ctx.lineTo(p.x + d, p.y); ctx.lineTo(p.x, p.y + d); ctx.lineTo(p.x - d, p.y); ctx.closePath(); }
+      else ctx.rect(p.x - s, p.y - s, 2 * s, 2 * s);
+      ctx.globalAlpha = 1; ctx.fillStyle = o.fillColor; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.lineJoin = 'round'; ctx.strokeStyle = '#102d41'; ctx.stroke();
+    }
+  }) : null;
+  function villeTip(key, p){
+    var C = couche(key);
+    var parts = key === 'mtl' ? [p.type, p.annee] : [p.soustype];
+    return '<div class="mtip"><div class="mtip-l"><b>' + esc(p.num || p.nom || p.id) + '</b>' +
+      esc(parts.filter(function(x){ return x != null; }).map(function(x){ return ' · ' + x; }).join('')) +
+      ' <small>· ' + esc(C.gestionnaire) + '</small></div></div>';
+  }
+  function buildVille(key){
+    var C = couche(key), V = VILLES[key], g = L.layerGroup();
+    if (!C) return g;
+    C.points.forEach(function(p){
+      var m = new ShapePin([p.lat, p.lon], { renderer: canvas, radius: radius, shape: V.shape, fillColor: V.color(p) });
+      m.bindTooltip(function(){ return villeTip(key, p); }, { direction: 'top', offset: [0, -6], className: 'mtip-wrap' });
+      m.on('click', function(){ selectVille(key, p); });
+      villeMarkers.push(m);
+      g.addLayer(m);
+    });
+    return g;
+  }
+  function villeFicheHtml(key, p){
+    var C = couche(key), rows = [];
+    function add(label, val){ if (val != null && val !== '') rows.push('<dt>' + esc(label) + '</dt><dd title="' + esc(val) + '">' + esc(val) + '</dd>'); }
+    var title, sub, badge = '';
+    if (key === 'mtl') {
+      title = p.route ? p.route + (p.obstacle ? ' / ' + p.obstacle : '') : (p.type || 'Structure');
+      sub = 'N° ' + p.num + ' · ' + C.gestionnaire + (p.tc ? ' · ' + (D.types[p.tc] ? D.types[p.tc][0] : p.type) + ' — type ' + p.tc : '');
+      if (p.cat) badge = '<span class="badge"><span class="dot" style="background:' + (ICG_COLOR[p.cat] || NA) + '"></span>' + esc('ICG ' + p.cat + ' — ' + (ICG_LABEL[p.cat] || '')) + '</span>';
+      add('Gestionnaire', C.gestionnaire);
+      add('Responsabilité', p.gestion);
+      add('Arrondissement', p.centre);
+      add('Ensemble', p.groupe);
+      add('Type', p.type);
+      add('Construction', p.annee);
+      add('Voie portée', p.route);
+      add('Obstacle', p.obstacle);
+      add('Superficie du tablier', p.stab != null ? nf.format(p.stab) + ' m²' : null);
+      add('Superficie du mur', p.smur != null ? nf.format(p.smur) + ' m²' : null);
+      add('ICG de la Ville', p.icg != null ? nf1.format(p.icg) + ' / 100' + (p.cat ? ' (catégorie ' + p.cat + ')' : '') : null);
+      add('Inspection générale', p.insp);
+      add('Rôle d’inspection', p.inspection);
+      add('Charge de conception', p.charge);
+      add('Affichage sur place', p.affichage);
+    } else {
+      title = p.nom || 'Ouvrage routier';
+      sub = C.gestionnaire + (p.soustype ? ' · ' + p.soustype : '');
+      add('Gestionnaire', C.gestionnaire);
+      add('Identifiant', p.id);
+      add('Sous-type', p.soustype);
+    }
+    add('Coordonnées', nf5.format(p.lat) + ', ' + nf5.format(p.lon));
+    var links = [];
+    if (p.rapport) links.push('<a href="' + esc(p.rapport) + '" target="_blank" rel="noopener">Rapport d’inspection ↗</a>');
+    links.push('<a href="' + esc(gmapsUrl(p)) + '" target="_blank" rel="noopener">Google Maps ↗</a>');
+    if (C.source) links.push('<a href="' + esc(C.source) + '" target="_blank" rel="noopener">Jeu de données ↗</a>');
+    var m = p.mtmd && byNum[p.mtmd];
+    var ic = p.tc ? icon(p.tc, 20) : icon('g', 20);
+    var h = '<div class="dr-head"><div class="dr-ico">' + ic + '</div>' +
+      '<div class="dr-title"><h2>' + esc(title) + '</h2><div class="dr-num">' + esc(sub) + '</div></div>' +
+      (badge ? '<div class="dr-badges">' + badge + '</div>' : '') +
+      '<button type="button" class="dr-close" data-act="close" aria-label="Fermer la fiche" title="Fermer (Échap)">×</button></div>' +
+      '<div class="dr-body"><div class="dr-top"><div class="dr-side"><div class="dr-nophoto">' + (p.tc ? icon(p.tc, 30) : icon('g', 30)) + '<span>Pas de photo dans les données de la Ville</span></div>' +
+      '<div class="dr-links">' + links.join('') + '<button type="button" data-act="center">Centrer la carte</button></div></div>' +
+      '<div class="dr-id"><section class="dr-sec"><h3>' + esc(C.titre) + '</h3><dl class="dr-grid">' + rows.join('') + '</dl></section></div></div><div class="dr-flow">';
+    if (m) h += '<section class="dr-sec"><h3>Inventaire du MTMD</h3><p class="muted">Une structure du MTMD est à moins de 30 m : probablement le même ouvrage.</p>' +
+      '<div class="dr-links"><button type="button" data-act="mtmd" data-num="' + esc(m.num) + '">Ouvrir la fiche MTMD n° ' + esc(m.num) + '</button></div></section>';
+    h += '<section class="dr-sec"><h3>Source</h3><p class="muted">' + esc(C.attribution) + (C.edition ? ' · édition ' + esc(C.edition) : '') + '.' +
+      (C.avertissement ? ' ' + esc(C.avertissement) : '') + (key === 'sherbrooke' ? ' Le jeu de la Ville ne donne que le nom et la position des ouvrages.' : '') + '</p></section>';
+    return h + '</div></div>';
+  }
+  function selectVille(key, p){
+    selNum = null; selVille = { key: key, p: p };
+    clearGeo();
+    drawer.innerHTML = villeFicheHtml(key, p);
+    drawer.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    setFicheLayout(!isMobile());
+    if (map) {
+      if (!selRing) selRing = L.circleMarker([p.lat, p.lon], { renderer: canvas, interactive: false, fill: false, color: '#102d41', weight: 3, opacity: 0.95 }).addTo(map);
+      selRing.setLatLng([p.lat, p.lon]).setRadius(radius + 6).bringToFront();
+      ensureVisible(p);
+    }
+    writeHash();
+  }
+
+  // ---------- Application des filtres ----------
+  var visible = [];
+  function criteria(){
+    var types = null;
+    if (state.types.length) { types = {}; state.types.forEach(function(c){ types[c] = 1; }); }
+    return {
+      hp: state.hp, famille: state.famille, types: types, region: state.region, reseau: state.reseau, ob: state.ob, icg: state.icg, ias: state.ias,
+      lp: state.lp, qn: norm(state.q.trim()),
+      amin: numOk(state.amin) ? parseFloat(state.amin) : null,
+      amax: numOk(state.amax) ? parseFloat(state.amax) : null,
+      lmin: numOk(state.lmin) ? parseFloat(state.lmin) : null,
+      hmax: numOk(state.h) ? parseFloat(state.h) : null
+    };
+  }
+  function apply(){
+    var c = criteria();
+    var vis = [];
+    for (var i = 0; i < data.length; i++) {
+      var o = data[i];
+      var ok = o.lat != null && o.lon != null && matches(o, c);
+      if (ok) vis.push(o);
+      if (!ok && o.on) { if (group) group.removeLayer(o.m); o.on = false; }
+    }
+    // ajouts par priorité croissante : les catégories importantes (fermées, limitations) restent au-dessus
+    for (var pass = 0; group && pass < 3; pass++) {
+      for (var j = 0; j < vis.length; j++) {
+        var v = vis[j];
+        if (v.on || prioOf(v) !== pass) continue;
+        if (!v.m) v.m = makeMarker(v);
+        group.addLayer(v.m); v.on = true;
+      }
+    }
+    if (selRing) selRing.bringToFront();
+    visible = vis;
+    $('#map-empty').hidden = vis.length > 0;
+    metrics(vis);
+    renderLegend();
+    updateLabels();
+    sortedDirty = true; listN = 200; dfDirty = true;
+    renderActive();
+  }
+
+  function metrics(vis){
+    var n = vis.length, bad = 0, fer = 0, ages = 0, an = 0;
+    vis.forEach(function(o){
+      if (o.icg === '1' || o.icg === '2') bad++;
+      if (o.ias === 'rouge') fer++;
+      if (o.annee != null && o.annee > 1700 && o.annee <= YEAR) { ages += YEAR - o.annee; an++; }
+    });
+    $('#m-count').textContent = nf.format(n);
+    $('#m-icg-bad').innerHTML = esc(nf.format(bad)) + (n ? ' <small>(' + nf1.format(100 * bad / n) + ' %)</small>' : '');
+    $('#m-fermees').textContent = nf.format(fer);
+    $('#m-age').innerHTML = an ? esc(nf1.format(ages / an)) + ' <small>ans</small>' : '—';
+  }
+
+  // ---------- Vues ----------
+  function renderActive(){
+    if (view === 'stats') renderStats();
+    else if (view === 'liste') renderList();
+    else if (view === 'defile' && dfDirty) dfBuild();
+  }
+  function showView(v){
+    view = v;
+    $('#view-tabs').querySelectorAll('button').forEach(function(b){
+      var on = b.getAttribute('data-view') === v;
+      b.classList.toggle('active', on);
+      if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+    VIEWS.forEach(function(k){ $('#view-' + k).hidden = v !== k; });
+    if (v === 'carte' && map) setTimeout(function(){ map.invalidateSize(); reframe(false); updateLabels(); }, 0);
+    renderActive();
+    if (v === 'defile') $('#df-scroll').focus({ preventScroll: true });
+  }
+  $('#view-tabs').addEventListener('click', function(e){
+    var b = e.target.closest('button');
+    if (!b) return;
+    showView(b.getAttribute('data-view'));
+    writeHash();
+  });
+
+  // ---------- Vue Défilement : une structure à la fois, tirage aléatoire parmi les résultats filtrés ----------
+  var dfList = [], dfShown = 0, dfDirty = true, DF_BATCH = 10;
+  var KEY_LTB = null, KEY_DJMA = null;
+  ((DET && DET.fields) || []).forEach(function(f){
+    if (f.label === 'Longueur du tablier') KEY_LTB = f.key;
+    if (/DJMA/.test(f.label)) KEY_DJMA = f.key;
+  });
+  function shuffle(a){ for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function dfBuild(){
+    var withP = [], without = [];
+    visible.forEach(function(o){ (photoUrl(o) ? withP : without).push(o); });   // les structures avec photo d'abord
+    dfList = shuffle(withP).concat(shuffle(without));
+    dfShown = 0; dfDirty = false;
+    var el = $('#df-scroll');
+    el.innerHTML = dfList.length ? '' : '<div class="df-empty">Aucune structure ne correspond aux filtres.</div>';
+    el.scrollTop = 0;
+    dfMore();
+  }
+  function dfMore(){
+    var end = Math.min(dfList.length, dfShown + DF_BATCH), h = '';
+    for (var i = dfShown; i < end; i++) h += dfCard(dfList[i], i);
+    $('#df-scroll').insertAdjacentHTML('beforeend', h);
+    dfShown = end;
+  }
+  function dfCard(o, i){
+    var d = detData[o.num] || {}, ph = photoUrl(o);
+    var ltb = o.ltb, djma = KEY_DJMA ? d[KEY_DJMA] : null;
+    var kv = [
+      ['Type', typeLabel(o)], ['Année', o.annee], ['Région', o.region], ['Obstacle', o.obstacle],
+      ['Longueur du tablier', ltb != null ? nf1.format(ltb) + ' m' : null], ['DJMA', djma != null ? nf.format(djma) + ' véh./j' : null],
+      ['ICG', badgeIcg(o), true], ['IAS', badgeIas(o), true]
+    ];
+    return '<article class="df-card" data-num="' + esc(o.num) + '">' +
+      '<div class="df-photo">' + (ph ? '<img src="' + esc(ph) + '" alt="Photo de la structure ' + esc(o.num) + '" loading="lazy" referrerpolicy="no-referrer">' : '') +
+      '<div class="df-ph-ico">' + icon(o.tc, 54) + '<span>Pas de photo</span></div></div>' +
+      '<div class="df-info"><div class="df-top"><div class="df-ico">' + icon(o.tc, 26) + '</div><div class="df-titles"><h2>' + esc(o.nom || o.tl || 'Structure') + '</h2>' +
+      '<div class="df-num">N° ' + esc(o.num) + (o.muncp ? ' · ' + esc(o.muncp) : '') + '</div></div><div class="df-count">' + nf.format(i + 1) + ' / ' + nf.format(dfList.length) + '</div></div><div class="df-kv">' +
+      kv.map(function(r){ return r[1] == null || r[1] === '' ? '' : '<div><span>' + esc(r[0]) + '</span><b>' + (r[2] ? r[1] : esc(r[1])) + '</b></div>'; }).join('') +
+      '</div><div class="df-actions"><button type="button" class="primary" data-act="map">Voir sur la carte</button>' + ficheLinks(o).join('') + '</div></div></article>';
+  }
+  // photos absentes ou en erreur : le pictogramme reste visible derrière
+  $('#df-scroll').addEventListener('error', function(e){ if (e.target.tagName === 'IMG') e.target.remove(); }, true);
+  function dfIndex(){ var el = $('#df-scroll'); return Math.round(el.scrollTop / Math.max(1, el.clientHeight)); }
+  function dfGo(delta){
+    var el = $('#df-scroll'), i = Math.max(0, Math.min(dfList.length - 1, dfIndex() + delta));
+    if (i >= dfShown - 2) dfMore();
+    el.scrollTo({ top: i * el.clientHeight, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
+  $('#df-scroll').addEventListener('scroll', function(){ if (dfIndex() >= dfShown - 3 && dfShown < dfList.length) dfMore(); }, { passive: true });
+  $('#df-prev').addEventListener('click', function(){ dfGo(-1); });
+  $('#df-next').addEventListener('click', function(){ dfGo(1); });
+  $('#df-shuffle').addEventListener('click', function(){ dfBuild(); $('#df-scroll').focus({ preventScroll: true }); });
+  $('#df-scroll').addEventListener('click', function(e){
+    var b = e.target.closest('[data-act="map"]'); if (!b) return;
+    var o = byNum[b.closest('.df-card').getAttribute('data-num')]; if (!o) return;
+    showView('carte');
+    select(o, { center: true });
+  });
+  document.addEventListener('keydown', function(e){
+    if (view !== 'defile' || e.altKey || e.ctrlKey || e.metaKey || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === 'j') { e.preventDefault(); dfGo(1); }
+    else if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'k') { e.preventDefault(); dfGo(-1); }
+  });
+
+  // ---------- Infobulle des graphiques ----------
+  var tip = $('#tip');
+  function tipShow(el, x, y){
+    tip.textContent = '';
+    el.getAttribute('data-tip').split('\n').forEach(function(t, i){
+      var d = document.createElement('div'); d.textContent = t; if (i === 0) d.className = 'tip-v'; tip.appendChild(d);
+    });
+    tip.hidden = false;
+    var w = tip.offsetWidth, h = tip.offsetHeight;
+    var px = Math.min(Math.max(8, x + 12), window.innerWidth - w - 8);
+    var py = y - h - 12; if (py < 8) py = y + 16;
+    tip.style.left = px + 'px'; tip.style.top = py + 'px';
+  }
+  var statsEl = $('#view-stats');
+  statsEl.addEventListener('pointermove', function(e){ var t = e.target.closest('[data-tip]'); if (t) tipShow(t, e.clientX, e.clientY); else tip.hidden = true; });
+  statsEl.addEventListener('pointerleave', function(){ tip.hidden = true; });
+  statsEl.addEventListener('focusin', function(e){ var t = e.target.closest('[data-tip]'); if (t) { var r = t.getBoundingClientRect(); tipShow(t, r.left + r.width / 2, r.top); } });
+  statsEl.addEventListener('focusout', function(){ tip.hidden = true; });
+
+  // ---------- Vue Statistiques ----------
+  function renderStats(){
+    var vis = visible, el = statsEl;
+    if (!vis.length) { el.innerHTML = '<div class="card"><div class="empty">Aucune structure ne correspond aux filtres.</div></div>'; return; }
+    var n = vis.length, icg = {}, ias = {}, dec = {}, types = {}, regs = {};
+    var lenSum = 0, lenN = 0, lens = [], widSum = 0, widN = 0;
+    ICG_ORDER.forEach(function(k){ icg[k] = 0; }); IAS_ORDER.forEach(function(k){ ias[k] = 0; });
+    // Longueurs : celle du tablier des ponts dès qu'il y en a dans la sélection, sinon la longueur propre (ponceaux, murs…)
+    var useLtb = vis.some(function(o){ return o.ltb != null; });
+    var LEN = useLtb ? function(o){ return o.ltb; } : function(o){ return o.long; };
+    vis.forEach(function(o){
+      var bad = o.icg === '1' || o.icg === '2';
+      icg[icgKey(o.icg)]++; ias[iasKey(o.ias)]++;
+      var age = (o.annee != null && o.annee > 1700 && o.annee <= YEAR) ? YEAR - o.annee : null;
+      if (age != null) {
+        var d = o.annee < 1900 ? 1800 : Math.floor(o.annee / 10) * 10;
+        var e = dec[d] || (dec[d] = { n: 0, bad: 0 }); e.n++; if (bad) e.bad++;
+      }
+      var ln = LEN(o);
+      if (ln != null) { lenSum += ln; lenN++; lens.push(ln); }
+      if (o.larg != null) { widSum += o.larg; widN++; }
+      var t = types[o.tc] || (types[o.tc] = { n: 0, ls: 0, ln: 0 });
+      t.n++; if (ln != null) { t.ls += ln; t.ln++; }
+      var rk = o.region || 'Non précisée';
+      var g = regs[rk] || (regs[rk] = { n: 0, bad: 0, fer: 0, as: 0, an: 0, ls: 0, ln: 0, ws: 0, wn: 0 });
+      g.n++; if (bad) g.bad++; if (o.ias === 'rouge') g.fer++;
+      if (age != null) { g.as += age; g.an++; }
+      if (ln != null) { g.ls += ln; g.ln++; }
+      if (o.larg != null) { g.ws += o.larg; g.wn++; }
+    });
+    lens.sort(function(a, b){ return a - b; });
+    var med = lens.length ? (lens.length % 2 ? lens[(lens.length - 1) / 2] : (lens[lens.length / 2 - 1] + lens[lens.length / 2]) / 2) : null;
+
+    var LL = useLtb ? ' du tablier' : '';
+    var h = '<div class="metrics" aria-label="Dimensions">' +
+      tile('Longueur' + LL + ' cumulée', lenN ? nf1.format(lenSum / 1000) : '—', lenN ? 'km' : '') +
+      tile('Longueur' + LL + ' moyenne', lenN ? nf1.format(lenSum / lenN) : '—', lenN ? 'm' : '') +
+      tile('Longueur' + LL + ' médiane', med != null ? nf1.format(med) : '—', med != null ? 'm' : '') +
+      tile('Largeur moyenne', widN ? nf1.format(widSum / widN) : '—', widN ? 'm' : '') + '</div>';
+
+    h += '<div class="stats-grid">';
+    h += '<div class="card"><h2>Indice de condition générale (ICG)</h2><p class="sub">Part des ' + nf.format(n) + ' structures par classe</p>' +
+      stacked(ICG_ORDER, icg, n, ICG_COLOR, function(k){ return k === 'SO' ? 'S. O. / inconnu' : k + ' — ' + ICG_LABEL[k]; }) + '</div>';
+    h += '<div class="card"><h2>Indice d’accessibilité (IAS)</h2><p class="sub">Restrictions de circulation en vigueur</p>' +
+      stacked(IAS_ORDER, ias, n, IAS_COLOR, function(k){ return IAS_LABEL[k]; }) + '</div>';
+
+    // Histogramme par décennie
+    var dk = Object.keys(dec).map(Number).sort(function(a, b){ return a - b; });
+    h += '<div class="card wide"><h2>Année de construction</h2><p class="sub">Nombre de structures par décennie</p>';
+    if (dk.length) {
+      var d0 = dk[0], d1 = Math.floor(YEAR / 10) * 10, bins = [], mx = 0;
+      for (var d = d0; d <= d1; d += (d === 1800 ? 100 : 10)) { var v = dec[d] || { n: 0, bad: 0 }; bins.push({ d: d, n: v.n, bad: v.bad }); if (v.n > mx) mx = v.n; }
+      var top = niceMax(mx);
+      h += '<div class="key"><span><i style="background:' + C_TEAL + '"></i>Autres ICG</span><span><i style="background:' + C_BAD + '"></i>ICG 1–2</span></div>';
+      h += '<div class="hist" role="img" aria-label="Histogramme du nombre de structures par décennie de construction">';
+      [0, 0.5, 1].forEach(function(f){ h += '<div class="gl" style="bottom:' + (f * 100) + '%"><span>' + nf.format(Math.round(top * f)) + '</span></div>'; });
+      h += '<div class="hcols">';
+      bins.forEach(function(b){
+        var lab = binLabel(b.d), tipTxt = nf.format(b.n) + ' structure' + (b.n > 1 ? 's' : '') + '\n' + lab + ' · ICG 1–2 : ' + nf.format(b.bad) + ' (' + pct(b.bad, b.n) + ')';
+        h += '<div class="hcol" tabindex="0" data-tip="' + esc(tipTxt) + '" aria-label="' + esc(lab + ' : ' + b.n + ' structures') + '">';
+        if (b.n) {
+          h += '<div class="hbar" style="height:' + (100 * b.n / top) + '%">' + (b.n === mx ? '<span class="hv">' + nf.format(b.n) + '</span>' : '');
+          if (b.bad) h += '<span style="flex:' + b.bad + ' 1 0;background:' + C_BAD + '"></span>';
+          if (b.n - b.bad) h += '<span style="flex:' + (b.n - b.bad) + ' 1 0;background:' + C_TEAL + '"></span>';
+          h += '</div>';
+        }
+        h += '</div>';
+      });
+      h += '</div></div><div class="hx">' + bins.map(function(b){ return '<span>' + esc(binLabel(b.d, true)) + '</span>'; }).join('') + '</div>';
+      h += '<details class="tbl-twin"><summary>Voir en tableau</summary><div class="tscroll"><table class="tbl"><thead><tr><th>Décennie</th><th>Structures</th><th>ICG 1–2</th><th>% ICG 1–2</th></tr></thead><tbody>' +
+        bins.map(function(b){ return '<tr><td>' + esc(binLabel(b.d)) + '</td><td>' + nf.format(b.n) + '</td><td>' + nf.format(b.bad) + '</td><td>' + pct(b.bad, b.n) + '</td></tr>'; }).join('') + '</tbody></table></div></details>';
+    } else h += '<div class="empty">Aucune année de construction renseignée.</div>';
+    h += '</div>';
+
+    // Top 12 types
+    var tk = Object.keys(types).sort(function(a, b){ return types[b].n - types[a].n; }).slice(0, 12);
+    var tmax = tk.length ? types[tk[0]].n : 1;
+    h += '<div class="card"><h2>Types les plus fréquents</h2><p class="sub">12 premiers · effectif et longueur moyenne' + (useLtb ? ' du tablier (ponts)' : '') + '</p>';
+    tk.forEach(function(c){
+      var t = types[c], lab = c === 'null' ? 'Type inconnu' : (D.types[c] ? D.types[c][0] : c);
+      h += '<div class="trow" data-tip="' + esc(nf.format(t.n) + ' structures\n' + lab) + '"><div class="ti">' + icon(c, 14) + '</div><div class="tl">' + esc(lab) + '</div><div class="tn">' + nf.format(t.n) + '</div>' +
+        '<div><div class="tb" style="width:' + Math.max(1, 100 * t.n / tmax) + '%"></div></div><div class="tm">' + (t.ln ? 'moy. ' + nf1.format(t.ls / t.ln) + ' m' : '—') + '</div></div>';
+    });
+    h += '</div>';
+
+    // Régions
+    var rk = Object.keys(regs).sort(function(a, b){ return regs[b].n - regs[a].n; });
+    var tot = { n: n, bad: 0, fer: 0, as: 0, an: 0, ls: lenSum, ln: lenN, ws: widSum, wn: widN };
+    rk.forEach(function(k){ var g = regs[k]; tot.bad += g.bad; tot.fer += g.fer; tot.as += g.as; tot.an += g.an; });
+    function row(name, g, tag){
+      return '<tr><td>' + esc(name) + '</td><td>' + nf.format(g.n) + '</td><td>' + pct(g.bad, g.n) + '</td><td>' + nf.format(g.fer) + '</td><td>' +
+        (g.an ? nf1.format(g.as / g.an) : '—') + '</td><td>' + (g.ln ? nf1.format(g.ls / g.ln) : '—') + '</td><td>' + (g.wn ? nf1.format(g.ws / g.wn) : '—') + '</td></tr>';
+    }
+    h += '<div class="card wide"><h2>Par région administrative</h2><p class="sub">Âge en années · longueur' + (useLtb ? ' du tablier (ponts)' : '') + ' et largeur en mètres</p><div class="tscroll"><table class="tbl"><thead><tr><th>Région</th><th>Structures</th><th>% ICG 1–2</th><th>Fermées</th><th>Âge moyen</th><th>Long. moy.</th><th>Larg. moy.</th></tr></thead><tbody>' +
+      rk.map(function(k){ return row(k, regs[k]); }).join('') + '</tbody><tfoot>' + row('Ensemble', tot).replace(/<tr>/, '<tr>') + '</tfoot></table></div></div>';
+    h += '</div>';
+    el.innerHTML = h;
+  }
+  function tile(label, value, unit){ return '<div class="metric"><div class="metric-label">' + esc(label) + '</div><div class="metric-value">' + esc(value) + (unit ? ' <small>' + esc(unit) + '</small>' : '') + '</div></div>'; }
+  function niceMax(m){
+    var p = Math.pow(10, Math.floor(Math.log10(Math.max(m, 1)))), f = m / p;
+    var nice = f <= 1 ? 1 : f <= 2 ? 2 : f <= 4 ? 4 : f <= 5 ? 5 : 10;
+    return nice * p;
+  }
+  function binLabel(d, short){ return d === 1800 ? (short ? '<1900' : 'Avant 1900') : (short ? String(d) : d + 's'); }
+  function stacked(order, counts, n, colors, labelFn){
+    var bar = '<div class="sbar" role="img" aria-label="Répartition">', lg = '<div class="lg">';
+    order.forEach(function(k){
+      var c = counts[k], lab = labelFn(k);
+      if (c) bar += '<span style="flex:' + c + ' 1 0;background:' + colors[k] + '" data-tip="' + esc(nf.format(c) + ' structures (' + pct(c, n) + ')\n' + lab) + '"></span>';
+      lg += '<i class="dot" style="background:' + colors[k] + '"></i><span>' + esc(lab) + '</span><span class="n">' + nf.format(c) + '</span><span class="p">' + pct(c, n) + '</span>';
+    });
+    return bar + '</div>' + lg + '</div>';
+  }
+
+  // ---------- Vue Liste ----------
+  var COLS = [
+    { k: 'num', l: 'N°', get: function(o){ return o.num; } },
+    { k: 'type', l: 'Type', get: function(o){ return o.tl; } },
+    { k: 'nom', l: 'Nom', get: function(o){ return o.nom; } },
+    { k: 'muncp', l: 'Municipalité', get: function(o){ return o.muncp; } },
+    { k: 'route', l: 'Route', get: function(o){ return o.route; } },
+    { k: 'obstacle', l: 'Obstacle', get: function(o){ return o.obstacle; } },
+    { k: 'annee', l: 'Année', num: true, get: function(o){ return o.annee; } },
+    { k: 'long', l: 'Long. tablier (m)', num: true, get: function(o){ return o.ltb; } },
+    { k: 'icg', l: 'ICG', get: function(o){ return o.icg == null ? null : (isFinite(+o.icg) ? +o.icg : (o.icg === 'AC' ? 5 : 6)); }, num: true },
+    { k: 'ias', l: 'IAS', get: function(o){ return o.ias == null ? null : IAS_ORDER.indexOf(iasKey(o.ias)); } , num: true }
+  ];
+  var sortKey = 'num', sortDir = 1, sorted = [], sortedDirty = true, listN = 200;
+  $('#list-head').innerHTML = COLS.map(function(c){
+    return '<th scope="col" data-k="' + c.k + '"' + (c.k === sortKey ? ' aria-sort="ascending"' : '') + '><button type="button" class="th-btn">' + esc(c.l) + '</button></th>';
+  }).join('');
+  $('#list-head').addEventListener('click', function(e){
+    var th = e.target.closest('th'); if (!th) return;
+    var k = th.getAttribute('data-k');
+    if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = 1; }
+    sortedDirty = true; listN = 200;
+    $('#list-head').querySelectorAll('th').forEach(function(t){
+      if (t === th) t.setAttribute('aria-sort', sortDir > 0 ? 'ascending' : 'descending'); else t.removeAttribute('aria-sort');
+    });
+    renderList();
+  });
+  function sortRows(){
+    var col = COLS.filter(function(c){ return c.k === sortKey; })[0], dir = sortDir;
+    sorted = visible.slice();
+    var keyed = sorted.map(function(o){ return { o: o, v: col.get(o) }; });
+    keyed.sort(function(a, b){
+      var x = a.v, y = b.v;
+      if (x == null && y == null) return 0;
+      if (x == null) return 1;                       // valeurs absentes toujours en fin de liste
+      if (y == null) return -1;
+      var r = (typeof x === 'number' && typeof y === 'number') ? x - y : collator.compare(String(x), String(y));
+      return r * dir;
+    });
+    sorted = keyed.map(function(k){ return k.o; });
+    sortedDirty = false;
+  }
+  function listRow(o){
+    var ik = icgKey(o.icg), ak = iasKey(o.ias);
+    return '<tr tabindex="0" data-num="' + esc(o.num) + '"><td>' + esc(o.num) + '</td>' +
+      '<td><div class="tcell">' + icon(o.tc, 12) + '<span>' + esc(o.tl || '') + '</span></div></td>' +
+      '<td>' + esc(o.nom || '') + '</td><td>' + esc(o.muncp || '') + '</td><td>' + esc(o.route || '') + '</td><td>' + esc(o.obstacle || '') + '</td>' +
+      '<td>' + (o.annee != null ? esc(o.annee) : '') + '</td><td>' + (o.ltb != null ? nf1.format(o.ltb) : '') + '</td>' +
+      '<td>' + (o.icg == null ? '' : '<span class="dot" style="background:' + ICG_COLOR[ik] + '"></span> ' + esc(ik === 'SO' ? 'S. O.' : ik)) + '</td>' +
+      '<td>' + (o.ias == null ? '' : '<span class="dot" style="background:' + IAS_COLOR[ak] + '"></span> ' + esc(IAS_LABEL[ak])) + '</td></tr>';
+  }
+  function renderList(){
+    if (sortedDirty) sortRows();
+    var shown = Math.min(listN, sorted.length);
+    $('#list-body').innerHTML = sorted.slice(0, shown).map(listRow).join('');
+    $('#list-count').textContent = sorted.length ? 'Affichage de ' + nf.format(shown) + ' sur ' + nf.format(sorted.length) + ' structures' : 'Aucune structure ne correspond aux filtres.';
+    var more = $('#list-more');
+    more.hidden = shown >= sorted.length;
+    $('#list-more-btn').textContent = 'Afficher ' + Math.min(200, sorted.length - shown) + ' de plus';
+    $('#export-csv').disabled = !sorted.length;
+  }
+  $('#list-more-btn').addEventListener('click', function(){ listN += 200; renderList(); });
+  function rowOpen(tr){
+    var o = tr && byNum[tr.getAttribute('data-num')];
+    if (!o) return;
+    showView('carte');
+    select(o, { center: true });
+  }
+  $('#list-body').addEventListener('click', function(e){ rowOpen(e.target.closest('tr')); });
+  $('#list-body').addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); rowOpen(e.target.closest('tr')); } });
+
+  // Export CSV : jeu filtré, colonnes de base, UTF-8 avec BOM, séparateur « ; », décimales à la virgule
+  function csvCell(v){
+    if (v == null) return '';
+    if (typeof v === 'number') return String(v).replace('.', ',');
+    var s = String(v);
+    return /[;"\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function buildCsv(rows){
+    var head = ['num', 'nom', 'code_type', 'type', 'famille', 'reseau', 'region', 'municipalite', 'route', 'obstacle', 'annee', 'voies', 'longueur_m', 'longueur_tablier_m', 'largeur_m', 'latitude', 'longitude', 'icg', 'ias', 'travaux', 'rapport', 'limite_hauteur', 'limite_poids', 'limite_charge', 'hauteur_libre_min_m', 'ide', 'public'];
+    var lines = [head.join(';')];
+    rows.forEach(function(o){
+      lines.push([o.num, o.nom, o.tc, o.tl, o.fam, o.reseau, o.region, o.muncp, o.route, o.obstacle, o.annee, o.voies, o.long, o.ltb, o.larg, o.lat, o.lon, o.icg, o.ias, o.travaux, o.rapport, o.limH, o.limP, o.charge, o.hmin, o.ide, o.pub].map(csvCell).join(';'));
+    });
+    return '﻿' + lines.join('\r\n') + '\r\n';
+  }
+  $('#export-csv').addEventListener('click', function(){
+    if (sortedDirty) sortRows();
+    var d = new Date(), p2 = function(x){ return (x < 10 ? '0' : '') + x; };
+    var name = 'quickeratlasoa-' + d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + '.csv';
+    var url = URL.createObjectURL(new Blob([buildCsv(sorted)], { type: 'text/csv;charset=utf-8' }));
+    var a = document.createElement('a'); a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  });
+
+  // ---------- Cadrage ----------
+  // Recadre sur les résultats quand la recherche ou la région change. Réinitialiser les filtres ne bouge
+  // plus la carte : le bouton « Québec » (sous le zoom) ramène la vue d'ensemble.
+  var HOME = { center: [47.0, -71.5], zoom: 6 }, lastFocus = null;
+  function focusKey(){ return state.q.trim() + '|' + state.region; }
+  function reframe(force){
+    var k = focusKey();
+    if (!map || map.getSize().x === 0 || view !== 'carte') return;   // carte masquée : on recadrera à son retour
+    if (!force && k === lastFocus) return;
+    lastFocus = k;
+    if (k === '|' || !visible.length) return;
+    var b = L.latLngBounds(visible.map(function(o){ return [o.lat, o.lon]; }));
+    map.flyToBounds(b, { padding: [40, 40], maxZoom: 13, duration: 0.6 });
+  }
+
+  // ---------- Événements ----------
+  var timer = null, syncing = false;
+  function writeHash(){
+    syncing = true;
+    var h = stateToHash();
+    try { history.replaceState(null, '', location.pathname + location.search + (h ? '#' + h : '')); } catch (e) { /* file:// ou iframe */ }
+    syncing = false;
+  }
+  function commit(){
+    uiToState();
+    buildTypeOptions();           // la liste des types dépend de la famille et de l'inventaire public
+    writeHash();
+    apply();
+    reframe(false);
+  }
+  var debounced = function(){ clearTimeout(timer); timer = setTimeout(commit, 150); };
+  $('#q').addEventListener('input', debounced);
+  ['#annee-min', '#annee-max', '#long-min', '#hauteur-max'].forEach(function(s){ $(s).addEventListener('input', debounced); });
+  ['#type', '#region', '#reseau', '#obst', '#icg', '#ias', '#lim-poids', '#hors-public'].forEach(function(s){ $(s).addEventListener('change', commit); });
+  $('#type-clear').addEventListener('click', function(){
+    $('#type').querySelectorAll('input:checked').forEach(function(x){ x.checked = false; });
+    commit();
+  });
+  $('#famille').addEventListener('click', function(e){
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.famille = b.getAttribute('data-famille');
+    setFamilleUI(state.famille);
+    commit();
+  });
+  $('#reset-filtres').addEventListener('click', function(){
+    clearTimeout(timer);
+    var keepSel = selNum;
+    copyDefaults(); stateToUI(); commit();
+    lastFocus = focusKey();
+    selNum = keepSel; writeHash();
+  });
+  window.addEventListener('hashchange', function(){
+    if (syncing) return;
+    var before = selNum, mode = colorMode;
+    hashToState(); stateToUI(); showView(view);
+    if (mode !== colorMode) restyleAll(); else apply();
+    reframe(false);
+    if (selNum != null && byNum[selNum]) select(byNum[selNum], { center: view === 'carte', noHash: true });
+    else if (before != null && selNum == null) { selNum = before; closeFiche(); }
+  });
+
+  // ---------- Légende paramétrable ----------
+  var legendBody = null, legendSel = null;
+  function swatch(M, k){
+    var c = M.color(k);
+    return M.shape && M.shape(k) === 'x' ? '<i class="sw-x" style="color:' + c + '">✕</i>' : '<i style="background:' + c + '"></i>';
+  }
+  function renderLegend(){
+    if (!legendBody) return;
+    var M = MODES[colorMode], cnt = {};
+    visible.forEach(function(o){ var k = M.key(o); cnt[k] = (cnt[k] || 0) + 1; });
+    var h = M.keys.map(function(k){
+      var n = cnt[k] || 0;
+      if (!n && k === '—') return '';
+      return '<div class="lg-row' + (n ? '' : ' zero') + '">' + swatch(M, k) + '<span>' + esc(M.lab(k)) + '</span><span class="lg-n">' + nf.format(n) + '</span></div>';
+    }).join('');
+    if (M.closed) h += '<div class="lg-row"><i class="closed"></i><span>Contour foncé = fermée</span></div>';
+    OVERLAYS.forEach(function(ov){
+      var C = couche(ov.key);
+      if (!C || !map.hasLayer(ov.layer)) return;
+      if (ov.key === 'geotech') {
+        h += '<div class="lg-sub">' + esc(ov.name) + '</div><div class="lg-chips">' +
+          GEO_COLOR.map(function(c, i){ return '<span><i class="sw-geo" style="--c:' + c + '"></i>' + (i ? 'Banque de données (BDG)' : 'Sondages du MTMD') + '</span>'; }).join('') + '</div>';
+        return;
+      }
+      if (VILLES[ov.key]) {
+        h += '<div class="lg-sub">' + esc(ov.name) + ' · ' + nf.format(C.points.length) + '</div><div class="lg-chips"><span><i class="sw-' + VILLES[ov.key].shape + '"></i>' +
+          (ov.key === 'mtl' ? 'Losange coloré selon la catégorie ICG de la Ville (édition ' + esc(C.edition || '') + ')' : 'Carré : localisation seulement') + '</span></div>';
+        return;
+      }
+      if (!C.classes) return;
+      h += '<div class="lg-sub">' + esc(ov.name) + '</div><div class="lg-chips">' + C.classes.map(function(cl){
+        return '<span><i class="ln" style="background:' + cl.color + ';height:' + Math.max(2, cl.weight || 2) + 'px"></i>' + esc(cl.label) + '</span>';
+      }).join('') + '</div>';
+    });
+    legendBody.innerHTML = h;
+    if (legendSel) legendSel.value = colorMode;
+  }
+
+  // ---------- Couches superposables (contrôle des fonds, en haut à droite) ----------
+  function flatPaths(g){ var out = []; g.eachLayer(function(l){ if (l.eachLayer) out = out.concat(flatPaths(l)); else out.push(l); }); return out; }
+  var OVERLAYS = [
+    { key: 'rtss', name: 'Réseau routier (RTSS)', src: 'data/couche-rtss.js', z: 0, build: function(){ return buildLines('rtss'); } },
+    { key: 'rail', name: 'Réseau ferroviaire', src: 'data/couche-rail.js', z: 1, build: function(){ return buildLines('rail'); } },
+    { key: 'geotech', name: 'Sondages géotechniques', src: 'data/couche-geotech.js', z: 2, build: function(){
+      var G = couche('geotech'), g = L.layerGroup();
+      if (G) G.points.forEach(function(p){ g.addLayer(geoMarker(p, false)); });
+      return g;
+    } },
+    { key: 'mtl', name: 'Structures — Ville de Montréal', src: 'data/couche-mtl.js', z: 3, build: function(){ return buildVille('mtl'); } },
+    { key: 'sherbrooke', name: 'Ouvrages — Ville de Sherbrooke', src: 'data/couche-sherbrooke.js', z: 3, build: function(){ return buildVille('sherbrooke'); } }
+  ];
+  var DEFAULT_OVERLAYS = 'rtss,rail', OVERLAY_KEY = 'pq-couches-v051';
+  // Ordre de dessin du canevas commun (bas → haut) : routes, rail, sondages, villes ; les structures du MTMD
+  // restent au-dessus parce qu'apply() les ajoute en dernier.
+  function restack(){
+    if (!map) return;
+    var groups = OVERLAYS.filter(function(ov){ return ov.paths && map.hasLayer(ov.layer); }).map(function(ov){ return { z: ov.z, paths: ov.paths }; });
+    if (geoNear) groups.push({ z: 2.5, paths: flatPaths(geoNear) });          // sondages proches, au-dessus de la couche complète
+    groups.sort(function(a, b){ return b.z - a.z; });                          // le dernier envoyé au fond finit tout en bas
+    groups.forEach(function(g){ for (var i = g.paths.length - 1; i >= 0; i--) g.paths[i].bringToBack(); });
+  }
+  function saveOverlays(){
+    try { localStorage.setItem(OVERLAY_KEY, OVERLAYS.filter(function(ov){ return map.hasLayer(ov.layer); }).map(function(ov){ return ov.key; }).join(',')); } catch (e) { /* idem */ }
+  }
+  if (map) {
+    OVERLAYS.forEach(function(ov){
+      ov.layer = L.layerGroup();
+      layersCtl.addOverlay(ov.layer, ov.name);
+    });
+    map.on('overlayadd', function(e){
+      var ov = OVERLAYS.filter(function(x){ return x.layer === e.layer; })[0];
+      if (!ov) return;
+      saveOverlays();
+      if (ov.filled) { restack(); renderLegend(); return; }
+      loadScript(ov.src).then(function(){
+        ov.filled = true;
+        var g = ov.build();
+        ov.paths = flatPaths(g);
+        ov.layer.addLayer(g);
+        restack();
+        renderLegend();
+        if (ov.key === 'geotech') refreshExtra();
+      }, function(){
+        map.removeLayer(ov.layer);
+        $('#notice').querySelector('span').innerHTML = 'Couche absente — exécuter <code>python -m etl couches</code>';
+        $('#notice').hidden = false;
+      });
+    });
+    map.on('overlayremove', function(){ saveOverlays(); renderLegend(); });
+
+    // Bouton « Québec » : vue d'ensemble manuelle
+    var Home = L.Control.extend({
+      options: { position: 'topleft' },
+      onAdd: function(){
+        var d = L.DomUtil.create('div', 'leaflet-bar home-ctl');
+        d.innerHTML = '<a href="#" role="button" title="Vue d’ensemble du Québec" aria-label="Vue d’ensemble du Québec"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7M6 9.5V20h12V9.5"/></svg></a>';
+        L.DomEvent.disableClickPropagation(d);
+        d.firstChild.addEventListener('click', function(e){ e.preventDefault(); map.flyTo(HOME.center, HOME.zoom, { duration: 0.6 }); });
+        return d;
+      }
+    });
+    new Home().addTo(map);
+
+    map.on('zoomend', function(){
+      var r = radiusFor(map.getZoom());
+      if (Math.abs(r - radius) < 0.05) return;
+      radius = r;
+      for (var i = 0; i < visible.length; i++) visible[i].m.setRadius(r * (visible[i].m.options.rmul || 1));
+      villeMarkers.forEach(function(m){ m.setRadius(r); });
+      if (selRing) selRing.setRadius(r + 5);
+    });
+    map.on('moveend', updateLabels);
+
+    var legend = L.control({ position: 'bottomleft' });
+    legend.onAdd = function(){
+      var d = L.DomUtil.create('div', 'legend');
+      d.innerHTML = '<div class="lg-head"><label for="color-mode">Couleur selon</label>' +
+        '<select id="color-mode">' + MODE_ORDER.map(function(k){ return '<option value="' + k + '">' + esc(MODES[k].label) + '</option>'; }).join('') + '</select>' +
+        '<button type="button" class="lg-tog" aria-expanded="true" aria-label="Afficher ou masquer la légende" title="Afficher ou masquer la légende">▾</button></div><div class="lg-body"></div>';
+      L.DomEvent.disableClickPropagation(d);
+      L.DomEvent.disableScrollPropagation(d);
+      legendBody = d.querySelector('.lg-body');
+      legendSel = d.querySelector('select');
+      legendSel.value = colorMode;
+      legendSel.addEventListener('change', function(){
+        colorMode = this.value;
+        try { localStorage.setItem('pq-couleur', colorMode); } catch (e) { /* idem */ }
+        restyleAll();
+        writeHash();
+      });
+      var t = d.querySelector('.lg-tog');
+      function toggle(){ var c = d.classList.toggle('collapsed'); t.setAttribute('aria-expanded', String(!c)); t.textContent = c ? '▸' : '▾'; }
+      t.addEventListener('click', toggle);
+      if (isMobile()) toggle();
+      return d;
+    };
+    legend.addTo(map);
+  }
+
+  // ---------- Démarrage ----------
+  hashToState();
+  stateToUI();
+  var startView = view, startSel = selNum;
+  view = 'carte'; selNum = null;                 // la carte est mesurable pendant l'initialisation
+  if (map) {
+    apply();
+    lastFocus = '|';                       // vue initiale = province
+    if (focusKey() !== '|' && visible.length) map.fitBounds(L.latLngBounds(visible.map(function(o){ return [o.lat, o.lon]; })), { padding: [40, 40], maxZoom: 13 });
+    lastFocus = focusKey();
+    if (startSel != null && byNum[startSel]) select(byNum[startSel], { center: true, noHash: true, focus: false });
+    var saved = DEFAULT_OVERLAYS;
+    try { var sv = localStorage.getItem(OVERLAY_KEY); if (sv != null) saved = sv; } catch (e) { /* idem */ }
+    OVERLAYS.forEach(function(ov){ if (saved.split(',').indexOf(ov.key) >= 0) ov.layer.addTo(map); });
+  } else { apply(); }
+  if (startView !== 'carte') showView(startView);
+  writeHash();
+  // Débits de circulation : chargés après l'affichage (fiche enrichie dès qu'ils arrivent)
+  loadScript('data/debits.js').then(refreshExtra, function(){ /* fichier optionnel */ });
+})();
+</script>
+</body>
+</html>

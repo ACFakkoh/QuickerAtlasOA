@@ -1,0 +1,740 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototype ponts forestiers et ferroviaires · QuickerAtlasOA</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+<style>
+:root{--navy:#102d41;--ink:#17374b;--muted:#566e7c;--focus:#00736d;--line:#dce5eb;--paper:#fff;--bg:#f0f4f7;--teal:#00736d;--mint:#d9f5eb;--amber:#a50026;--shadow:0 2px 7px #15354a08;font-family:"Segoe UI",Arial,sans-serif;color:var(--ink);font-size:16px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg)}
+header{background:var(--navy);color:#fff;padding:18px 28px}
+header h1{margin:0;font-size:1.4rem;font-weight:650;letter-spacing:-.4px}
+header h1 span{font-weight:350;color:#9cdfcf}
+header p{margin:6px 0 0;color:#b5cbd6;font-size:.85rem;max-width:1000px;line-height:1.5}
+main{max-width:1500px;margin:0 auto;padding:20px 28px 40px;display:flex;flex-direction:column;gap:20px}
+h2.sec{margin:6px 0 -6px;font-size:1.15rem;letter-spacing:-.2px}
+.intro{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.box{background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:14px 16px;font-size:.86rem;line-height:1.5}
+.box h2,.box h3{margin:0 0 6px;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase}
+.box p{margin:0 0 6px}.box p:last-child{margin-bottom:0}
+.box ul{margin:4px 0 0;padding-left:18px}
+.site{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.site-h{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);background:#f6f9fb}
+.site-h h2{margin:0;font-size:1.05rem;letter-spacing:-.2px}
+.tag{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--teal);background:var(--mint);border-radius:999px;padding:2px 9px}
+.sub{color:var(--muted);font-size:.82rem}
+.bar{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;padding:10px 18px;border-bottom:1px solid var(--line);font-size:.84rem}
+.seg{display:inline-flex;border:1px solid #9fb3c0;border-radius:8px;overflow:hidden}
+.seg button{font:inherit;font-size:.82rem;border:0;border-right:1px solid #9fb3c0;background:#fff;color:var(--ink);padding:6px 12px;cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--navy);color:#fff;font-weight:650}
+.seg button:focus-visible,.chk input:focus-visible,a:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.bar label.lab{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:8px}
+.viewline{color:var(--muted);font-variant-numeric:tabular-nums}
+.site-b{display:grid;grid-template-columns:minmax(0,1fr) 400px}
+.map{height:700px;border-right:1px solid var(--line);background:#e8eef2}
+.side{padding:12px 14px;overflow:auto;max-height:700px;font-size:.82rem;line-height:1.45}
+.side h3{margin:12px 0 4px;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.side h3:first-child{margin-top:0}
+.chk{display:flex;align-items:center;gap:7px;padding:3px 0;cursor:pointer}
+.chk input{margin:0;width:16px;height:16px;flex:none}
+.chk svg{flex:none}
+.chk .n{margin-left:auto;font-variant-numeric:tabular-nums;color:var(--muted);font-size:.78rem;white-space:nowrap}
+.note{color:var(--muted);font-size:.76rem;margin:2px 0 4px}
+.sel{background:#f6f9fb;border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-height:60px}
+.sel table{border-collapse:collapse;width:100%}
+.sel td{padding:2px 4px 2px 0;vertical-align:top;border-bottom:1px dotted var(--line)}
+.sel td:first-child{color:var(--muted);width:40%;padding-right:10px}
+.sel .vide{color:var(--muted)}
+.sel h4{margin:0 0 4px;font-size:.88rem}
+table.t{border-collapse:collapse;width:100%;font-size:.82rem}
+table.t th,table.t td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+table.t th{font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:#f6f9fb;position:sticky;top:0}
+table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums}
+table.t tr.tot td{font-weight:700;background:#f6f9fb}
+.scroll{overflow-x:auto}
+.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:.83rem;line-height:1.5}
+.card h3{margin:0 0 6px;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;color:var(--navy)}
+.card .v{display:inline-block;font-size:.7rem;font-weight:700;border:1.5px solid var(--navy);border-radius:5px;padding:0 6px;margin-bottom:5px;color:var(--navy)}
+.card ul{margin:4px 0 0;padding-left:16px}
+.verdict{font-size:.92rem;line-height:1.55;background:#f6f9fb;border-left:4px solid var(--teal);padding:12px 16px;border-radius:0 8px 8px 0}
+.verdict.non{border-left-color:var(--amber)}
+.verdict b.v1{color:var(--teal)}
+.verdict b.v2{color:var(--amber)}
+.pad{padding:14px 18px}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+code{background:#eef3f6;border-radius:4px;padding:0 4px;font-size:.92em}
+.pq-canvas{position:absolute;left:0;top:0;pointer-events:none}
+.wms-mu{filter:hue-rotate(-75deg) saturate(.9) brightness(.85)}
+.leaflet-popup-content{font-size:.8rem;line-height:1.4;margin:10px 12px}
+.leaflet-popup-content table{border-collapse:collapse}
+.leaflet-popup-content td{padding:1px 8px 1px 0;vertical-align:top;border-bottom:1px dotted #dce5eb}
+.leaflet-popup-content td:first-child{color:#566e7c;white-space:nowrap}
+.leaflet-popup-content h4{margin:0 0 4px;font-size:.88rem}
+footer{color:var(--muted);font-size:.75rem;text-align:center;padding:0 16px 30px;line-height:1.5}
+a{color:#0b5f9e}
+@media(max-width:1100px){.intro{grid-template-columns:1fr}.site-b{grid-template-columns:1fr}.map{height:520px;border-right:0;border-bottom:1px solid var(--line)}.side{max-height:none}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}}
+@media(max-width:600px){main{padding:14px 16px}header{padding:14px 16px}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Quicker<span>AtlasOA</span> · prototype ponts forestiers et ferroviaires</h1>
+  <p>Que trouve-t-on <b>en dehors de l’inventaire du MTMD</b> ? Ponts des chemins multiusages en forêt (AQréseau+ du ministère des Ressources naturelles et des Forêts, MRNF, et OpenStreetMap) et ouvrages ferroviaires (couche ferroviaire du MTMD, issue du Réseau ferroviaire national de RNCan, et OpenStreetMap). Données récupérées le 12 octobre 2026.</p>
+</header>
+<main>
+  <section class="intro">
+    <div class="box"><h2>Ce que la carte superpose</h2>
+      <p>Les <b>ouvrages du MTMD</b> (points bleu foncé), les <b>ponts forestiers d’AQréseau+</b> qui n’y sont pas (formes colorées), les <b>ponts OpenStreetMap</b> (traits bleus) et les <b>ponts ferroviaires</b> (traits épais, par exploitant).</p>
+      <p>Cliquer sur un objet affiche ses attributs dans la colonne de droite.</p></div>
+    <div class="box"><h2>Lire les symboles</h2>
+      <p>La <b>forme</b> indique la source ; le <b>remplissage</b> indique le statut du pont : <b>plein</b> = ouvert, <b>contour seul</b> = statut inconnu, <b>contour barré d’un X</b> = fermé. Les traits se distinguent par leur motif (plein, tirets, pointillés) autant que par leur couleur.</p></div>
+    <div class="box"><h2>Doublons</h2>
+      <p>Un pont d’AQréseau+ ou d’OpenStreetMap à <b>moins de 30 m</b> d’un ouvrage du MTMD est réputé déjà connu : il est masqué par défaut, mais compté. La page montre donc surtout ce qui <b>manquerait</b> à l’atlas.</p></div>
+  </section>
+
+  <section class="site" aria-labelledby="t-carte">
+    <div class="site-h"><span class="tag">Carte</span><h2 id="t-carte">Ouvrages du MTMD, ponts forestiers et ponts ferroviaires</h2><span class="sub">Sources : MTMD, AQréseau+ (MRNF), OpenStreetMap, couche ferroviaire du MTMD</span></div>
+    <div class="bar">
+      <span><label class="lab" id="lab-reg">Région</label><span class="seg" id="seg-reg" role="group" aria-labelledby="lab-reg"></span></span>
+      <span><label class="lab" id="lab-mode">Thème</label><span class="seg" id="seg-mode" role="group" aria-labelledby="lab-mode"></span></span>
+      <span class="viewline" id="viewline" aria-live="polite"></span>
+    </div>
+    <div class="site-b">
+      <div class="map" id="map" role="application" aria-label="Carte des ponts"></div>
+      <div class="side" id="side"></div>
+    </div>
+  </section>
+
+  <h2 class="sec">Comptes par source</h2>
+  <section class="site"><div class="pad scroll">
+    <p class="note" style="margin-top:0">Calculés dans la page à partir des fichiers embarqués. « Régions » = zones de démonstration (rectangles ; la Côte-Nord est limitée à la rive nord du Saint-Laurent), pas les limites administratives exactes. « Hors MTMD » = aucun ouvrage du MTMD à moins de 30 m.</p>
+    <table class="t" id="t-comptes"></table>
+  </div></section>
+
+  <h2 class="sec">Sources essayées pour les ponts forestiers</h2>
+  <section class="site"><div class="pad scroll">
+    <table class="t">
+      <thead><tr><th>Source</th><th>Adresse testée</th><th class="num">Volume</th><th>Attributs utiles</th><th>Licence · mise à jour</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td><b>AQréseau+</b> (devenu RQTT) — couches « Pont ouvert / inconnu / fermé »</td>
+          <td><a href="https://servicescarto.mrnf.gouv.qc.ca/pes/rest/services/Territoire/AQreseauPlus_WMS/MapServer" target="_blank" rel="noopener">REST MapServer</a>, couches 1, 2 et 3 (JSON ou GeoJSON, 2 000 objets par requête)</td>
+          <td class="num">11 321 points (5 126 ouverts, 5 130 inconnus, 1 065 fermés)</td>
+          <td>Position, n° de dossier du pont, capacité portante (3 valeurs en tonnes, selon la configuration du véhicule), statut, source, version. <b>Ni type, ni matériau, ni portée, ni année, ni propriétaire, ni état.</b></td>
+          <td>CC-BY 4.0 · trimestrielle (version AQ20260701) · « aucune valeur légale »</td>
+          <td><b>Retenu.</b> Seule source ouverte qui couvre tout le territoire.</td></tr>
+        <tr><td><b>AQréseau+</b> — chemins multiusages</td>
+          <td><a href="https://servicescarto.mrnf.gouv.qc.ca/pes/rest/services/Territoire/AQreseauPlus_WMS/MapServer/37" target="_blank" rel="noopener">couche 37</a> (affichée ici en WMS, couche 81)</td>
+          <td class="num">944 719 tronçons</td>
+          <td>Classe de chemin forestier (Routard/BDTQ), gestionnaire (« Forêt », « Transports Québec », « Privé », « Municipal »…), et pour 3 037 tronçons le n° de pont, la capacité portante et le statut.</td>
+          <td>CC-BY 4.0 · trimestrielle</td>
+          <td><b>Contexte seulement</b> : trop lourd pour être embarqué.</td></tr>
+        <tr><td><b>Ponts et ponceaux autorisés</b> (PRANA, MRNF)</td>
+          <td><a href="https://geoegl.msp.gouv.qc.ca/ws/mffpecofor.fcgi?service=WFS&amp;version=2.0.0&amp;request=GetCapabilities" target="_blank" rel="noopener">WFS</a> <code>ms:prana_ponts_ponceaux</code> ; <a href="https://diffusion.mffp.gouv.qc.ca/Diffusion/DonneeGratuite/Foret/INTERVENTIONS_FORESTIERES//PRANA/PRANA_2026.gpkg.zip" target="_blank" rel="noopener">GPKG 29 Mo</a></td>
+          <td class="num">152 points (147 ponceaux, 4 ponts, 1 ouvrage amovible)</td>
+          <td>Type d’infrastructure, chantier, intervention prévue. Aucune dimension.</td>
+          <td>CC-BY 4.0 · annuelle</td>
+          <td>Écarté : <b>travaux planifiés</b> de l’année, pas un inventaire.</td></tr>
+        <tr><td><b>RATF</b> — rapport d’activité technique et financier (MRNF)</td>
+          <td><a href="https://www.donneesquebec.ca/recherche/dataset/rapport-d-activite-technique-et-financier-ratf" target="_blank" rel="noopener">Données Québec</a> : un fichier FGDB par année (2013-14 à 2024-25, 86 Mo pour 2024-25)</td>
+          <td class="num">2024-25 : 20 ponts, 2 690 ponceaux et 24 096 chemins</td>
+          <td>Couches <code>pont</code> et <code>ponc</code> : type (codes ACBO, BOIS, ACIER, ACBE pour les ponts), intervention (implantation, réfection, amélioration), dates de début et de fin, méthode de levé (GPS ou numérisation). <b>Seule source qui donne un type de pont</b>, mais ni portée ni état.</td>
+          <td>CC-BY 4.0 · annuelle</td>
+          <td>Écartée : <b>seulement les ponts touchés par des travaux de l’année</b> (20 en 2024-25). Fichier de 86 Mo par année.</td></tr>
+        <tr><td><b>Opérations régionales</b> (MRNF)</td>
+          <td><a href="https://operationsregionales.mrnf.gouv.qc.ca/server/rest/services" target="_blank" rel="noopener">serveur ArcGIS</a> : « Pont_fermés_Routard », « Ponts_fermés_Reg_14 », « Pont_planifie_oct_2026 »…</td>
+          <td class="num">2 à 132 points par couche</td>
+          <td>Ponts fermés ou planifiés pour une région administrative.</td>
+          <td>Consultations régionales · variable</td>
+          <td>Écarté : partiel. L’ancien domaine <code>operationsregionales.mffp</code> n’existe plus.</td></tr>
+        <tr><td><b>Réseau routier national</b> (RRN, RNCan)</td>
+          <td><a href="https://geo.statcan.gc.ca/nrn_rrn/qc/nrn_rrn_qc_GPKG.zip" target="_blank" rel="noopener">GPKG Québec 403 Mo</a></td>
+          <td class="num">non compté (403 Mo)</td>
+          <td>Sur chaque tronçon : type de structure (pont, pont couvert, pont mobile, tunnel), identifiant et nom de la structure.</td>
+          <td>Licence du gouvernement ouvert – Canada · édition 2026-06</td>
+          <td>Écarté : tronçons, pas des ouvrages ; recoupe AQréseau+. Le service REST de RNCan répondait « Application Error ».</td></tr>
+        <tr><td><b>OpenStreetMap</b> (Overpass)</td>
+          <td><a href="https://overpass-api.de/api/interpreter" target="_blank" rel="noopener">API Overpass</a> : <code>way[highway][bridge]</code></td>
+          <td class="num">19 007 tronçons de route avec <code>bridge</code> au Québec, dont 1 833 sur <code>track</code>, 2 774 sur <code>unclassified</code> et 792 sur <code>service</code></td>
+          <td>Géométrie (donc <b>longueur</b>), type de pont (<code>yes</code>, <code>viaduct</code>…), nom, surface. <code>maxweight</code> sur moins de 1 % ; ni matériau, ni année, ni propriétaire.</td>
+          <td>ODbL · en continu</td>
+          <td><b>Complément utile</b> : donne la longueur et trouve des ponts absents d’AQréseau+.</td></tr>
+        <tr><td>Autres jeux regardés</td>
+          <td>« Infrastructures en milieu forestier », cartes écoforestières, « Référentiel québécois du transport terrestre »</td>
+          <td class="num">—</td><td>Polygones de superficie ; le RQTT est le successeur d’AQréseau+ (GPKG 409 Mo).</td><td>CC-BY 4.0</td>
+          <td>Aucun inventaire de ponts supplémentaire.</td></tr>
+      </tbody>
+    </table>
+  </div></section>
+
+  <h2 class="sec">Est-ce que ça aurait de l’allure de les ajouter à l’atlas ?</h2>
+  <div class="verdict"><b class="v1">Oui, comme couche séparée, légère et clairement étiquetée</b> « ponts hors inventaire du MTMD — information limitée ». <b class="v2">Non, comme fiches d’ouvrage</b> : il n’y a ni type, ni dimensions, ni état à afficher.</div>
+  <section class="cards">
+    <div class="card"><h3>Valeur</h3><span class="v">Moyenne</span>
+      <ul><li><b>4 821</b> ponts hors des ouvrages du MTMD, dont 2 519 « Routard » : l’essentiel des ponts de chemins multiusages.</li><li>Capacité portante pour <b>1 905</b> d’entre eux : utile à un camionneur ou à un gestionnaire, moins à un ingénieur en structures.</li><li>Répond à « où sont les ponts qui ne sont pas au MTMD ? ».</li></ul></div>
+    <div class="card"><h3>Qualité des données</h3><span class="v">Faible à moyenne</span>
+      <ul><li>Aucun type, matériau, portée, année ni état.</li><li>Statut « inconnu » pour <b>1 371</b> ponts et « fermé » pour <b>1 063</b>.</li><li>Positions non validées : OpenStreetMap confirme seulement 27 à 39 % des ponts forestiers à moins de 50 m (OSM en connaît moins).</li><li>Plusieurs identifiants (<code>H000-000</code>, <code>R0000-00</code>) n’ont aucune fiche publique.</li></ul></div>
+    <div class="card"><h3>Poids</h3><span class="v">Léger</span>
+      <ul><li><b>≈ 207 Ko</b> (60 Ko compressés) pour les 4 821 points.</li><li>+ ≈ 103 Ko (28 Ko compressés) pour les ponts OpenStreetMap hors MTMD des chemins et routes locales de 3 régions.</li><li>Les chemins multiusages (944 719 tronçons) restent en WMS, non embarqués.</li></ul></div>
+    <div class="card"><h3>Mise à jour</h3><span class="v">Facile</span>
+      <ul><li>AQréseau+ : trimestrielle (mars, juin, septembre, décembre) ; 6 requêtes REST, environ 1 minute.</li><li>Un module <code>etl/forestiers.py</code> du même style que <code>etl/villes.py</code> suffit.</li><li>Le nom du produit change (AQréseau+ vers RQTT) : prévoir de suivre l’adresse.</li></ul></div>
+    <div class="card"><h3>Risques</h3><span class="v">À encadrer</span>
+      <ul><li>Confusion avec un inventaire d’inspection : ces ponts relèvent du MRNF et des détenteurs de droits, <b>pas du MTMD</b>.</li><li>Aucune valeur légale selon le diffuseur ; positions et capacités à ne pas utiliser pour des calculs.</li><li>Des ponts démantelés peuvent rester listés.</li><li>Doublons : 6 500 points à moins de 30 m d’un ouvrage MTMD, à filtrer.</li></ul></div>
+  </section>
+  <section class="box"><h2>Façon de faire proposée</h2>
+    <ul>
+      <li><b>Couche « Ponts forestiers (MRNF) »</b>, désactivée par défaut, avec les 4 821 points hors MTMD : forme selon la source, remplissage selon le statut, fiche courte (n° de dossier, capacité portante, statut, source, version) et avertissement permanent.</li>
+      <li>Bouton « Voisins OpenStreetMap » qui montre la longueur d’un pont OSM trouvé à moins de 50 m.</li>
+      <li>Pas de score ni de couleur d’état : aucune donnée d’état n’existe pour ces ponts.</li>
+      <li>Effort estimé : <b>2 à 3 jours</b> (ETL, couche, fiche, tests) ; le premier jet est en grande partie fait dans ce prototype.</li>
+    </ul></section>
+
+  <h2 class="sec">Ouvrages ferroviaires (CN, CPKC et autres)</h2>
+  <div class="verdict non"><b class="v2">Aucune base de données ouverte du CN ou du CPKC.</b> Ces compagnies ne publient pas d’inventaire de leurs ponts, et Transports Canada n’en publie pas non plus. Il existe toutefois un <b>substitut géométrique</b> : la couche ferroviaire du MTMD (déjà dans l’atlas) marque les voies qui passent sur un pont, un pont mobile ou un tunnel. Sans portée, matériau, année ni état.</div>
+  <section class="two">
+    <div class="box"><h2>Ponts ferroviaires par exploitant (Québec)</h2>
+      <div class="scroll"><table class="t" id="t-rail"></table></div>
+      <p class="note">RFN-MTMD : segments de voie portant un pont ou un pont mobile dans <code>ms:reseau_chfer_qc</code> (version 2026-06-08). OSM : tronçons <code>railway=rail</code> avec <code>bridge</code>. Un même pont peut compter plus d’un segment ou tronçon.</p></div>
+    <div class="box"><h2>À ne pas confondre</h2>
+      <ul>
+        <li><b>Ponts routiers au-dessus des voies</b> : <span id="n-mtmd-fer">177</span> ouvrages du MTMD ont pour obstacle un chemin de fer. Ils sont dans l’atlas ; ils appartiennent aux gestionnaires routiers.</li>
+        <li><b>Ponts ferroviaires</b> (voie sur un pont, au-dessus d’une rivière ou d’une route) : propriété des compagnies, <b>absents</b> de l’inventaire du MTMD.</li>
+        <li><b>Exception</b> : le MTQ est propriétaire de lignes de la Gaspésie et de Québec Central (sigles <code>SCFG(MTQ)</code> et <code>CFQC(MTQ)</code>) : <b>156 segments de pont</b>, dont seulement <b>44</b> ont un ouvrage du MTMD à moins de 30 m. Les autres devraient exister dans les dossiers internes du ministère.</li>
+        <li>Recoupement des sources : 74 % des ponts du RFN-MTMD ont un pont OSM à moins de 30 m, et 86 % des tronçons OSM ont un pont du RFN-MTMD.</li>
+      </ul></div>
+  </section>
+  <section class="box"><h2>Sources ferroviaires essayées</h2><div class="scroll">
+    <table class="t">
+      <thead><tr><th>Source</th><th>Adresse testée</th><th class="num">Volume</th><th>Attributs utiles</th><th>Licence · mise à jour</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td><b>Couche ferroviaire du MTMD</b></td><td><a href="https://ws.mapserver.transports.gouv.qc.ca/swtq?service=wfs&amp;version=2.0.0&amp;request=getfeature&amp;typename=ms:reseau_chfer_qc&amp;srsname=EPSG:4326&amp;outputformat=geojson" target="_blank" rel="noopener">WFS <code>ms:reseau_chfer_qc</code></a></td>
+          <td class="num">12 653 segments, dont 1 372 sur structure (1 348 ponts, 9 ponts mobiles, 15 tunnels)</td>
+          <td>Exploitant, propriétaire, usage, état, subdivision, <b>type de structure</b> (<code>typstruc</code>), longueur du segment par la géométrie.</td>
+          <td>CC-BY 4.0 · version 2026-06-08</td><td><b>Retenue</b> : déjà chargée par l’atlas, sans nouvelle donnée à télécharger.</td></tr>
+        <tr><td><b>Réseau ferroviaire national</b> (RFN / NRWN, RNCan)</td><td><a href="https://ftp.maps.canada.ca/pub/nrcan_rncan/vector/geobase_nrwn_rfn/qc/nrwn_rfn_qc_shp_en.zip" target="_blank" rel="noopener">SHP Québec 5,4 Mo</a> ; <a href="https://maps.geogratis.gc.ca/wms/railway_en?service=WMS&amp;version=1.3.0&amp;request=GetCapabilities" target="_blank" rel="noopener">WMS</a> (couches <code>railway.structure.line</code> et <code>.point</code>)</td>
+          <td class="num">1 350 ponts, 9 ponts mobiles, 87 tunnels, 100 ponceaux</td>
+          <td>Type de structure, voie, subdivision ; nom de la structure toujours « None » ; exploitant et propriétaire par jointure sur la voie.</td>
+          <td>Licence du gouvernement ouvert – Canada · édition 2014 (fichiers de 2019)</td><td>Même origine que la couche du MTMD, <b>plus ancienne</b> : utile seulement pour vérifier.</td></tr>
+        <tr><td><b>OpenStreetMap</b></td><td><a href="https://overpass-api.de/api/interpreter" target="_blank" rel="noopener">Overpass</a> : <code>way[railway=rail][bridge]</code>, une requête</td>
+          <td class="num">1 170 tronçons, 79,9 km au total</td>
+          <td>Nom (92 %), exploitant (98 %), propriétaire (58 %), usage, type de pont (96 % <code>yes</code>). Aucun matériau ni année.</td>
+          <td>ODbL · en continu</td><td><b>Complément</b> : noms des ponts et exploitants à jour.</td></tr>
+        <tr><td><b>Transports Canada</b></td><td><a href="https://tc.canada.ca/en/rail-transportation/guidelines/guideline-bridge-safety-management/part-general" target="_blank" rel="noopener">Ligne directrice sur la gestion de la sécurité des ponts (2018)</a></td>
+          <td class="num">aucun jeu de données</td><td>Les compagnies tiennent l’inventaire et les inspections ; Transports Canada les surveille par inspections et par les données transmises en vertu du <i>Règlement sur les renseignements relatifs au transport</i>.</td>
+          <td>Non publié</td><td>Rien d’ouvert trouvé. Voie possible : demande d’accès à l’information (non vérifiée).</td></tr>
+        <tr><td><b>CN, CPKC, VIA Rail, chemins de fer d’intérêt local</b></td><td>Sites des compagnies, Données Québec, portail du gouvernement ouvert</td>
+          <td class="num">aucun jeu de données</td><td>—</td><td>—</td><td>Aucun inventaire de ponts publié.</td></tr>
+      </tbody></table></div></section>
+  <section class="box"><h2>Façon de faire proposée pour les ponts ferroviaires</h2>
+    <ul>
+      <li><b>Surligner les voies sur pont</b> dans la couche ferroviaire déjà affichée (champ <code>typstruc</code>) : <b>aucune nouvelle donnée</b>, environ 0,5 jour. Étiquette : « Pont ferroviaire — propriétaire : CN », sans fiche d’ouvrage.</li>
+      <li>Ajouter la <b>longueur du segment</b> et l’exploitant dans l’infobulle ; indiquer que la longueur vient de la géométrie, pas d’un plan.</li>
+      <li>Ne pas intégrer OpenStreetMap : il n’apporte que les noms de quelques ponts.</li>
+      <li>Demander en interne les dossiers des <b>156 segments de pont dont le MTQ est propriétaire</b> (Gaspésie, Québec Central) : ce sont les seuls ponts ferroviaires pour lesquels le ministère a une responsabilité directe.</li>
+    </ul></section>
+</main>
+<footer>Inventaire des ouvrages © MTMD / Données Québec (CC-BY 4.0) · AQréseau+ © MRNF, Adresses Québec (CC-BY 4.0) · Couche ferroviaire © MTMD (CC-BY 4.0) · RFN © RNCan (Licence du gouvernement ouvert – Canada) · Contributeurs OpenStreetMap (ODbL) · Fonds © Esri<br>Données fournies à titre indicatif : aucune valeur légale ; ne pas utiliser pour des calculs d’ingénierie.</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="../../data/structures.js"></script>
+<script src="data-forestiers.js"></script>
+<script src="data-ferroviaire.js"></script>
+<script>
+(function(){
+  'use strict';
+  var NF = new Intl.NumberFormat('fr-CA');
+  var NF1 = new Intl.NumberFormat('fr-CA', { maximumFractionDigits: 1 });
+  function nf(x){ return NF.format(x); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var F = window.FORESTIERS, R = window.FERRO, S = window.STRUCTURES;
+  var SEUIL = 30;
+  var ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+
+  // ------------------------------------------------------------------ données
+  function decode(flat){
+    var out = [], la = flat[0], lo = flat[1];
+    out.push([la / 1e5, lo / 1e5]);
+    for (var i = 2; i < flat.length; i += 2){ la += flat[i]; lo += flat[i + 1]; out.push([la / 1e5, lo / 1e5]); }
+    return out;
+  }
+  var ix = {}; S.cols.forEach(function(c, i){ ix[c] = i; });
+  var MT = S.rows.filter(function(r){ return r[ix.lat] && r[ix.lon]; });
+  var MT_FER = MT.map(function(r){ var o = r[ix.obst]; return o != null && S.enums.obst[o] === 'Chemin de fer'; });
+  var nMtmdFer = MT_FER.filter(Boolean).length;
+  document.getElementById('n-mtmd-fer').textContent = nf(nMtmdFer);
+  var AQ = F.aq.rows;            // lat, lon, src, st, d, id, cap, mtmd, dosm
+  var SRC = F.aq.srcs;           // AQ, AQ_FO, ROUTARD, DGIG, Sépaq, BDTQ
+
+  // ------------------------------------------------------------------ styles
+  // Palette Okabe-Ito (sûre pour le daltonisme) ; la forme porte l'information en plus de la couleur.
+  var CATS = [
+    { id: 'routard', label: 'Routard (MFFP)', srcs: [2], shape: 'circle', color: '#E69F00' },
+    { id: 'fo', label: 'Forêt ouverte (AQ_FO)', srcs: [1], shape: 'square', color: '#56B4E9' },
+    { id: 'dgig', label: 'DGIG', srcs: [3], shape: 'triangle', color: '#D55E00' },
+    { id: 'aq', label: 'AQ (autres, municipaux…)', srcs: [0], shape: 'diamond', color: '#009E73' },
+    { id: 'autres', label: 'Sépaq et BDTQ', srcs: [4, 5], shape: 'plus', color: '#CC79A7' }
+  ];
+  var CAT_DE_SRC = {}; CATS.forEach(function(c, i){ c.srcs.forEach(function(s){ CAT_DE_SRC[s] = i; }); });
+  var STATUT = ['Ouvert', 'Inconnu', 'Fermé'];
+  var OSM_CLS = [
+    { label: 'Chemins et pistes (track, service)', color: '#0072B2', weight: 5, dash: null },
+    { label: 'Routes locales (unclassified, tertiary…)', color: '#0072B2', weight: 3, dash: '8 5' },
+    { label: 'Routes principales', color: '#555555', weight: 3, dash: '2 4' },
+    { label: 'Sentiers piétons et vélo', color: '#7a7a7a', weight: 2, dash: '1 4' }
+  ];
+  var GRP = [
+    { label: 'CN', color: '#D55E00', weight: 5, dash: null },
+    { label: 'CPKC', color: '#CC79A7', weight: 5, dash: '12 6' },
+    { label: 'Courtes lignes et industriels', color: '#E69F00', weight: 5, dash: '3 5' },
+    { label: 'Autre ou inconnu', color: '#666666', weight: 4, dash: '2 3' }
+  ];
+
+  // ------------------------------------------------------------------ formes (canvas et SVG)
+  function shapePts(shape, x, y, r){
+    switch (shape){
+      case 'square': return [[x - r * .9, y - r * .9], [x + r * .9, y - r * .9], [x + r * .9, y + r * .9], [x - r * .9, y + r * .9]];
+      case 'triangle': return [[x, y - r * 1.2], [x + r * 1.15, y + r * .85], [x - r * 1.15, y + r * .85]];
+      case 'tridown': return [[x, y + r * 1.2], [x + r * 1.15, y - r * .85], [x - r * 1.15, y - r * .85]];
+      case 'diamond': return [[x, y - r * 1.3], [x + r * 1.1, y], [x, y + r * 1.3], [x - r * 1.1, y]];
+      case 'plus': var a = r * .45, b = r * 1.25;
+        return [[x - a, y - b], [x + a, y - b], [x + a, y - a], [x + b, y - a], [x + b, y + a], [x + a, y + a], [x + a, y + b], [x - a, y + b], [x - a, y + a], [x - b, y + a], [x - b, y - a], [x - a, y - a]];
+    }
+    return null;
+  }
+  function path(ctx, shape, x, y, r){
+    ctx.beginPath();
+    var p = shapePts(shape, x, y, r);
+    if (!p){ ctx.arc(x, y, r, 0, 6.2832); return; }
+    ctx.moveTo(p[0][0], p[0][1]);
+    for (var i = 1; i < p.length; i++) ctx.lineTo(p[i][0], p[i][1]);
+    ctx.closePath();
+  }
+  function marker(ctx, shape, color, statut, x, y, r){
+    path(ctx, shape, x, y, r);
+    if (statut === 0){
+      ctx.fillStyle = color; ctx.fill(); ctx.lineWidth = 1.3; ctx.strokeStyle = '#102d41'; ctx.stroke();
+    } else {
+      ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 2.2; ctx.strokeStyle = color; ctx.stroke();
+      path(ctx, shape, x, y, r + 1.4); ctx.lineWidth = .8; ctx.strokeStyle = '#102d41'; ctx.stroke();
+      if (statut === 2){
+        ctx.strokeStyle = '#102d41'; ctx.lineWidth = 1.8; ctx.beginPath();
+        ctx.moveTo(x - r * .75, y - r * .75); ctx.lineTo(x + r * .75, y + r * .75);
+        ctx.moveTo(x + r * .75, y - r * .75); ctx.lineTo(x - r * .75, y + r * .75); ctx.stroke();
+      }
+    }
+  }
+  function glyph(shape, color, statut){
+    var r = 6.2, c = 11, h = '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">';
+    var p = shapePts(shape, c, c, r), sty;
+    if (statut === 0) sty = 'fill="' + color + '" stroke="#102d41" stroke-width="1.3"';
+    else sty = 'fill="#fff" stroke="' + color + '" stroke-width="2.2"';
+    h += p ? '<polygon points="' + p.map(function(q){ return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join(' ') + '" ' + sty + '/>' : '<circle cx="' + c + '" cy="' + c + '" r="' + r + '" ' + sty + '/>';
+    if (statut === 2) h += '<path d="M' + (c - 4.5) + ' ' + (c - 4.5) + 'L' + (c + 4.5) + ' ' + (c + 4.5) + 'M' + (c + 4.5) + ' ' + (c - 4.5) + 'L' + (c - 4.5) + ' ' + (c + 4.5) + '" stroke="#102d41" stroke-width="1.8"/>';
+    return h + '</svg>';
+  }
+  function lineGlyph(st){
+    return '<svg width="30" height="14" viewBox="0 0 30 14" aria-hidden="true"><line x1="1" y1="7" x2="29" y2="7" stroke="' + st.color + '" stroke-width="' + Math.min(st.weight, 5) + '"' + (st.dash ? ' stroke-dasharray="' + st.dash + '"' : '') + ' stroke-linecap="butt"/></svg>';
+  }
+
+  // ------------------------------------------------------------------ état
+  var mapModes = {
+    forestiers: { label: 'Ponts forestiers', on: { mtmd: 1, mtmdfer: 0, routard: 1, fo: 1, dgig: 1, aq: 1, autres: 1, dup: 0, osm0: 1, osm1: 1, osm2: 0, osm3: 0, osmdup: 0, mu: 1, rfn: 0, rfntun: 0, osmrail: 0 } },
+    ferro: { label: 'Ouvrages ferroviaires', on: { mtmd: 0, mtmdfer: 1, routard: 0, fo: 0, dgig: 0, aq: 0, autres: 0, dup: 0, osm0: 0, osm1: 0, osm2: 0, osm3: 0, osmdup: 0, mu: 0, rfn: 1, rfntun: 1, osmrail: 1 } },
+    tout: { label: 'Tout', on: { mtmd: 1, mtmdfer: 1, routard: 1, fo: 1, dgig: 1, aq: 1, autres: 1, dup: 0, osm0: 1, osm1: 1, osm2: 0, osm3: 0, osmdup: 0, mu: 0, rfn: 1, rfntun: 0, osmrail: 1 } }
+  };
+  var ON = {};
+  var region = 'slsj', mode = 'forestiers', selected = null;
+  var REG = {};
+  ['slsj', 'cote-nord', 'abitibi'].forEach(function(k){ REG[k] = { nom: F.regions[k].nom, bbox: F.regions[k].bbox, poly: F.regions[k].poly }; });
+  REG.qc = { nom: 'Tout le Québec', bbox: [40, -100, 70, -40], fit: [44.9, -79.8, 53.0, -57.0] };
+
+  // ------------------------------------------------------------------ carte
+  var map = L.map('map', { zoomControl: true, preferCanvas: true, zoomSnap: .5 });
+  var fonds = {
+    'Plan topographique (Esri)': L.tileLayer(ESRI + 'World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 17, maxZoom: 18, attribution: 'Fond © Esri' }),
+    'Gris clair (Esri)': L.tileLayer(ESRI + 'Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 16, maxZoom: 18, attribution: 'Fond © Esri' }),
+    'Satellite (Esri)': L.tileLayer(ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 18, maxZoom: 18, attribution: 'Imagerie © Esri' })
+  };
+  fonds['Plan topographique (Esri)'].addTo(map);
+  L.control.layers(fonds, null, { collapsed: true }).addTo(map);
+  L.control.scale({ imperial: false }).addTo(map);
+  var mu = L.tileLayer.wms('https://servicescarto.mrnf.gouv.qc.ca/pes/services/Territoire/AQreseauPlus_WMS/MapServer/WMSServer', {
+    layers: '81', version: '1.3.0', format: 'image/png', transparent: true, opacity: .75, minZoom: 9, maxZoom: 18, className: 'wms-mu',
+    attribution: 'Chemins multiusages © MRNF, AQréseau+ (CC-BY 4.0)' });
+
+  // ---- couche de points (canvas unique : ouvrages MTMD + ponts AQréseau+)
+  var PointLayer = L.Layer.extend({
+    onAdd: function(m){
+      this._m = m;
+      var c = this._c = L.DomUtil.create('canvas', 'pq-canvas');
+      c.style.zIndex = 450;
+      m.getPanes().overlayPane.appendChild(c);
+      m.on('moveend zoomend resize', this.redraw, this);
+      m.on('zoomstart', function(){ this._c.style.opacity = 0; }, this);
+      this.redraw();
+    },
+    onRemove: function(m){
+      m.off('moveend zoomend resize', this.redraw, this);
+      L.DomUtil.remove(this._c);
+    },
+    redraw: function(){
+      var m = this._m, s = m.getSize(), c = this._c, dpr = window.devicePixelRatio || 1;
+      L.DomUtil.setPosition(c, m.containerPointToLayerPoint([0, 0]));
+      c.width = s.x * dpr; c.height = s.y * dpr; c.style.width = s.x + 'px'; c.style.height = s.y + 'px'; c.style.opacity = 1;
+      var ctx = c.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      this._hits = [];
+      var z = m.getZoom(), b = m.getBounds().pad(.05);
+      var s0 = b.getSouth(), n0 = b.getNorth(), w0 = b.getWest(), e0 = b.getEast();
+      var r = z >= 12 ? 7.5 : z >= 10 ? 6.5 : z >= 8.5 ? 5.2 : 4;
+      var i, row, p;
+      if (ON.mtmd){
+        var rm = z >= 11 ? 3.6 : z >= 9 ? 2.8 : 2;
+        ctx.fillStyle = '#102d41'; ctx.strokeStyle = '#fff'; ctx.lineWidth = .8;
+        for (i = 0; i < MT.length; i++){
+          row = MT[i];
+          if (row[ix.lat] < s0 || row[ix.lat] > n0 || row[ix.lon] < w0 || row[ix.lon] > e0) continue;
+          if (MT_FER[i] && ON.mtmdfer) continue;
+          p = m.latLngToContainerPoint([row[ix.lat], row[ix.lon]]);
+          ctx.beginPath(); ctx.arc(p.x, p.y, rm, 0, 6.2832); ctx.fill(); ctx.stroke();
+          this._hits.push([p.x, p.y, 'm', i]);
+        }
+      }
+      if (ON.dup){
+        ctx.strokeStyle = '#6b7280'; ctx.lineWidth = 1.2;
+        for (i = 0; i < AQ.length; i++){
+          row = AQ[i];
+          if (row[4] >= SEUIL || row[0] < s0 || row[0] > n0 || row[1] < w0 || row[1] > e0) continue;
+          p = m.latLngToContainerPoint([row[0], row[1]]);
+          ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, 6.2832); ctx.stroke();
+          this._hits.push([p.x, p.y, 'a', i]);
+        }
+      }
+      for (i = 0; i < AQ.length; i++){
+        row = AQ[i];
+        if (row[4] < SEUIL || row[0] < s0 || row[0] > n0 || row[1] < w0 || row[1] > e0) continue;
+        var cat = CATS[CAT_DE_SRC[row[2]]];
+        if (!ON[cat.id]) continue;
+        p = m.latLngToContainerPoint([row[0], row[1]]);
+        marker(ctx, cat.shape, cat.color, row[3], p.x, p.y, r);
+        this._hits.push([p.x, p.y, 'a', i]);
+      }
+      if (ON.mtmdfer){   // ouvrages du MTMD au-dessus d'une voie ferrée : triangle inversé bleu foncé
+        for (i = 0; i < MT.length; i++){
+          if (!MT_FER[i]) continue;
+          row = MT[i];
+          if (row[ix.lat] < s0 || row[ix.lat] > n0 || row[ix.lon] < w0 || row[ix.lon] > e0) continue;
+          p = m.latLngToContainerPoint([row[ix.lat], row[ix.lon]]);
+          path(ctx, 'tridown', p.x, p.y, r); ctx.fillStyle = '#102d41'; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = '#fff'; ctx.stroke();
+          this._hits.push([p.x, p.y, 'm', i]);
+        }
+      }
+      if (selected && selected.kind !== 'line'){
+        p = m.latLngToContainerPoint(selected.ll);
+        ctx.beginPath(); ctx.arc(p.x, p.y, r + 7, 0, 6.2832); ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.stroke();
+        ctx.beginPath(); ctx.arc(p.x, p.y, r + 7, 0, 6.2832); ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]); ctx.strokeStyle = '#102d41'; ctx.stroke(); ctx.setLineDash([]);
+      }
+      updateView();
+    },
+    pick: function(pt){
+      var best = null, bd = 13 * 13, h = this._hits || [];
+      for (var i = h.length - 1; i >= 0; i--){
+        var dx = h[i][0] - pt.x, dy = h[i][1] - pt.y, d = dx * dx + dy * dy;
+        if (d < bd){ bd = d; best = h[i]; }
+      }
+      return best;
+    }
+  });
+  var points = new PointLayer().addTo(map);
+
+  // ---- lignes (OSM routes, ponts ferroviaires, OSM rail)
+  var canvasR = L.canvas({ padding: .5, tolerance: 6 });
+  var gOsm = L.layerGroup().addTo(map), gRfn = L.layerGroup().addTo(map), gOsmRail = L.layerGroup().addTo(map);
+  var OSMR = F.osm.rows.map(function(r){ return { id: r[0], cls: r[1], hw: r[2], br: r[3], name: r[4], len: r[5], mw: r[6], surf: r[7], acc: r[8], dM: r[9], dA: r[10], g: r[11] }; });
+  var RFN = R.nrwn.rows.map(function(r){ return { type: r[0], grp: r[2], ex: r[3], pr: r[4], us: r[5], st: r[6], au: r[7], sub: r[8], cl: r[9], len: r[10], dM: r[11], mn: r[12], mo: r[13], dO: r[14], g: r[15] }; });
+  var ORAIL = R.osm.rows.map(function(r){ return { id: r[0], br: r[1], name: r[2], op: r[3], ow: r[4], us: r[5], sv: r[6], len: r[7], ly: r[8], grp: r[9], dM: r[10], mn: r[11], mo: r[12], dN: r[13], g: r[14] }; });
+
+  var gSel = L.layerGroup().addTo(map);
+  function bind(line, html){
+    line.on('click', function(e){
+      L.DomEvent.stopPropagation(e);
+      select({ kind: 'line', html: html(), co: line.getLatLngs() });
+    });
+  }
+  function buildLines(){
+    gOsm.clearLayers(); gRfn.clearLayers(); gOsmRail.clearLayers();
+    OSMR.forEach(function(o){
+      if (!ON['osm' + o.cls]) return;
+      if (o.dM < SEUIL && !ON.osmdup) return;
+      var st = OSM_CLS[o.cls];
+      var l = L.polyline(decode(o.g), { renderer: canvasR, color: st.color, weight: st.weight, dashArray: st.dash, opacity: .95, bubblingMouseEvents: false });
+      bind(l, function(){ return osmHtml(o); });
+      gOsm.addLayer(l);
+    });
+    RFN.forEach(function(o){
+      var tun = o.type === 'Tunnel';
+      if (tun ? !ON.rfntun : !ON.rfn) return;
+      var st = tun ? { color: '#000', weight: 4, dash: '2 4' } : GRP[o.grp];
+      var mtq = /Transports/.test(o.pr);
+      var co = decode(o.g);
+      gRfn.addLayer(L.polyline(co, { renderer: canvasR, color: mtq ? '#102d41' : '#fff', weight: st.weight + (mtq ? 6 : 3), opacity: mtq ? .55 : .85, interactive: false }));
+      var l = L.polyline(co, { renderer: canvasR, color: st.color, weight: st.weight, dashArray: st.dash, opacity: 1, bubblingMouseEvents: false });
+      bind(l, function(){ return rfnHtml(o); });
+      gRfn.addLayer(l);
+    });
+    if (ON.osmrail) ORAIL.forEach(function(o){
+      var l = L.polyline(decode(o.g), { renderer: canvasR, color: '#111', weight: 1.8, opacity: 1, bubblingMouseEvents: false });
+      bind(l, function(){ return orailHtml(o); });
+      gOsmRail.addLayer(l);
+    });
+  }
+
+  // ------------------------------------------------------------------ fiches
+  function tab(rows, titre){
+    var h = titre ? '<h4>' + titre + '</h4>' : '';
+    h += '<table>';
+    rows.forEach(function(r){ if (r[1] !== '' && r[1] != null) h += '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>'; });
+    return h + '</table>';
+  }
+  function capTxt(c){
+    if (!c || c === '--') return 'non renseignée';
+    if (c === 'INC') return 'inconnue';
+    if (/^[0\-]+$/.test(c)) return '0 t (' + esc(c) + ') : fermé ou non portant';
+    return esc(c.split('-').join(' / ')) + ' t <span style="color:#566e7c">(trois configurations de véhicule, non précisées dans la fiche de couche)</span>';
+  }
+  var SRC_INFO = {
+    'AQ': 'saisie propre à AQréseau+ (surtout des ponts déjà inventoriés par le MTMD)',
+    'AQ_FO': 'vraisemblablement issu de Forêt ouverte (non documenté)',
+    'ROUTARD': 'base du réseau routier forestier du MFFP/MRNF (n° H000-000 ou R0000-00)',
+    'DGIG': 'vraisemblablement la Direction générale de l’information géographique du MRNF (non documenté)',
+    'Sépaq': 'réseau de la Sépaq',
+    'BDTQ': 'Base de données topographiques du Québec'
+  };
+  function aqHtml(i){
+    var r = AQ[i], src = SRC[r[2]];
+    var dup = r[4] < SEUIL;
+    return tab([
+      ['Source', '<b>' + esc(src) + '</b> : ' + esc(SRC_INFO[src] || '')],
+      ['N° de dossier du pont', esc(r[5] || 'aucun')],
+      ['Statut', STATUT[r[3]]],
+      ['Capacité portante', capTxt(r[6])],
+      ['Ouvrage MTMD le plus proche', r[4] >= 999 ? 'plus de 999 m' : '<b>' + r[4] + ' m</b>' + (dup ? ' — <b>doublon probable</b>' + (r[7] ? ' (n° ' + esc(r[7]) + ')' : '') : ' — hors inventaire du MTMD')],
+      ['Pont OSM à moins de 50 m', r[8] < 0 ? 'non évalué (hors des 3 régions)' : (r[8] <= 50 ? 'oui (' + r[8] + ' m)' : 'non (' + (r[8] >= 999 ? '> 999' : r[8]) + ' m)')],
+      ['Version AQréseau+', esc(F.version)],
+      ['Coordonnées', r[0].toFixed(5) + ', ' + r[1].toFixed(5)]
+    ], 'Pont d’AQréseau+ (MRNF)') + '<div style="margin-top:4px;color:#566e7c">Aucune valeur légale selon le diffuseur. Pas de type, de dimensions ni d’état.</div>';
+  }
+  function mtHtml(i){
+    var r = MT[i], g = function(c){ return r[ix[c]]; };
+    var fer = MT_FER[i];
+    var url = S.ficheUrl.replace('{ide}', g('ide')).replace('{cs}', g('cs'));
+    return tab([
+      ['N°', esc(g('num'))], ['Nom', esc(g('nom'))], ['Type', esc((S.types[g('type')] || [''])[0])], ['Route', esc(g('route'))],
+      ['Obstacle', esc(g('obstacle')) + (fer ? ' — <b>chemin de fer</b>' : '')], ['Municipalité', esc(g('muncp'))],
+      ['Année', g('annee')], ['Longueur', g('long') != null ? NF1.format(g('long')) + ' m' : ''],
+      ['Fiche', g('ide') ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">ouvrir la fiche du MTMD</a>' : '']
+    ], 'Ouvrage du MTMD');
+  }
+  function osmHtml(o){
+    return tab([
+      ['Type de route', esc(o.hw) + ' — ' + OSM_CLS[o.cls].label], ['Nom', esc(o.name)], ['Type de pont', esc(F.osm.br[o.br])],
+      ['Longueur', o.len + ' m (par la géométrie)'], ['Surface', esc(o.surf)], ['Accès', esc(o.acc)], ['Charge max.', esc(o.mw)],
+      ['Ouvrage MTMD à moins de 30 m', o.dM < SEUIL ? '<b>oui</b> (' + o.dM + ' m)' : 'non'],
+      ['Pont AQréseau+ à moins de 30 m', o.dA < SEUIL ? 'oui (' + o.dA + ' m)' : 'non'],
+      ['OpenStreetMap', '<a href="https://www.openstreetmap.org/way/' + o.id + '" target="_blank" rel="noopener">tronçon ' + o.id + '</a>']
+    ], 'Pont OpenStreetMap');
+  }
+  function rfnHtml(o){
+    var mtq = /Transports/.test(o.pr);
+    return tab([
+      ['Structure', esc(o.type)], ['Exploitant', esc(o.ex)], ['Propriétaire', esc(o.pr) + (mtq ? ' — <b>propriété du MTQ</b>' : '')],
+      ['Usage', esc(o.us)], ['État de la voie', esc(o.st)], ['Subdivision', esc(o.sub)], ['Longueur du segment', o.len + ' m (géométrie)'],
+      ['Ouvrage MTMD à moins de 30 m', o.mn ? '<b>oui</b> : n° ' + esc(o.mn) + (o.mo ? ' (obstacle : ' + esc(o.mo) + ')' : '') : 'non'],
+      ['Pont OSM à moins de 30 m', o.dO < SEUIL ? 'oui' : 'non']
+    ], 'Pont ferroviaire (couche ferroviaire du MTMD)');
+  }
+  function orailHtml(o){
+    return tab([
+      ['Nom', esc(o.name)], ['Exploitant', esc(o.op)], ['Propriétaire', esc(o.ow)], ['Usage', esc(o.us + (o.sv ? ' / ' + o.sv : ''))],
+      ['Type de pont', esc(o.br)], ['Niveau (layer)', esc(o.ly)], ['Longueur', o.len + ' m (géométrie)'],
+      ['Ouvrage MTMD à moins de 30 m', o.mn ? '<b>oui</b> : n° ' + esc(o.mn) + (o.mo ? ' (obstacle : ' + esc(o.mo) + ')' : '') : 'non'],
+      ['Pont de la couche du MTMD à moins de 30 m', o.dN < SEUIL ? 'oui' : 'non'],
+      ['OpenStreetMap', '<a href="https://www.openstreetmap.org/way/' + o.id + '" target="_blank" rel="noopener">tronçon ' + o.id + '</a>']
+    ], 'Pont ferroviaire OpenStreetMap');
+  }
+
+  // ------------------------------------------------------------------ sélection
+  function select(s){
+    selected = s;
+    gSel.clearLayers();
+    if (s && s.kind === 'line'){
+      gSel.addLayer(L.polyline(s.co, { renderer: canvasR, color: '#fff', weight: 12, opacity: .9, interactive: false }));
+      gSel.addLayer(L.polyline(s.co, { renderer: canvasR, color: '#102d41', weight: 3, dashArray: '5 4', interactive: false }));
+    }
+    var el = document.getElementById('sel');
+    el.innerHTML = s ? s.html : '<span class="vide">Cliquer sur un point ou un trait de la carte.</span>';
+    points.redraw();
+  }
+  map.on('click', function(e){
+    var h = points.pick(map.latLngToContainerPoint(e.latlng));
+    if (!h){ select(null); return; }
+    var html, ll;
+    if (h[2] === 'a'){ html = aqHtml(h[3]); ll = [AQ[h[3]][0], AQ[h[3]][1]]; }
+    else { html = mtHtml(h[3]); ll = [MT[h[3]][ix.lat], MT[h[3]][ix.lon]]; }
+    select({ kind: h[2], html: html, ll: ll });
+  });
+
+  // ------------------------------------------------------------------ comptes
+  function inPoly(la, lo, poly){
+    var d = false, n = poly.length;
+    for (var i = 0; i < n; i++){
+      var p = poly[i], q = poly[(i + 1) % n];
+      if ((p[0] > la) !== (q[0] > la) && lo < (q[1] - p[1]) * (la - p[0]) / (q[0] - p[0]) + p[1]) d = !d;
+    }
+    return d;
+  }
+  function statsRegion(reg){
+    var b = reg.bbox;
+    function inBox(la, lo){ return reg.poly ? inPoly(la, lo, reg.poly) : (la >= b[0] && la <= b[2] && lo >= b[1] && lo <= b[3]); }
+    var s = { mt: 0, mtFer: 0, aq: [], osm: [0, 0, 0, 0], osmNew: [0, 0, 0, 0], rfn: [0, 0, 0, 0], rfnT: 0, orail: [0, 0, 0, 0], fo50: [0, 0] }, i;
+    for (i = 0; i < SRC.length; i++) s.aq.push({ tot: 0, hors: 0, dup: 0, st: [0, 0, 0] });
+    MT.forEach(function(r, k){ if (inBox(r[ix.lat], r[ix.lon])){ s.mt++; if (MT_FER[k]) s.mtFer++; } });
+    AQ.forEach(function(r){
+      if (!inBox(r[0], r[1])) return;
+      var a = s.aq[r[2]]; a.tot++;
+      if (r[4] < SEUIL) a.dup++; else { a.hors++; a.st[r[3]]++; if (r[2] === 2 || r[2] === 1 || r[2] === 3){ if (r[8] >= 0){ s.fo50[1]++; if (r[8] <= 50) s.fo50[0]++; } } }
+    });
+    OSMR.forEach(function(o){
+      var la = o.g[0] / 1e5, lo = o.g[1] / 1e5;
+      if (!inBox(la, lo)) return;
+      s.osm[o.cls]++; if (o.dM >= SEUIL && o.dA >= SEUIL) s.osmNew[o.cls]++;
+    });
+    RFN.forEach(function(o){
+      if (!inBox(o.g[0] / 1e5, o.g[1] / 1e5)) return;
+      if (o.type === 'Tunnel') s.rfnT++; else s.rfn[o.grp]++;
+    });
+    ORAIL.forEach(function(o){ if (inBox(o.g[0] / 1e5, o.g[1] / 1e5)) s.orail[o.grp]++; });
+    return s;
+  }
+  var STAT = {};
+  Object.keys(REG).forEach(function(k){ STAT[k] = statsRegion(REG[k]); });
+  function sum(a){ return a.reduce(function(x, y){ return x + y; }, 0); }
+
+  function buildComptes(){
+    var keys = ['slsj', 'cote-nord', 'abitibi', 'qc'];
+    var h = '<thead><tr><th>Mesure</th>' + keys.map(function(k){ return '<th class="num">' + esc(REG[k].nom) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    function row(label, fn, cls){ h += '<tr' + (cls ? ' class="' + cls + '"' : '') + '><td>' + label + '</td>' + keys.map(function(k){ var v = fn(STAT[k]); return '<td class="num">' + (typeof v === 'number' ? nf(v) : v) + '</td>'; }).join('') + '</tr>'; }
+    row('Ouvrages du MTMD (référence)', function(s){ return s.mt; }, 'tot');
+    row('Ponts AQréseau+, tous', function(s){ return sum(s.aq.map(function(a){ return a.tot; })); }, 'tot');
+    row('&nbsp;&nbsp;dont à moins de 30 m d’un ouvrage MTMD (doublons)', function(s){ return sum(s.aq.map(function(a){ return a.dup; })); });
+    row('&nbsp;&nbsp;dont hors MTMD', function(s){ return sum(s.aq.map(function(a){ return a.hors; })); });
+    [2, 1, 3, 0, 4, 5].forEach(function(i){ row('&nbsp;&nbsp;&nbsp;&nbsp;hors MTMD, source ' + esc(SRC[i]), function(s){ return s.aq[i].hors; }); });
+    row('&nbsp;&nbsp;hors MTMD : statut ouvert / inconnu / fermé', function(s){ var o = [0, 0, 0]; s.aq.forEach(function(a){ for (var j = 0; j < 3; j++) o[j] += a.st[j]; }); return o.map(nf).join(' / '); });
+    row('Ponts forestiers hors MTMD confirmés par un pont OSM (≤ 50 m)', function(s){ return s === STAT.qc ? '—' : s.fo50[1] ? nf(s.fo50[0]) + ' sur ' + nf(s.fo50[1]) + ' (' + Math.round(100 * s.fo50[0] / s.fo50[1]) + ' %)' : '—'; });
+    row('Ponts OpenStreetMap (route avec <code>bridge</code>), 3 régions seulement', function(s){ return s === STAT.qc ? 'voir 3 régions' : sum(s.osm); }, 'tot');
+    OSM_CLS.forEach(function(c, j){ row('&nbsp;&nbsp;' + esc(c.label) + ' : total (dont ni MTMD ni AQréseau+ à moins de 30 m)', function(s){ return s === STAT.qc ? '—' : nf(s.osm[j]) + ' (dont ' + nf(s.osmNew[j]) + ')'; }); });
+    row('Ponts ferroviaires, couche du MTMD (segments)', function(s){ return sum(s.rfn); }, 'tot');
+    row('Ponts ferroviaires OpenStreetMap (tronçons)', function(s){ return sum(s.orail); });
+    row('Ouvrages du MTMD au-dessus d’une voie ferrée', function(s){ return s.mtFer; });
+    document.getElementById('t-comptes').innerHTML = h + '</tbody>';
+  }
+
+  function buildRail(){
+    var h = '<thead><tr><th>Exploitant</th><th class="num">Ponts RFN-MTMD</th><th class="num">Tronçons OSM</th></tr></thead><tbody>';
+    var a = [0, 0, 0, 0], b = [0, 0, 0, 0], t = 0, mob = 0;
+    RFN.forEach(function(o){ if (o.type === 'Tunnel') t++; else { a[o.grp]++; if (o.type === 'Pont mobile') mob++; } });
+    ORAIL.forEach(function(o){ b[o.grp]++; });
+    R.groupes.forEach(function(g, i){ h += '<tr><td>' + esc(g) + '</td><td class="num">' + nf(a[i]) + '</td><td class="num">' + nf(b[i]) + '</td></tr>'; });
+    h += '<tr class="tot"><td>Total</td><td class="num">' + nf(sum(a)) + '</td><td class="num">' + nf(sum(b)) + '</td></tr>';
+    h += '<tr><td>dont ponts mobiles (RFN-MTMD) · mobiles ou à chevalet (OSM)</td><td class="num">' + nf(mob) + '</td><td class="num">' + nf(ORAIL.filter(function(o){ return o.br !== 'yes' && o.br !== 'viaduct'; }).length) + '</td></tr>';
+    h += '<tr><td>Tunnels (RFN-MTMD)</td><td class="num">' + nf(t) + '</td><td class="num">—</td></tr>';
+    var L1 = 0, L2 = 0; RFN.forEach(function(o){ if (o.type !== 'Tunnel') L1 += o.len; }); ORAIL.forEach(function(o){ L2 += o.len; });
+    h += '<tr><td>Longueur cumulée</td><td class="num">' + NF1.format(L1 / 1000) + ' km</td><td class="num">' + NF1.format(L2 / 1000) + ' km</td></tr>';
+    document.getElementById('t-rail').innerHTML = h + '</tbody>';
+  }
+
+  // ------------------------------------------------------------------ panneau latéral
+  function buildSide(){
+    var st = STAT[region], h = '<h3>Objet sélectionné</h3><div class="sel" id="sel"></div>';
+    function chk(id, glyphHtml, label, n){
+      return '<label class="chk"><input type="checkbox" data-k="' + id + '"' + (ON[id] ? ' checked' : '') + '>' + glyphHtml + '<span>' + label + '</span><span class="n">' + (n == null ? '' : nf(n)) + '</span></label>';
+    }
+    h += '<h3>Inventaire du MTMD</h3>';
+    h += chk('mtmd', '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="4" fill="#102d41" stroke="#fff"/></svg>', 'Ouvrages du MTMD', st.mt);
+    h += chk('mtmdfer', glyph('tridown', '#102d41', 0), 'Ouvrages du MTMD au-dessus d’une voie ferrée', st.mtFer);
+    h += '<h3>Ponts forestiers hors MTMD (AQréseau+, MRNF)</h3>';
+    CATS.forEach(function(c){
+      var n = 0; c.srcs.forEach(function(i){ n += st.aq[i].hors; });
+      h += chk(c.id, glyph(c.shape, c.color, 0), esc(c.label), n);
+    });
+    h += '<div class="note">Statut : ' + glyph('circle', '#8a8a8a', 0) + ' plein = ouvert · ' + glyph('circle', '#8a8a8a', 1) + ' contour = inconnu · ' + glyph('circle', '#8a8a8a', 2) + ' barré = fermé</div>';
+    h += chk('dup', '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="5" fill="none" stroke="#6b7280" stroke-width="1.4"/></svg>', 'Doublons : AQréseau+ à moins de 30 m du MTMD', sum(st.aq.map(function(a){ return a.dup; })));
+    h += '<h3>Ponts OpenStreetMap (3 régions)</h3>';
+    OSM_CLS.forEach(function(c, j){ h += chk('osm' + j, lineGlyph(c), esc(c.label), region === 'qc' ? null : st.osm[j]); });
+    h += chk('osmdup', '<span style="width:30px;flex:none"></span>', 'Montrer aussi les ponts OSM déjà au MTMD (< 30 m)', null);
+    h += '<h3>Contexte</h3>';
+    h += chk('mu', '<svg width="30" height="14" viewBox="0 0 30 14" aria-hidden="true"><path d="M1 10 C8 2 14 12 29 4" fill="none" stroke="#8a5a2b" stroke-width="2"/></svg>', 'Chemins multiusages (MRNF, visibles dès le zoom 9)', null);
+    h += '<h3>Ponts ferroviaires</h3>';
+    GRP.forEach(function(g, i){ });
+    h += chk('rfn', lineGlyph(GRP[0]), 'Ponts ferroviaires — couche du MTMD', sum(st.rfn));
+    h += '<div class="note" style="margin-left:4px">' + GRP.map(function(g, i){ return lineGlyph(g) + ' ' + esc(g.label) + ' (' + nf(st.rfn[i]) + ')'; }).join('<br>') + '<br><svg width="30" height="14" aria-hidden="true"><line x1="1" y1="7" x2="29" y2="7" stroke="#102d41" stroke-width="10" opacity=".55"/><line x1="1" y1="7" x2="29" y2="7" stroke="#D55E00" stroke-width="4"/></svg> halo foncé : propriété du MTQ</div>';
+    h += chk('rfntun', lineGlyph({ color: '#000', weight: 4, dash: '2 4' }), 'Tunnels ferroviaires', st.rfnT);
+    h += chk('osmrail', '<svg width="30" height="14" viewBox="0 0 30 14" aria-hidden="true"><line x1="1" y1="7" x2="29" y2="7" stroke="#111" stroke-width="1.8"/></svg>', 'Ponts ferroviaires — OpenStreetMap (trait fin noir)', sum(st.orail));
+    var el = document.getElementById('side'); el.innerHTML = h;
+    el.querySelectorAll('input[data-k]').forEach(function(inp){
+      inp.addEventListener('change', function(){ ON[inp.dataset.k] = inp.checked ? 1 : 0; applyLayers(); });
+    });
+    select(selected && selected.kind !== 'line' ? selected : null);
+  }
+
+  function applyLayers(){
+    if (ON.mu) { if (!map.hasLayer(mu)) mu.addTo(map); } else if (map.hasLayer(mu)) map.removeLayer(mu);
+    buildLines();
+    points.redraw();
+  }
+  function updateView(){
+    if (!points._hits) return;
+    var b = map.getBounds(), nA = 0, nM = 0, i, r;
+    for (i = 0; i < AQ.length; i++){ r = AQ[i]; if (r[4] >= SEUIL && b.contains([r[0], r[1]])) nA++; }
+    for (i = 0; i < MT.length; i++){ r = MT[i]; if (b.contains([r[ix.lat], r[ix.lon]])) nM++; }
+    document.getElementById('viewline').textContent = 'Dans la vue : ' + nf(nM) + ' ouvrages du MTMD · ' + nf(nA) + ' ponts AQréseau+ hors MTMD';
+  }
+
+  // ------------------------------------------------------------------ commandes
+  function seg(el, items, current, onPick){
+    el.innerHTML = '';
+    items.forEach(function(it){
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = it[1]; b.setAttribute('aria-pressed', it[0] === current ? 'true' : 'false');
+      b.addEventListener('click', function(){ onPick(it[0]); seg(el, items, it[0], onPick); });
+      el.appendChild(b);
+    });
+  }
+  function setRegion(k, fit){
+    region = k;
+    if (fit !== false){
+      var b = REG[k].fit || REG[k].bbox;
+      map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: [10, 10] });
+    }
+    buildSide();
+    applyLayers();
+  }
+  function setMode(k){
+    mode = k;
+    ON = {}; Object.keys(mapModes[k].on).forEach(function(i){ ON[i] = mapModes[k].on[i]; });
+    buildSide(); applyLayers();
+  }
+  seg(document.getElementById('seg-reg'), [['slsj', 'Saguenay–Lac-Saint-Jean'], ['cote-nord', 'Côte-Nord'], ['abitibi', 'Abitibi'], ['qc', 'Tout le Québec']], region, function(k){ setRegion(k); });
+  seg(document.getElementById('seg-mode'), [['forestiers', 'Ponts forestiers'], ['ferro', 'Ouvrages ferroviaires'], ['tout', 'Tout']], mode, function(k){ setMode(k); });
+
+  buildComptes(); buildRail();
+  ON = {}; Object.keys(mapModes.forestiers.on).forEach(function(i){ ON[i] = mapModes.forestiers.on[i]; });
+  var b0 = REG.slsj.bbox;
+  map.fitBounds([[b0[0], b0[1]], [b0[2], b0[3]]]);
+  buildSide(); applyLayers();
+  window.__pq = { map: map, setRegion: setRegion, setMode: setMode, ON: function(){ return ON; }, stat: STAT };
+})();
+</script>
+</body>
+</html>

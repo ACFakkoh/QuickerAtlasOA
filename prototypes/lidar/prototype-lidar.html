@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototype LiDAR · QuickerAtlasOA</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+<style>
+:root{--navy:#102d41;--ink:#17374b;--muted:#566e7c;--line:#dce5eb;--bg:#f0f4f7;--teal:#007f78;--mint:#d9f5eb;--amber:#b66c16;--earth:#c8b28a;--earth-d:#8a6d3b;--deck:#102d41;--shadow:0 2px 7px #15354a08;font-family:"Segoe UI",Arial,sans-serif;color:var(--ink);font-size:16px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg)}
+header{background:var(--navy);color:#fff;padding:18px 28px}
+header h1{margin:0;font-size:1.4rem;font-weight:650;letter-spacing:-.4px}
+header h1 span{font-weight:350;color:#9cdfcf}
+header p{margin:6px 0 0;color:#b5cbd6;font-size:.85rem;max-width:980px;line-height:1.5}
+main{max-width:1500px;margin:0 auto;padding:20px 28px 40px;display:flex;flex-direction:column;gap:20px}
+.intro{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.box{background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:14px 16px;font-size:.86rem;line-height:1.5}
+.box h2{margin:0 0 6px;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase}
+.box p{margin:0}
+.site{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.site-h{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;padding:14px 18px;border-bottom:1px solid var(--line);background:#f6f9fb}
+.site-h h2{margin:0;font-size:1.08rem;letter-spacing:-.2px}
+.site-h .tag{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--teal);background:var(--mint);border-radius:999px;padding:2px 9px}
+.site-h .sub{color:var(--muted);font-size:.82rem}
+.site-b{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:0}
+.map{height:470px;border-right:1px solid var(--line)}
+.right{padding:12px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.pf h3{margin:0;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.pf h3 small{text-transform:none;letter-spacing:0;font-weight:400}
+.pf svg{display:block;width:100%;height:auto;overflow:visible}
+.readout{font-size:.75rem;color:var(--muted);min-height:1.2em;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:.78rem;background:#fff}
+.chip b{font-size:.98rem;font-variant-numeric:tabular-nums;color:var(--navy)}
+.chip span{display:block;font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:650}
+.chip.ok{border-color:#9fd8c6;background:#f1fbf7}
+.verdict{font-size:.84rem;line-height:1.5;background:#f6f9fb;border-left:3px solid var(--teal);padding:8px 12px;border-radius:0 8px 8px 0}
+.legend-p{display:flex;gap:14px;font-size:.72rem;color:var(--muted);flex-wrap:wrap}
+.legend-p i{display:inline-block;width:14px;height:8px;margin-right:5px;vertical-align:middle;border-radius:2px}
+.live{display:flex;gap:8px;align-items:end;flex-wrap:wrap;font-size:.85rem}
+.live input{font:inherit;border:1px solid #cbd8e1;border-radius:6px;padding:7px 9px;width:140px}
+.live button{font:inherit;font-weight:600;border:1px solid var(--teal);background:var(--teal);color:#fff;border-radius:6px;padding:7px 14px;cursor:pointer}
+.live .st{color:var(--muted);font-size:.8rem}
+footer{color:var(--muted);font-size:.75rem;text-align:center;padding:0 0 30px}
+@media(max-width:1000px){.intro{grid-template-columns:1fr}.site-b{grid-template-columns:1fr}.map{height:340px;border-right:0;border-bottom:1px solid var(--line)}}
+@media(max-width:600px){main{padding:14px 16px}header{padding:14px 16px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Quicker<span>AtlasOA</span> · prototype LiDAR</h1>
+  <p>Relief ombré et profils en long / en travers autour de quelques structures, à partir du modèle numérique d’élévation LiDAR 1 m de Ressources naturelles Canada (MNEHR). MNT = sol nu ; MNS = surface (tablier, arbres, bâtiments compris).</p>
+</header>
+<main>
+  <section class="intro">
+    <div class="box"><h2>Fond de carte</h2><p>Relief ombré du MNT (sol) ou du MNS (surface) servi en tuiles WMS par RNCan : aucune donnée à héberger, couverture LiDAR de tout le Québec méridional. Le MNS fait ressortir tabliers, culées et remblais ; le MNT, les lits, berges, méandres et talus.</p></div>
+    <div class="box"><h2>Profils</h2><p>Le long de l’axe de la route (axe OpenStreetMap) et en travers (le long de l’obstacle). Ligne foncée = MNS, aplat beige = MNT. Sous un tablier, le MNT est <b>interpolé</b> (pointillé) : le LiDAR ne voit pas le sol sous le pont, d’où la lecture du dessous juste à côté du tablier.</p></div>
+    <div class="box"><h2>Faisabilité dans l’application</h2><p>Le service WCS de RNCan autorise les requêtes du navigateur (CORS) : un bouton « Profil LiDAR » dans la fiche peut tout calculer à la demande (≈ 2 × 250 Ko par structure), sans traitement préalable. L’essai en direct en bas de page le démontre.</p></div>
+  </section>
+  <div id="sites"></div>
+  <section class="site">
+    <div class="site-h"><span class="tag">Essai en direct</span><h2>N’importe quelle structure du MTMD, calculée dans le navigateur</h2><span class="sub">MNT/MNS lus en GeoTIFF par WCS, axe par l’API Overpass d’OpenStreetMap</span></div>
+    <div style="padding:12px 18px">
+      <div class="live"><label>N° de structure<br><input id="live-num" value="18649N" autocomplete="off"></label><button type="button" id="live-go">Calculer le profil</button><span class="st" id="live-st"></span></div>
+    </div>
+    <div id="live-out"></div>
+  </section>
+</main>
+<footer>MNEHR 1 m © Ressources naturelles Canada (Licence du gouvernement ouvert – Canada) · Axes © contributeurs OpenStreetMap (ODbL) · Inventaire © MTMD / Données Québec (CC-BY 4.0) · Fonds © Esri</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="profils.js"></script>
+<script src="../../data/structures.js"></script>
+<script src="../../data/details.js"></script>
+<script>
+(function(){
+  'use strict';
+  var nf1 = new Intl.NumberFormat('fr-CA', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  var nf2 = new Intl.NumberFormat('fr-CA', { maximumFractionDigits: 2 });
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var WCS = 'https://datacube.services.geo.ca/wrapper/ogc/elevation-hrdem-mosaic';
+  var ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+
+  // ---------- Carte d'un site ----------
+  function siteMap(el, S, idx){
+    var map = L.map(el, { zoomControl: true, attributionControl: true });
+    var fonds = {
+      'Relief ombré MNT (RNCan)': L.layerGroup([L.tileLayer(ESRI + 'Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 16, maxZoom: 19 }),
+        L.tileLayer.wms(WCS, { layers: 'dtm-hillshade', version: '1.3.0', format: 'image/png', transparent: true, opacity: 0.9, maxZoom: 19, attribution: 'MNEHR © RNCan' })]),
+      'Relief ombré MNS (RNCan)': L.tileLayer.wms(WCS, { layers: 'dsm-hillshade', version: '1.3.0', format: 'image/png', transparent: false, maxZoom: 19, attribution: 'MNEHR © RNCan' }),
+      'Satellite': L.tileLayer(ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 19, maxZoom: 19, attribution: '© Esri' }),
+      'Plan': L.tileLayer(ESRI + 'World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 19, maxZoom: 19, attribution: '© Esri' })
+    };
+    fonds[idx % 2 ? 'Relief ombré MNT (RNCan)' : 'Relief ombré MNS (RNCan)'].addTo(map);
+    var over = {};
+    if (S.images) {
+      over['Relief ombré local (calcul 1 m)'] = L.imageOverlay(S.images.mnt, S.bornes, { opacity: 0.85 });
+    }
+    L.control.layers(fonds, over, { collapsed: true }).addTo(map);
+    L.polyline(S.lignes.long, { color: '#007f78', weight: 3, dashArray: '6 4' }).bindTooltip('Profil en long').addTo(map);
+    L.polyline(S.lignes.travers, { color: '#e8590c', weight: 3, dashArray: '6 4' }).bindTooltip('Profil en travers').addTo(map);
+    L.circleMarker([S.structure.lat, S.structure.lon], { radius: 6, color: '#fff', weight: 2, fillColor: '#102d41', fillOpacity: 1 }).bindTooltip('Structure ' + S.structure.num).addTo(map);
+    map.fitBounds(L.latLngBounds(S.lignes.long.concat(S.lignes.travers)), { padding: [16, 16] });
+    var hover = L.circleMarker(S.centre, { radius: 5, color: '#fff', weight: 2, fillColor: '#e8590c', fillOpacity: 1, interactive: false });
+    return { map: map, hover: hover };
+  }
+
+  // ---------- Profil SVG ----------
+  // P = {s, mnt, mns}; o = {deck: demi-longueur, color, under: [s0, s1] zone interpolée, marks: [{z, label}]}
+  function profile(el, P, o, onHover){
+    var W = 760, H = o.h || 220, ml = 44, mr = 10, mt = 10, mb = 24;
+    var zs = [];
+    P.mnt.concat(P.mns).forEach(function(z){ if (z != null) zs.push(z); });
+    var zmin = Math.min.apply(null, zs), zmax = Math.max.apply(null, zs);
+    (o.marks || []).forEach(function(m){ zmin = Math.min(zmin, m.z); zmax = Math.max(zmax, m.z); });
+    var pad = Math.max(1, (zmax - zmin) * 0.08); zmin -= pad; zmax += pad;
+    var s0 = P.s[0], s1 = P.s[P.s.length - 1];
+    var X = function(s){ return ml + (s - s0) / (s1 - s0) * (W - ml - mr); };
+    var Y = function(z){ return mt + (zmax - z) / (zmax - zmin) * (H - mt - mb); };
+    var h = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.label) + '">';
+    // grille
+    var step = niceStep((zmax - zmin) / 4);
+    for (var z = Math.ceil(zmin / step) * step; z <= zmax; z += step) h += '<line x1="' + ml + '" x2="' + (W - mr) + '" y1="' + Y(z) + '" y2="' + Y(z) + '" stroke="#dce5eb"/><text x="' + (ml - 6) + '" y="' + (Y(z) + 4) + '" text-anchor="end" font-size="10" fill="#566e7c">' + nf1.format(z) + '</text>';
+    var xs = niceStep((s1 - s0) / 6);
+    for (var s = Math.ceil(s0 / xs) * xs; s <= s1; s += xs) h += '<text x="' + X(s) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="10" fill="#566e7c">' + Math.round(s) + ' m</text>';
+    // zone de l'ouvrage
+    if (o.deck) h += '<rect x="' + X(-o.deck) + '" y="' + mt + '" width="' + (X(o.deck) - X(-o.deck)) + '" height="' + (H - mt - mb) + '" fill="#007f78" opacity=".07"/>';
+    // MNT (aplat)
+    var area = 'M' + X(P.s[0]) + ' ' + Y(zmin), line = '';
+    P.s.forEach(function(s, i){ var z = P.mnt[i]; if (z == null) return; area += 'L' + X(s).toFixed(1) + ' ' + Y(z).toFixed(1); });
+    area += 'L' + X(s1) + ' ' + Y(zmin) + 'Z';
+    h += '<path d="' + area + '" fill="#e6d8bb"/>';
+    // contour du MNT : plein hors ouvrage, pointillé sous le tablier (interpolé)
+    var seg = function(test){
+      var d = '', on = false;
+      P.s.forEach(function(s, i){ var z = P.mnt[i]; if (z == null || !test(s)) { on = false; return; } d += (on ? 'L' : 'M') + X(s).toFixed(1) + ' ' + Y(z).toFixed(1); on = true; });
+      return d;
+    };
+    var u = o.under;
+    h += '<path d="' + seg(function(s){ return !u || s < u[0] || s > u[1]; }) + '" fill="none" stroke="#8a6d3b" stroke-width="1.6"/>';
+    if (u) h += '<path d="' + seg(function(s){ return s >= u[0] && s <= u[1]; }) + '" fill="none" stroke="#8a6d3b" stroke-width="1.6" stroke-dasharray="4 3"/>';
+    // MNS
+    P.s.forEach(function(s, i){ var z = P.mns[i]; if (z == null) return; line += (line ? 'L' : 'M') + X(s).toFixed(1) + ' ' + Y(z).toFixed(1); });
+    h += '<path d="' + line + '" fill="none" stroke="#102d41" stroke-width="1.3" opacity=".9"/>';
+    // repères (tablier, dessous…)
+    (o.marks || []).forEach(function(m){
+      h += '<line x1="' + X(m.s0 != null ? m.s0 : s0) + '" x2="' + X(m.s1 != null ? m.s1 : s1) + '" y1="' + Y(m.z) + '" y2="' + Y(m.z) + '" stroke="' + (m.color || '#e8590c') + '" stroke-width="1.2" stroke-dasharray="5 3"/>' +
+        '<text x="' + (X(m.s1 != null ? m.s1 : s1) - 4) + '" y="' + (Y(m.z) - 4) + '" text-anchor="end" font-size="10.5" font-weight="600" fill="' + (m.color || '#e8590c') + '">' + esc(m.label) + '</text>';
+    });
+    if (o.arrow) {
+      var ax = X(o.arrow.s);
+      h += '<line x1="' + ax + '" x2="' + ax + '" y1="' + Y(o.arrow.z1) + '" y2="' + Y(o.arrow.z0) + '" stroke="#b3261e" stroke-width="1.6" marker-start="url(#a)" marker-end="url(#a)"/>' +
+        '<text x="' + (ax + 6) + '" y="' + ((Y(o.arrow.z1) + Y(o.arrow.z0)) / 2 + 4) + '" font-size="11.5" font-weight="700" fill="#b3261e">' + esc(o.arrow.label) + '</text>';
+    }
+    h += '<defs><marker id="a" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#b3261e"/></marker></defs>';
+    h += '<line class="cur" x1="0" x2="0" y1="' + mt + '" y2="' + (H - mb) + '" stroke="#566e7c" stroke-width="1" visibility="hidden"/>';
+    h += '<rect class="hit" x="' + ml + '" y="' + mt + '" width="' + (W - ml - mr) + '" height="' + (H - mt - mb) + '" fill="transparent"/></svg>';
+    el.innerHTML = h;
+    var svg = el.querySelector('svg'), cur = svg.querySelector('.cur');
+    svg.addEventListener('pointermove', function(e){
+      var r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * W;
+      var sv = s0 + (x - ml) / (W - ml - mr) * (s1 - s0), i = 0, best = 1e9;
+      P.s.forEach(function(s, j){ if (Math.abs(s - sv) < best) { best = Math.abs(s - sv); i = j; } });
+      cur.setAttribute('x1', X(P.s[i])); cur.setAttribute('x2', X(P.s[i])); cur.setAttribute('visibility', 'visible');
+      onHover && onHover(i);
+    });
+    svg.addEventListener('pointerleave', function(){ cur.setAttribute('visibility', 'hidden'); onHover && onHover(null); });
+  }
+  function niceStep(v){ var p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
+
+  // ---------- Carte + profils + mesures d'un site ----------
+  var VERDICTS = {
+    '13716': function(m, st){ return 'Le MNS donne le dessus du tablier (' + nf2.format(m.tablier_m) + ' m) et le MNT, à côté du tablier, la chaussée du boulevard (' + nf2.format(m.dessous_m) + ' m) : <b>' + nf1.format(m.hauteur_sous_tablier_m) + ' m</b> entre les deux. Avec la hauteur libre mesurée par le MTMD (' + nf2.format(st.hlibre) + ' m), il reste <b>≈ ' + nf1.format(m.epaisseur_tablier_estimee_m) + ' m</b> pour le tablier, la chaussée et le dévers : ordre de grandeur cohérent pour une dalle évidée, à ± 0,3 m près. Le MNT interpolé sous le tablier (' + nf2.format(m.dessous_mnt_interpole_m) + ' m) aurait sous-estimé la hauteur de 2,5 m : piège à éviter.'; },
+    '03994': function(m){ return 'Profil en long très lisible : vallée de <b>' + nf1.format(m.denivele_franchissement_m) + ' m</b>, tablier à <b>' + nf1.format(m.hauteur_sous_tablier_m) + ' m</b> au-dessus de l’eau (surface au moment du levé), approche amont en pente de ' + nf1.format(Math.abs(m.pente_approche_amont_pct)) + ' %. Le MNS montre aussi un second ouvrage à ~70 m en aval sur le profil en travers. Utile pour la revanche, l’accès aux appuis et la lecture du site sans visite.'; },
+    '05041': function(m){ return 'Pont de ' + '18 m en ICG 1 : tablier à seulement <b>' + nf1.format(m.hauteur_sous_tablier_m) + ' m</b> au-dessus de l’eau, plaine inondable large et plate de part et d’autre (profil en travers), approche aval à ' + nf1.format(m.pente_approche_aval_pct) + ' %. Le relief ombré du MNT montre le tracé du lit et les anciens méandres : contexte hydraulique (affouillement, revanche) visible en un coup d’œil.'; },
+    '10082': function(m, st){ return 'Ponceau invisible sur une photo, mais le LiDAR mesure le remblai : chaussée à ' + nf2.format(m.chaussee_m) + ' m, pied du talus à ' + nf2.format(m.lit_m) + ' m, soit <b>' + nf1.format(m.hauteur_remblai_lidar_m) + ' m</b>. L’inventaire donne ' + nf1.format(st.remblai) + ' m de remblai + ' + nf1.format(st.ouverture) + ' m d’ouverture = ' + nf1.format(st.remblai + st.ouverture) + ' m : <b>écart de ' + nf1.format(Math.abs(st.remblai + st.ouverture - m.hauteur_remblai_lidar_m)) + ' m</b>. Contrôle automatique possible des épaisseurs de remblai sur les ~2 800 ponceaux.'; }
+  };
+  function chips(m, st){
+    var c = [];
+    var add = function(label, v, unit, ok){ if (v != null) c.push('<div class="chip' + (ok ? ' ok' : '') + '"><span>' + esc(label) + '</span><b>' + nf1.format(v) + '</b> ' + unit + '</div>'); };
+    if (st.num !== '10082') { add('Dessus du tablier', m.tablier_m, 'm'); add('Dessous (mesuré à côté)', m.dessous_m, 'm'); add('Hauteur sous l’ouvrage', m.hauteur_sous_tablier_m, 'm', true); }
+    if (m.epaisseur_tablier_estimee_m != null) { add('Hauteur libre MTMD', st.hlibre, 'm'); add('Tablier + chaussée (estimé)', m.epaisseur_tablier_estimee_m, 'm', true); }
+    if (st.num === '10082') { add('Chaussée', m.chaussee_m, 'm'); add('Pied du remblai', m.lit_m, 'm'); add('Remblai + ouverture (LiDAR)', m.hauteur_remblai_lidar_m, 'm', true); add('Inventaire (remblai + ouv.)', st.remblai + st.ouverture, 'm'); }
+    else add('Dénivelé du franchissement', m.denivele_franchissement_m, 'm');
+    add('Pente approche amont', m.pente_approche_amont_pct != null ? Math.abs(m.pente_approche_amont_pct) : null, '%');
+    add('Pente approche aval', m.pente_approche_aval_pct != null ? Math.abs(m.pente_approche_aval_pct) : null, '%');
+    return '<div class="chips">' + c.join('') + '</div>';
+  }
+  function renderSite(container, S, idx, verdictHtml){
+    var st = S.structure, m = S.mesures, hd = (st.ltb || 20) / 2, isPonceau = st.num === '10082';
+    var div = document.createElement('section');
+    div.className = 'site';
+    div.innerHTML = '<div class="site-h">' + (S.site ? '<span class="tag">' + esc(S.site.cas) + '</span>' : '') + '<h2>N° ' + esc(st.num) + ' · ' + esc(st.route) + ' → ' + esc(st.obstacle) + '</h2>' +
+      '<span class="sub">' + esc([st.type, st.annee ? 'construit en ' + st.annee : null, st.ltb ? 'tablier ' + nf1.format(st.ltb) + ' m' : null, st.icg ? 'ICG ' + st.icg : null, st.region].filter(Boolean).join(' · ')) + '</span></div>' +
+      '<div class="site-b"><div class="map"></div><div class="right">' +
+      (S.site ? '<div class="sub" style="font-size:.82rem;color:#566e7c"><b>But :</b> ' + esc(S.site.but) + '</div>' : '') +
+      '<div class="pf pf-long"><h3>Profil en long (axe de la route) <small>pas ' + nf1.format(S.pas_m) + ' m</small></h3><div class="svg"></div></div>' +
+      '<div class="pf pf-tr"><h3>Profil en travers (le long de l’obstacle)</h3><div class="svg"></div></div>' +
+      '<div class="readout">Survoler un profil pour lire les altitudes.</div>' +
+      '<div class="legend-p"><span><i style="background:#102d41"></i>MNS (surface, tablier)</span><span><i style="background:#e6d8bb;border:1px solid #8a6d3b"></i>MNT (sol nu)</span><span><i style="background:repeating-linear-gradient(90deg,#8a6d3b 0 4px,transparent 4px 7px)"></i>MNT interpolé sous l’ouvrage</span><span><i style="background:#007f78;opacity:.25"></i>Longueur du tablier</span></div>' +
+      chips(m, st) + (verdictHtml ? '<div class="verdict">' + verdictHtml + '</div>' : '') + '</div></div>';
+    container.appendChild(div);
+    var M = siteMap(div.querySelector('.map'), S, idx);
+    var ro = div.querySelector('.readout');
+    function hov(kind, P, dir){
+      return function(i){
+        if (i == null) { M.map.removeLayer(M.hover); return; }
+        ro.textContent = (kind === 'long' ? 'Profil en long' : 'Profil en travers') + ' · s = ' + nf1.format(P.s[i]) + ' m · MNT ' + (P.mnt[i] != null ? nf2.format(P.mnt[i]) : '—') + ' m · MNS ' + (P.mns[i] != null ? nf2.format(P.mns[i]) : '—') + ' m';
+        var L0 = S.lignes[kind][0], L1 = S.lignes[kind][1], s0 = P.s[0], s1 = P.s[P.s.length - 1], t = (P.s[i] - s0) / (s1 - s0);
+        M.hover.setLatLng([L0[0] + (L1[0] - L0[0]) * t, L0[1] + (L1[1] - L0[1]) * t]).addTo(M.map);
+      };
+    }
+    var marksL = isPonceau ? [{ z: m.chaussee_m, label: 'chaussée ' + nf1.format(m.chaussee_m) + ' m', color: '#102d41' }] : [{ z: m.tablier_m, label: 'tablier ' + nf1.format(m.tablier_m) + ' m', color: '#102d41', s0: -hd * 1.6, s1: hd * 1.6 }];
+    profile(div.querySelector('.pf-long .svg'), S.long, { label: 'Profil en long', deck: isPonceau ? 3 : hd, under: isPonceau ? null : [-hd, hd], marks: marksL }, hov('long', S.long));
+    var arrow = isPonceau ? { s: 0, z0: m.lit_m, z1: m.chaussee_m, label: nf1.format(m.hauteur_remblai_lidar_m) + ' m' }
+      : { s: 0, z0: m.dessous_m, z1: m.tablier_m, label: nf1.format(m.hauteur_sous_tablier_m) + ' m' };
+    var hw = 6;
+    profile(div.querySelector('.pf-tr .svg'), S.travers, { label: 'Profil en travers', h: 190, deck: isPonceau ? null : hw, under: null,
+      marks: isPonceau ? [{ z: m.lit_m, label: 'pied du remblai ' + nf1.format(m.lit_m) + ' m', color: '#8a6d3b' }] : [{ z: m.dessous_m, label: 'dessous ' + nf1.format(m.dessous_m) + ' m', color: '#8a6d3b' }],
+      arrow: arrow }, hov('travers', S.travers));
+    return div;
+  }
+
+  var P = window.PROTO_LIDAR;
+  P.sites.forEach(function(S, i){ renderSite(document.getElementById('sites'), S, i, VERDICTS[S.structure.num] ? VERDICTS[S.structure.num](S.mesures, S.structure) : ''); });
+
+  // ---------- Essai en direct : tout dans le navigateur (WCS + Overpass) ----------
+  var R = 6378137;
+  function merc(lat, lon){ return [lon * Math.PI / 180 * R, Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360)) * R]; }
+  function unmerc(x, y){ return [(2 * Math.atan(Math.exp(y / R)) - Math.PI / 2) * 180 / Math.PI, x / R * 180 / Math.PI]; }
+  // GeoTIFF du WCS : flottants 32 bits, tuilés, non compressés
+  function readTiff(buf){
+    var dv = new DataView(buf), le = dv.getUint16(0) === 0x4949, u16 = function(o){ return dv.getUint16(o, le); }, u32 = function(o){ return dv.getUint32(o, le); };
+    var ifd = u32(4), n = u16(ifd), T = {};
+    var size = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 11: 4, 12: 8, 16: 8 };
+    for (var i = 0; i < n; i++) {
+      var e = ifd + 2 + i * 12, tag = u16(e), type = u16(e + 2), cnt = u32(e + 4), sz = size[type] * cnt, off = sz <= 4 ? e + 8 : u32(e + 8), vals = [];
+      for (var j = 0; j < cnt && type !== 2; j++) {
+        var p = off + j * size[type];
+        vals.push(type === 3 ? u16(p) : type === 4 || type === 16 ? u32(p) : type === 12 ? dv.getFloat64(p, le) : type === 11 ? dv.getFloat32(p, le) : dv.getUint8(p));
+      }
+      T[tag] = vals;
+    }
+    var w = T[256][0], h = T[257][0], tw = T[322][0], th = T[323][0], nx = Math.ceil(w / tw), a = new Float32Array(w * h).fill(NaN);
+    T[324].forEach(function(o, k){
+      var ty = Math.floor(k / nx), tx = k % nx;
+      for (var r = 0; r < th; r++) for (var c = 0; c < tw; c++) {
+        var y = ty * th + r, x = tx * tw + c; if (y >= h || x >= w) continue;
+        var v = dv.getFloat32(o + (r * tw + c) * 4, le); a[y * w + x] = v <= -32000 ? NaN : v;
+      }
+    });
+    return { a: a, w: w, h: h, sx: T[33550][0], sy: T[33550][1], X0: T[33922][3], Y0: T[33922][4] };
+  }
+  function samp(D, x, y){
+    var c = (x - D.X0) / D.sx - 0.5, r = (D.Y0 - y) / D.sy - 0.5, c0 = Math.max(0, Math.min(D.w - 2, Math.floor(c))), r0 = Math.max(0, Math.min(D.h - 2, Math.floor(r))), fc = c - c0, fr = r - r0;
+    var g = function(rr, cc){ return D.a[rr * D.w + cc]; };
+    var v = g(r0, c0) * (1 - fc) * (1 - fr) + g(r0, c0 + 1) * fc * (1 - fr) + g(r0 + 1, c0) * (1 - fc) * fr + g(r0 + 1, c0 + 1) * fc * fr;
+    return isFinite(v) ? Math.round(v * 100) / 100 : null;
+  }
+  function wcs(kind, cx, cy, half){
+    var q = 'service=WCS&version=1.1.1&request=GetCoverage&identifier=' + kind + '&boundingbox=' + [cx - half, cy - half, cx + half, cy + half].join(',') + ',urn:ogc:def:crs:EPSG::3857&format=image/geotiff';
+    return fetch(WCS + '?' + q).then(function(r){ if (!r.ok) throw new Error('WCS ' + r.status); return r.arrayBuffer(); }).then(readTiff);
+  }
+  function osmAxis(lat, lon){
+    var q = '[out:json][timeout:25];way(around:70,' + lat + ',' + lon + ')[highway][bridge];out geom;';
+    return fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+      .then(function(r){ if (!r.ok) throw new Error('Overpass ' + r.status); return r.json(); });
+  }
+  var D = window.STRUCTURES, ci = {}; D.cols.forEach(function(c, i){ ci[c] = i; });
+  var DET = (window.STRUCTURE_DETAILS || {}).data || {};
+  $('#live-go').addEventListener('click', live);
+  $('#live-num').addEventListener('keydown', function(e){ if (e.key === 'Enter') live(); });
+  function $(s){ return document.querySelector(s); }
+  function live(){
+    var num = $('#live-num').value.trim().toUpperCase(), st = $('#live-st');
+    var row = D.rows.filter(function(r){ return String(r[ci.num]).toUpperCase() === num; })[0];
+    if (!row) { st.textContent = 'Structure introuvable.'; return; }
+    var lat = row[ci.lat], lon = row[ci.lon], det = DET[row[ci.num]] || {}, t0 = performance.now();
+    var k = 1 / Math.cos(lat * Math.PI / 180), p0 = merc(lat, lon), ltb = det.ltb || row[ci.long] || 20, lht = det.lht || 12;
+    var Lh = ltb / 2 + 120, T = 150, half = Math.max(Lh, T) * k + 110 * k;
+    st.textContent = 'MNT, MNS (WCS RNCan) et axe OpenStreetMap, en parallèle…';
+    var osm = osmAxis(lat, lon).catch(function(){ return osmAxis(lat, lon); }).catch(function(){ return { elements: [] }; });
+    Promise.all([osm, wcs('dtm', p0[0], p0[1], half), wcs('dsm', p0[0], p0[1], half)]).then(function(res){
+      var js = res[0], dem = [res[1], res[2]], best = null, bd = 1e18, src = '';
+      (js.elements || []).forEach(function(w){
+        var pts = (w.geometry || []).map(function(g){ return merc(g.lat, g.lon); });
+        for (var i = 0; i + 1 < pts.length; i++) {
+          var a = pts[i], b = pts[i + 1], dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy || 1, t = Math.max(0, Math.min(1, ((p0[0] - a[0]) * dx + (p0[1] - a[1]) * dy) / L2));
+          var px = a[0] + t * dx, py = a[1] + t * dy, d = Math.hypot(px - p0[0], py - p0[1]);
+          if (d < bd) { bd = d; var n = Math.hypot(dx, dy); best = { c: [px, py], u: [dx / n, dy / n], tags: w.tags || {} }; }
+        }
+      });
+      if (best) src = 'axe OSM : ' + (best.tags.name || best.tags.ref || 'chemin sans nom');
+      else {
+        // Repli : axe principal des pixels « surélevés » (MNS − MNT > 2,5 m) autour de la structure = le tablier
+        var rad = Math.max(25, ltb / 2 + 10) * k, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0, nn = 0;
+        for (var yy = p0[1] - rad; yy <= p0[1] + rad; yy += dem[0].sy) for (var xx = p0[0] - rad; xx <= p0[0] + rad; xx += dem[0].sx) {
+          var zt = samp(dem[0], xx, yy), zs = samp(dem[1], xx, yy);
+          if (zt == null || zs == null || zs - zt < 2.5 || Math.hypot(xx - p0[0], yy - p0[1]) > rad) continue;
+          var X = xx - p0[0], Y = yy - p0[1]; sx += X; sy += Y; sxx += X * X; syy += Y * Y; sxy += X * Y; nn++;
+        }
+        if (nn > 20) {
+          var mx = sx / nn, my = sy / nn, cxx = sxx / nn - mx * mx, cyy = syy / nn - my * my, cxy = sxy / nn - mx * my, th = 0.5 * Math.atan2(2 * cxy, cxx - cyy);
+          best = { c: p0, u: [Math.cos(th), Math.sin(th)], tags: {} }; src = 'axe déduit du LiDAR (MNS − MNT, ' + nn + ' pixels surélevés)';
+        } else { best = { c: p0, u: [1, 0], tags: {} }; src = 'axe inconnu : est-ouest par défaut'; }
+      }
+      {
+        function prof(ux, uy, hl){
+          var P = { s: [], mnt: [], mns: [] };
+          for (var s = -hl; s <= hl; s += 2) { var x = best.c[0] + ux * s * k, y = best.c[1] + uy * s * k; P.s.push(s); P.mnt.push(samp(dem[0], x, y)); P.mns.push(samp(dem[1], x, y)); }
+          return P;
+        }
+        var ux = best.u[0], uy = best.u[1], PL = prof(ux, uy, Lh), PT = prof(-uy, ux, T);
+        var hd = ltb / 2, deck = med(PL.s.map(function(s, i){ return Math.abs(s) <= Math.max(3, hd / 3) ? PL.mns[i] : null; }));
+        var below = Math.min.apply(null, PT.s.map(function(s, i){ return Math.abs(s) >= lht / 2 + 3 && Math.abs(s) <= lht / 2 + 20 && PT.mnt[i] != null ? PT.mnt[i] : Infinity; }));
+        var hl = row[ci.hmin];
+        var S = { structure: { num: row[ci.num], route: row[ci.route], obstacle: row[ci.obstacle], type: (D.types[row[ci.type]] || [])[0], annee: row[ci.annee], ltb: ltb, icg: row[ci.icg], lat: lat, lon: lon, hlibre: hl },
+          mesures: { tablier_m: deck, dessous_m: below, hauteur_sous_tablier_m: deck - below, epaisseur_tablier_estimee_m: hl ? deck - below - hl : null,
+            denivele_franchissement_m: Math.min(max(PL.mnt.slice(0, PL.mnt.length / 2 | 0)), max(PL.mnt.slice(PL.mnt.length / 2 | 0))) - Math.min(below, min(PL.mnt)) },
+          pas_m: dem[0].sx / k, centre: unmerc(best.c[0], best.c[1]), long: PL, travers: PT,
+          lignes: { long: [unmerc(best.c[0] - ux * Lh * k, best.c[1] - uy * Lh * k), unmerc(best.c[0] + ux * Lh * k, best.c[1] + uy * Lh * k)],
+            travers: [unmerc(best.c[0] + uy * T * k, best.c[1] - ux * T * k), unmerc(best.c[0] - uy * T * k, best.c[1] + ux * T * k)] } };
+        $('#live-out').innerHTML = '';
+        renderSite($('#live-out'), S, 0, 'Calculé en ' + nf1.format((performance.now() - t0) / 1000) + ' s dans le navigateur (' + esc(src) + ').' +
+          (hl ? ' Hauteur libre MTMD ' + nf2.format(hl) + ' m → tablier + chaussée ≈ <b>' + nf1.format(deck - below - hl) + ' m</b>.' : ''));
+        st.textContent = '';
+      }
+    }).catch(function(e){ st.textContent = 'Échec : ' + e.message; });
+  }
+  function med(v){ v = v.filter(function(x){ return x != null; }).sort(function(a, b){ return a - b; }); return v.length ? v[v.length >> 1] : null; }
+  function max(v){ return Math.max.apply(null, v.filter(function(x){ return x != null; })); }
+  function min(v){ return Math.min.apply(null, v.filter(function(x){ return x != null; })); }
+})();
+</script>
+</body>
+</html>

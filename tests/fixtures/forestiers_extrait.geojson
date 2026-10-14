@@ -1,0 +1,208 @@
+{
+"type": "FeatureCollection",
+"features": [
+{
+"type": "Feature",
+"id": 8878,
+"geometry": {
+"type": "Point",
+"coordinates": [
+-71.753424,
+48.8236
+]
+},
+"properties": {
+"Version": "AQ20260701",
+"Source": "DGIG",
+"Dossi_Pont": "H024-025",
+"Cap_Port": "50-90-120",
+"Stat_Pont": "O",
+"OBJECTID": 8878
+}
+},
+{
+"type": "Feature",
+"id": 8882,
+"geometry": {
+"type": "Point",
+"coordinates": [
+-70.402002,
+47.89412
+]
+},
+"properties": {
+"Version": "AQ20260701",
+"Source": "Sépaq",
+"Dossi_Pont": "H033-090",
+"Cap_Port": "24-38-34",
+"Stat_Pont": "O",
+"OBJECTID": 8882
+}
+},
+{
+"type": "Feature",
+"id": 9460,
+"geometry": {
+"type": "Point",
+"coordinates": [
+-69.82536,
+48.108991
+]
+},
+"properties": {
+"Version": "AQ20260701",
+"Source": "ROUTARD",
+"Dossi_Pont": "H033-204",
+"Cap_Port": "--",
+"Stat_Pont": "O",
+"OBJECTID": 9460
+}
+},
+{
+"type": "Feature",
+"id": 10479,
+"geometry": {
+"type": "Point",
+"coordinates": [
+-73.969285,
+46.798334
+]
+},
+"properties": {
+"Version": "AQ20260701",
+"Source": "AQ",
+"Dossi_Pont": "5133058",
+"Cap_Port": "INC",
+"Stat_Pont": "O",
+"OBJECTID": 10479
+}
+},
+{
+"type": "Feature",
+"id": 10522,
+"geometry": {
+"type": "Point",
+"coordinates": [
+-73.956057,
+45.402731
+]
+},
+"properties": {
+"Version": "AQ20260701",
+"Source": "AQ",
+"Dossi_Pont": null,
+"Cap_Port": "INC",
+"Stat_Pont": "O",
+"OBJECTID": 10522
+}
+},
+{
+"type": "Feature",
+"id": 2182,
+"geometry": {
+"type": "Point",
+"coordinates": [
+-75.892425,
+51.688158
+]
+},
+"properties": {
+"Version": "AQ20260701",
+"Source": "AQ_FO",
+"Dossi_Pont": "H999-024",
+"Cap_Port": "30-48-60",
+"Stat_Pont": "INC",
+"OBJECTID": 2182
+}
+},
+{
+"type": "Feature",
+"id": 2111,
+"geometry": {
+"type": "Point",
+"coordinates": [
+-69.864238,
+49.143652
+]
+},
+"properties": {
+"Version": "AQ20260701",
+"Source": "ROUTARD",
+"Dossi_Pont": "R0952-13",
+"Cap_Port": "5-5-5",
+"Stat_Pont": "INC",
+"OBJECTID": 2111
+}
+},
+{
+"type": "Feature",
+"id": 1110,
+"geometry": {
+"type": "Point",
+"coordinates": [
+-68.431512,
+47.529342
+]
+},
+"properties": {
+"Version": "AQ20260701",
+"Source": "ROUTARD",
+"Dossi_Pont": "H011-163",
+"Cap_Port": "0-0-0",
+"Stat_Pont": "F",
+"OBJECTID": 1110
+}
+},
+{
+"type": "Feature",
+"id": 1114,
+"geometry": {
+"type": "Point",
+"coordinates": [
+-67.11384,
+48.913961
+]
+},
+"properties": {
+"Version": "AQ20260701",
+"Source": "BDTQ",
+"Dossi_Pont": "H012-186",
+"Cap_Port": "0-0-0-0",
+"Stat_Pont": "F",
+"OBJECTID": 1114
+}
+},
+{
+"type": "Feature",
+"id": 9001,
+"geometry": null,
+"properties": {
+"Version": "AQ20260701",
+"Source": "AQ",
+"Dossi_Pont": "X1",
+"Cap_Port": "INC",
+"Stat_Pont": "O",
+"OBJECTID": 9001
+}
+},
+{
+"type": "Feature",
+"id": 9002,
+"geometry": {
+"type": "Point",
+"coordinates": [
+-71.5,
+47.25
+]
+},
+"properties": {
+"Version": "AQ20260701",
+"Source": "ROUTARD",
+"Dossi_Pont": "  H000-001 ",
+"Cap_Port": " 30-50-60 ",
+"Stat_Pont": "?",
+"OBJECTID": 9002
+}
+}
+]
+}

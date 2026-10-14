@@ -1,0 +1,46 @@
+{
+ "value": [
+  {
+   "Id": "200031AE",
+   "Dossier": "00734",
+   "Point": "A",
+   "Direction": "Est",
+   "Gauche": null,
+   "CentreGauche": null,
+   "Centre": null,
+   "CentreDroit": null,
+   "Droite": 4.76,
+   "Remarques": "",
+   "Date": "2018-07-25",
+   "Cle": "200031AE"
+  },
+  {
+   "Id": "200031AO",
+   "Dossier": "00734",
+   "Point": "A",
+   "Direction": "Ouest",
+   "Gauche": null,
+   "CentreGauche": null,
+   "Centre": null,
+   "CentreDroit": null,
+   "Droite": 4.79,
+   "Remarques": "",
+   "Date": "2018-07-25",
+   "Cle": "200031AO"
+  },
+  {
+   "Id": "202001BS",
+   "Dossier": "09710",
+   "Point": "B",
+   "Direction": "Sud",
+   "Gauche": 5.42,
+   "CentreGauche": 5.37,
+   "Centre": null,
+   "CentreDroit": 5.34,
+   "Droite": 5.34,
+   "Remarques": "",
+   "Date": "2016-06-21",
+   "Cle": "202001BS"
+  }
+ ]
+}

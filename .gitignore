@@ -1,0 +1,14 @@
+__pycache__/
+.pytest_cache/
+data/raw/
+data/*.sqlite
+# Références locales (logiciel tiers, documents du MTMD) : non publiées
+Doc_ref/
+QuickerBridge-*.html
+.claude/settings.local.json
+.pytest_tmp/
+# Prototype LiDAR : GeoTIFF et réponses Overpass mis en cache
+prototypes/lidar/cache/
+
+# Serveur local de l’outil de critique (état machine)
+.impeccable/live/

@@ -1,0 +1,117 @@
+{
+ "type": "FeatureCollection",
+ "name": "extrait",
+ "crs": {
+  "type": "name",
+  "properties": {
+   "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+  }
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "No structure": "81-01102",
+    "IDE_STRCT": 6027781,
+    "Groupe": null,
+    "Statut": "Actif Ville de Montréal",
+    "Type structure": "Pont à  dalle pleine en béton armé",
+    "Charg. conception": "98-Autre",
+    "Affichage sur place": "Aucun affichage",
+    "Responsablilté de gestion": "Ville Montréal - Canadien National",
+    "Centre de services": "14 - Arrondissement Saint-Léonard",
+    "Role VM Inspection": "Inspection annuelle par la Ville de Montréal",
+    "Année de construction": 1969,
+    "Nom route": "Canadien National rail 1",
+    "Nom obstacle": "boulevard Lacordaire ",
+    "ICG": null,
+    "Catégorie ICG": null,
+    "Date Insp. Générale Fermee": null,
+    "Superficie du tablier": 451,
+    "Superficie du mur": null,
+    "Longitude": -73.614609366196,
+    "Latitude": 45.6016502528907,
+    "X": 295859.3808,
+    "Y": 5051311.584,
+    "lien_vers_rapport": "Non disponible"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -73.614609366196,
+     45.6016502528907
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "No structure": "81-01201B",
+    "IDE_STRCT": 6041601,
+    "Groupe": null,
+    "Statut": "Actif Ville de Montréal",
+    "Type structure": "Mur",
+    "Charg. conception": null,
+    "Affichage sur place": null,
+    "Responsablilté de gestion": "Ville de Montréal",
+    "Centre de services": "09 - Arrondissement Anjou",
+    "Role VM Inspection": "Inspections annuelle et générale par la Ville Montréal",
+    "Année de construction": 1974,
+    "Nom route": "Avenue Bourget, côté Est ",
+    "Nom obstacle": null,
+    "ICG": 98.42,
+    "Catégorie ICG": 4,
+    "Date Insp. Générale Fermee": "2019-07-03",
+    "Superficie du tablier": null,
+    "Superficie du mur": 177,
+    "Longitude": -73.5492167607784,
+    "Latitude": 45.6258611710468,
+    "X": 300962.2768,
+    "Y": 5053996.997,
+    "lien_vers_rapport": "https://depot.ville.montreal.qc.ca/pontsettunnels/2019/81-01201B_inspection_generale_web.pdf"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -73.5492167607784,
+     45.6258611710468
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "properties": {
+    "No structure": "81-01103A",
+    "IDE_STRCT": 6005961,
+    "Groupe": "P.I. Langelier / Aut. 40",
+    "Statut": "Actif Ville de Montréal",
+    "Type structure": "Pont à  dalle évidée en béton armé",
+    "Charg. conception": "99-Inconnu",
+    "Affichage sur place": "Aucun affichage",
+    "Responsablilté de gestion": "Ville de Montréal",
+    "Centre de services": "14 - Arrondissement Saint-Léonard",
+    "Role VM Inspection": "Inspections annuelle et générale par la Ville Montréal",
+    "Année de construction": 1964,
+    "Nom route": "Boulevard Métropolitain Est, dir. Est",
+    "Nom obstacle": "boulevard Langelier, dir. Nord",
+    "ICG": 99.97,
+    "Catégorie ICG": 4,
+    "Date Insp. Générale Fermee": "2019-10-22",
+    "Superficie du tablier": 687,
+    "Superficie du mur": null,
+    "Longitude": -73.5780812405499,
+    "Latitude": 45.5933614433059,
+    "X": 298708.0246,
+    "Y": 5050387.006,
+    "lien_vers_rapport": "https://depot.ville.montreal.qc.ca/pontsettunnels/2019/81-01103A_inspection_generale_web.pdf"
+   },
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -73.5780812405499,
+     45.5933614433059
+    ]
+   }
+  }
+ ]
+}

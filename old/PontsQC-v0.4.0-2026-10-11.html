@@ -1,0 +1,1243 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ponts QC v0.4.0 · Inventaire des structures</title>
+<meta name="description" content="Carte de l'inventaire des structures (ponts, ponceaux, murs, tunnels) du ministère des Transports et de la Mobilité durable du Québec.">
+<meta name="theme-color" content="#102d41">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23102d41'/%3E%3Ctext x='12' y='47' font-size='48' fill='%2356e0bb' font-family='sans-serif'%3EP%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+<style>
+/* Tokens repris de QuickerBridge pour que les deux applications forment une même suite */
+:root{--navy:#102d41;--ink:#17374b;--muted:#566e7c;--focus:#007f78;--line:#dce5eb;--paper:#fff;--bg:#f0f4f7;--teal:#007f78;--mint:#d9f5eb;--amber:#b66c16;--shadow:0 2px 7px #15354a08;--topbar-h:78px;font-family:"Segoe UI",Arial,sans-serif;color:var(--ink);font-size:16px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg)}
+button,input,select{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:6px;padding:7px 12px;font-size:.875rem;font-weight:600;transition:background .15s}
+button:hover:not(:disabled){background:#eef5f7}
+input,select{width:100%;min-height:36px;border:1px solid #cbd8e1;border-radius:5px;background:#fff;color:var(--ink);padding:6px 8px;font-size:.875rem;font-variant-numeric:tabular-nums}
+input[type=checkbox]{width:17px;min-height:17px;accent-color:var(--teal)}
+label{font-size:.875rem}
+
+/* Barre du haut */
+.topbar{height:var(--topbar-h);background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 28px}
+.brand{display:flex;align-items:center;gap:12px;font-size:1.48rem;font-weight:650;letter-spacing:-.6px}
+.brand>div>span{font-weight:350;color:#9cdfcf}
+.brand small{display:block;font-weight:500;letter-spacing:1.8px;font-size:.625rem;color:#92adbc;margin-top:4px;text-transform:uppercase}
+.brand-mark{color:#73e4c2;font-weight:800;font-size:2.5rem;line-height:1}
+.header-right{display:flex;gap:24px;align-items:center}
+.release-info{display:flex;flex-direction:column;gap:4px;font-size:.8rem;text-align:right;color:#ecf6f5}.release-info small{font-size:.75rem;color:#b5cbd6}
+
+/* Espace de travail */
+.workspace{display:grid;grid-template-columns:340px minmax(0,1fr);gap:22px;max-width:1780px;margin:0 auto;padding:22px 28px;height:calc(100vh - var(--topbar-h))}
+.inputs{align-self:start;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);max-height:100%;display:flex;flex-direction:column;min-height:0}
+.panel-heading{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 12px}
+.panel-heading h1{font-size:1.25rem;letter-spacing:-.005em;margin:0}
+.text-button{border:0;padding:4px 0;background:none;color:var(--muted);font-size:.75rem}
+.collapse-inputs{display:none;font-size:1.25rem;padding:0 12px}
+#input-content{padding:0 18px 18px;overflow:auto;scrollbar-width:thin}
+.inputs.collapsed #input-content,.inputs.collapsed .input-footer{display:none}
+.input-footer{border-top:1px solid var(--line);color:var(--muted);font-size:.75rem;padding:12px 18px}
+.input-footer button{width:100%}
+
+.input-group{margin:0 0 10px;border:1px solid var(--line);border-radius:9px;background:#fff;overflow:hidden}
+.input-group>summary{display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;list-style:none;background:#f3f7f9;user-select:none}
+.input-group>summary::-webkit-details-marker{display:none}
+.input-group>summary::before{content:"";flex:none;width:7px;height:7px;border-right:2px solid #5d7d8c;border-bottom:2px solid #5d7d8c;transform:rotate(-45deg);transition:transform .15s;margin-right:2px}
+.input-group[open]>summary::before{transform:rotate(45deg)}
+.input-group>summary:hover{background:#e8f0f4}
+.input-group[open]>summary{border-bottom:1px solid var(--line)}
+.group-title{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.group-body{padding:12px}
+.field{display:block;margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field>span{display:block;margin-bottom:6px;color:var(--muted);font-size:.8125rem}
+.check{display:flex;align-items:center;gap:8px;margin-bottom:0}
+.check span{margin:0;color:var(--ink);font-size:.875rem}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.field-row .field{margin-bottom:0}
+
+/* Contrôle segmenté */
+.segmented{display:flex;flex-wrap:wrap;gap:4px;padding:3px;background:#f3f7f9;border:1px solid var(--line);border-radius:8px}
+.segmented button{flex:1 1 auto;border:0;background:none;color:var(--muted);padding:6px 8px;font-size:.8125rem;border-radius:5px}
+.segmented button:hover:not(.active){background:#e8f0f4}
+.segmented button.active{background:#fff;color:var(--teal);box-shadow:0 1px 3px #15354a22}
+
+/* Colonne principale */
+.main{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+.view-tabs{display:flex;gap:20px;border-bottom:1px solid var(--line);flex:none}
+.view-tabs button{border:0;border-radius:0;background:none;padding:8px 1px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.view-tabs button:hover:not(.active){background:none;color:var(--ink)}
+.view-tabs button.active{color:var(--teal);border-bottom-color:var(--teal)}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.metric{background:#fff;padding:12px 15px;min-width:0;text-align:left}
+.metric-label{font-size:.6875rem;letter-spacing:.8px;font-weight:600;text-transform:uppercase;color:var(--muted)}
+.metric-value{display:flex;gap:7px;align-items:baseline;margin-top:4px;font-size:1.48rem;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.6px}
+.metric-value small{font-size:.75rem;font-weight:400;letter-spacing:0;color:var(--muted)}
+.metric:nth-child(1) .metric-value{color:var(--teal)}
+.metric:nth-child(2) .metric-value{color:var(--amber)}
+.view[hidden]{display:none!important}
+
+.map-wrap{position:relative;flex:1;min-height:320px;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;background:#dfe8ed}
+#map{position:absolute;inset:0;font-family:inherit}
+.notice{position:absolute;top:12px;right:12px;z-index:1000;max-width:min(340px,calc(100% - 70px));display:flex;gap:10px;align-items:flex-start;background:#fff6e5;color:#7a4b00;border:1px solid #efcf8f;border-radius:6px;padding:8px 10px;font-size:.8125rem;line-height:1.5;box-shadow:0 2px 8px #15354a22}
+.notice[hidden]{display:none}
+.notice code{font-family:Consolas,monospace;font-size:.78rem;background:#fff;border:1px solid #efcf8f;border-radius:3px;padding:0 4px;white-space:nowrap}
+.notice button{border:0;background:none;padding:0 4px;font-size:1.1rem;line-height:1;color:#7a4b00;min-height:24px}
+.leaflet-container{font-family:inherit}
+.map-empty{position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:1000;background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 14px;font-size:.8125rem;color:var(--muted);box-shadow:0 2px 8px #15354a22}
+.map-empty[hidden]{display:none}
+.legend{background:#fffffff2;border:1px solid var(--line);border-radius:8px;box-shadow:0 2px 8px #15354a22;padding:8px 10px;font-size:.75rem;line-height:1.55;color:var(--ink)}
+.legend b{display:block;cursor:pointer;font-size:.6875rem;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:7px;vertical-align:-1px;border:1px solid #ffffffcc;box-shadow:0 0 0 1px #15354a22}
+.legend i.closed{background:#fff;border:2px solid #0b1c28;width:11px;height:11px;box-shadow:none}
+.legend div{white-space:nowrap}
+.legend.collapsed div{display:none}
+.legend.collapsed b{margin-bottom:0}
+.leaflet-tooltip{font-family:"Segoe UI",Arial,sans-serif;font-size:.78rem;color:var(--ink);border-color:var(--line)}
+
+/* Icônes de types */
+.ico{display:block;flex:none}
+
+/* Fiche détaillée */
+.drawer{position:absolute;top:0;right:0;bottom:0;width:380px;max-width:100%;z-index:1100;background:#fff;border-left:1px solid var(--line);box-shadow:-8px 0 28px #102d4122;display:flex;flex-direction:column;transform:translateX(102%);visibility:hidden;transition:transform .2s ease,visibility 0s linear .2s}
+.drawer.open{transform:none;visibility:visible;transition-delay:0s}
+.dr-head{display:flex;gap:12px;align-items:flex-start;padding:14px 12px 12px 14px;border-bottom:1px solid var(--line);background:#f3f7f9;flex:none}
+.dr-ico{flex:none;width:48px;height:48px;border-radius:10px;background:#fff;border:1px solid var(--line);color:var(--teal);display:grid;place-items:center}
+.dr-title{min-width:0;flex:1}
+.dr-title h2{margin:0;font-size:1.02rem;font-weight:650;letter-spacing:-.2px;line-height:1.3;overflow-wrap:anywhere}
+.dr-num{font-size:.75rem;color:var(--muted);margin-top:2px}
+.dr-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:999px;font-size:.75rem;font-weight:600;border:1px solid var(--line);background:#fff;line-height:1.5}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none;box-shadow:0 0 0 1px #15354a33}
+.dr-close{flex:none;border:0;background:none;font-size:1.4rem;line-height:1;padding:2px 8px;color:var(--muted);min-height:32px}
+.dr-body{overflow:auto;flex:1;padding:0 14px 18px;scrollbar-width:thin}
+.dr-photo{display:block;margin:12px -14px 0;border-bottom:1px solid var(--line);background:#e7eef2;position:relative}
+.dr-photo[hidden]{display:none}
+.dr-photo img{display:block;width:100%;height:200px;object-fit:cover}
+.dr-photo figcaption{position:absolute;right:8px;bottom:8px;background:#102d41cc;color:#fff;font-size:.6875rem;padding:2px 7px;border-radius:4px}
+.dr-sec h3{margin:16px 0 6px;font-size:.6875rem;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding-bottom:4px}
+.dr-grid{display:grid;grid-template-columns:minmax(90px,auto) minmax(0,1fr);gap:5px 12px;margin:0;font-size:.8125rem}
+.dr-grid dt{color:var(--muted)}
+.dr-grid dd{margin:0;overflow-wrap:anywhere}
+.dr-act{margin-top:8px}
+.dr-act button,.dr-links a{font-size:.8125rem}
+.dr-links{display:flex;flex-wrap:wrap;gap:8px}
+.dr-links a{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:7px 12px;font-weight:600;color:var(--teal);text-decoration:none;background:#fff}
+.dr-links a:hover{background:#eef5f7}
+
+/* Infobulle des graphiques */
+#tip{position:fixed;z-index:3000;pointer-events:none;background:#fff;border:1px solid var(--line);border-radius:6px;padding:6px 10px;box-shadow:0 4px 14px #102d4130;font-size:.75rem;color:var(--muted);max-width:240px}
+#tip[hidden]{display:none}
+#tip .tip-v{font-size:.9rem;font-weight:650;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* Vue Statistiques */
+.stats{overflow:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:14px;scrollbar-width:thin}
+.stats[hidden]{display:none}
+.stats .metrics{margin:0}
+.stats-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:14px 16px;min-width:0}
+.card h2{margin:0 0 2px;font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.card .sub{font-size:.75rem;color:var(--muted);margin:0 0 12px}
+.card.wide{grid-column:1/-1}
+.sbar{display:flex;gap:2px;height:22px}
+.sbar>span{display:block;min-width:2px}
+.sbar>span:first-child{border-radius:4px 0 0 4px}
+.sbar>span:last-child{border-radius:0 4px 4px 0}
+.sbar>span:only-child{border-radius:4px}
+.lg{display:grid;grid-template-columns:12px minmax(0,1fr) auto auto;gap:5px 10px;align-items:center;margin-top:12px;font-size:.8125rem}
+.lg .n{font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+.lg .p{font-variant-numeric:tabular-nums;color:var(--muted);text-align:right;min-width:48px}
+.key{display:flex;gap:14px;flex-wrap:wrap;font-size:.75rem;color:var(--muted);margin-bottom:8px}
+.key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.hist{position:relative;height:190px;margin:14px 0 0 34px}
+.hist .gl{position:absolute;left:0;right:0;border-top:1px solid var(--line)}
+.hist .gl span{position:absolute;left:-36px;top:-8px;width:30px;text-align:right;font-size:.6875rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.hcols{position:absolute;inset:0;display:flex;gap:4px}
+.hcol{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.hcol:hover .hbar,.hcol:focus-visible .hbar{filter:brightness(1.12)}
+.hbar{position:relative;width:100%;max-width:24px;display:flex;flex-direction:column;gap:2px}
+.hbar>span{display:block;min-height:1px}
+.hbar>span:first-child{border-radius:4px 4px 0 0}
+.hbar .hv{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);padding-bottom:2px;font-size:.6875rem;font-weight:600;color:var(--ink);background:none;border-radius:0;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hx{display:flex;gap:4px;margin:6px 0 0 34px}
+.hx span{flex:1;min-width:0;text-align:center;font-size:.6875rem;color:var(--muted);white-space:nowrap}
+details.tbl-twin{margin-top:12px;font-size:.8125rem}
+details.tbl-twin summary{cursor:pointer;color:var(--teal);font-weight:600}
+.trow{display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:3px 10px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:.8125rem}
+.trow:first-of-type{border-top:0}
+.trow .ti{grid-row:1/3;color:var(--teal)}
+.trow .tl{overflow-wrap:anywhere}
+.trow .tn{font-weight:650;font-variant-numeric:tabular-nums;text-align:right}
+.trow .tb{height:6px;border-radius:0 3px 3px 0;background:var(--teal);min-width:2px}
+.trow .tm{font-size:.75rem;color:var(--muted);text-align:right;white-space:nowrap}
+.tscroll{overflow:auto}
+table.tbl{width:100%;border-collapse:collapse;font-size:.8125rem}
+.tbl th{padding:8px 10px;text-align:right;font-size:.6875rem;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.tbl tfoot td{font-weight:650;border-bottom:0}
+.empty{padding:28px;text-align:center;color:var(--muted);font-size:.875rem}
+
+/* Vue Liste */
+.listview{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px}
+.listview[hidden]{display:none}
+.list-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;flex:none}
+.list-bar .cnt{font-size:.8125rem;color:var(--muted)}
+.tablewrap{flex:1;min-height:0;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+table.list{min-width:980px}
+table.list thead th{position:sticky;top:0;background:#f3f7f9;z-index:1;padding:0;text-align:left}
+.th-btn{display:flex;align-items:center;gap:4px;width:100%;border:0;border-radius:0;background:none;padding:9px 10px;font-size:.6875rem;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:left;white-space:nowrap}
+.th-btn:hover:not(:disabled){background:#e8f0f4}
+th[aria-sort] .th-btn{color:var(--teal)}
+th[aria-sort=ascending] .th-btn::after{content:"▲";font-size:.6rem}
+th[aria-sort=descending] .th-btn::after{content:"▼";font-size:.6rem}
+table.list td{text-align:left;vertical-align:middle}
+table.list td.num,table.list th.num .th-btn{justify-content:flex-start}
+table.list td.r{text-align:right}
+table.list tbody tr{cursor:pointer}
+table.list tbody tr:hover{background:#eef5f7}
+.tcell{display:flex;align-items:center;gap:8px;color:var(--ink)}
+.tcell .ico{color:var(--teal)}
+.more{padding:12px;text-align:center}
+
+@media(min-width:1500px){.workspace{grid-template-columns:365px minmax(0,1fr)}.metric-value{font-size:1.7rem}}
+@media(max-width:1100px){.workspace{grid-template-columns:300px minmax(0,1fr);gap:14px;padding:18px}.metric{padding:10px}.metric-value{font-size:1.2rem}.topbar{padding:0 20px}.stats-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:800px){
+  :root{--topbar-h:70px}
+  .workspace{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);padding:14px;gap:14px;height:auto;min-height:calc(100vh - var(--topbar-h))}
+  .inputs{max-height:340px}
+  .topbar{padding:0 16px}
+  .brand{font-size:1.25rem}
+  .collapse-inputs{display:inline-block}
+  .metrics{grid-template-columns:repeat(4,1fr)}
+  .metric-label{letter-spacing:.4px}
+  .metric-value{font-size:1.2rem}
+  .map-wrap{min-height:62vh}
+  .stats{overflow:visible}
+  .listview{min-height:60vh}
+  .tablewrap{max-height:70vh}
+  .drawer{top:auto;left:0;right:0;bottom:0;width:100%;max-height:72%;border-left:0;border-top:1px solid var(--line);border-radius:14px 14px 0 0;box-shadow:0 -8px 28px #102d4122;transform:translateY(102%)}
+  .drawer.open{transform:none}
+  .dr-photo img{height:150px}
+}
+@media(max-width:500px){
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .metric-value{font-size:1.4rem}
+  .release-info{font-size:.65rem}.release-info small{font-size:.6rem}
+  .brand small{font-size:.5rem;letter-spacing:1px}
+  .legend{font-size:.6875rem;padding:6px 8px}
+  .hx span:nth-child(even){visibility:hidden}
+  .hist{margin-left:28px}.hx{margin-left:28px}
+  .hist .gl span{left:-30px;width:24px}
+}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">P</div>
+    <div>Ponts <span>QC</span><small>Inventaire des structures du MTMD</small></div>
+  </div>
+  <div class="header-right">
+    <div class="release-info"><b id="release-version"></b><small id="release-date"></small></div>
+  </div>
+</header>
+
+<div class="workspace">
+  <aside class="inputs" id="inputs" aria-label="Filtres">
+    <div class="panel-heading">
+      <h1>Filtres</h1>
+      <button type="button" class="text-button collapse-inputs" id="collapse-inputs" aria-expanded="true" aria-controls="input-content" aria-label="Réduire ou développer les filtres">−</button>
+    </div>
+    <div id="input-content">
+      <details class="input-group" open>
+        <summary><span class="group-title">Recherche</span></summary>
+        <div class="group-body">
+          <label class="field"><span>Texte libre</span>
+            <input type="search" id="q" aria-label="Recherche" placeholder="Rechercher (nom, route, obstacle, municipalité)…" autocomplete="off">
+          </label>
+        </div>
+      </details>
+
+      <details class="input-group" open>
+        <summary><span class="group-title">Type de structure</span></summary>
+        <div class="group-body">
+          <div class="segmented" id="famille" role="group" aria-label="Famille de structures">
+            <button type="button" class="active" data-famille="pont" aria-pressed="true">Pont</button>
+            <button type="button" data-famille="ponceau" aria-pressed="false">Ponceau</button>
+            <button type="button" data-famille="mur" aria-pressed="false">Mur</button>
+            <button type="button" data-famille="tunnel" aria-pressed="false">Tunnel</button>
+            <button type="button" data-famille="tous" aria-pressed="false">Tous</button>
+          </div>
+          <label class="field" style="margin-top:12px"><span>Type précis</span>
+            <select id="type"><option value="">Tous les types</option></select>
+          </label>
+          <label class="field check" style="margin-top:12px"><input type="checkbox" id="hors-public"><span>Inclure les structures hors inventaire public</span></label>
+        </div>
+      </details>
+
+      <details class="input-group" open>
+        <summary><span class="group-title">Localisation et réseau</span></summary>
+        <div class="group-body">
+          <label class="field"><span>Région administrative</span>
+            <select id="region"><option value="">Toutes</option></select>
+          </label>
+          <label class="field"><span>Réseau</span>
+            <select id="reseau">
+              <option value="">Tous</option>
+              <option value="superieur">Supérieur</option>
+              <option value="municipal">Municipal</option>
+            </select>
+          </label>
+        </div>
+      </details>
+
+      <details class="input-group" open>
+        <summary><span class="group-title">État et caractéristiques</span></summary>
+        <div class="group-body">
+          <label class="field"><span>ICG</span>
+            <select id="icg">
+              <option value="">Tous</option>
+              <option value="4">4 — Aucune intervention</option>
+              <option value="3">3 — Réparations</option>
+              <option value="2">2 — Travaux majeurs</option>
+              <option value="1">1 — Travaux majeurs / remplacement</option>
+              <option value="AC">AC — Analyse en cours</option>
+              <option value="SO">S. O.</option>
+            </select>
+          </label>
+          <label class="field"><span>IAS</span>
+            <select id="ias">
+              <option value="">Tous</option>
+              <option value="vert">Aucune restriction</option>
+              <option value="jaune">Certaines restrictions</option>
+              <option value="rouge">Fermée</option>
+              <option value="SO">S. O.</option>
+            </select>
+          </label>
+          <div class="field-row">
+            <label class="field"><span>Construite dès</span>
+              <input type="number" id="annee-min" min="1800" max="2100" step="1" inputmode="numeric" placeholder="ex. 1950">
+            </label>
+            <label class="field"><span>Construite avant</span>
+              <input type="number" id="annee-max" min="1800" max="2100" step="1" inputmode="numeric" placeholder="ex. 1975">
+            </label>
+          </div>
+          <label class="field"><span>Longueur min. (m)</span>
+            <input type="number" id="long-min" min="0" step="1" inputmode="decimal" placeholder="ex. 20">
+          </label>
+          <label class="field"><span>Hauteur libre inférieure à (m)</span>
+            <input type="number" id="hauteur-max" min="0" step="0.1" inputmode="decimal" placeholder="ex. 4,2">
+          </label>
+          <label class="field check"><input type="checkbox" id="lim-poids"><span>Limitation de poids</span></label>
+        </div>
+      </details>
+    </div>
+    <div class="input-footer"><button type="button" id="reset-filtres">Réinitialiser les filtres</button></div>
+  </aside>
+
+  <main class="main">
+    <nav class="view-tabs" id="view-tabs" aria-label="Vues">
+      <button type="button" class="active" data-view="carte" aria-current="page">Carte</button>
+      <button type="button" data-view="stats">Statistiques</button>
+      <button type="button" data-view="liste">Liste</button>
+    </nav>
+    <section class="metrics" aria-label="Indicateurs">
+      <div class="metric"><div class="metric-label">Structures</div><div class="metric-value" id="m-count">—</div></div>
+      <div class="metric"><div class="metric-label">ICG 1–2</div><div class="metric-value" id="m-icg-bad">—</div></div>
+      <div class="metric"><div class="metric-label">Fermées</div><div class="metric-value" id="m-fermees">—</div></div>
+      <div class="metric"><div class="metric-label">Âge moyen</div><div class="metric-value" id="m-age">—</div></div>
+    </section>
+
+    <div class="map-wrap view" id="view-carte">
+      <div id="map" role="application" aria-label="Carte des structures"></div>
+      <div class="map-empty" id="map-empty" role="status" hidden>Aucune structure ne correspond aux filtres.</div>
+      <div class="notice" id="notice" role="status" hidden>
+        <span>Données absentes — exécuter <code>python -m etl update</code></span>
+        <button type="button" id="notice-close" aria-label="Fermer l'avis">×</button>
+      </div>
+      <aside class="drawer" id="drawer" aria-label="Fiche de la structure" aria-hidden="true"></aside>
+    </div>
+
+    <div class="stats view" id="view-stats" hidden></div>
+
+    <div class="listview view" id="view-liste" hidden>
+      <div class="list-bar">
+        <span class="cnt" id="list-count" role="status"></span>
+        <button type="button" id="export-csv">Exporter CSV</button>
+      </div>
+      <div class="tablewrap">
+        <table class="tbl list" id="list-table">
+          <thead><tr id="list-head"></tr></thead>
+          <tbody id="list-body"></tbody>
+        </table>
+        <div class="more" id="list-more" hidden><button type="button" id="list-more-btn">Afficher 200 de plus</button></div>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="tip" role="tooltip" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="../data/structures.js"></script>
+<script src="../data/details.js"></script>
+<script>window.PQ_META={"version": "0.4.0", "date": "2026-10-11", "author": "Anthony Chéruel"};</script>
+<script>
+(function(){
+  'use strict';
+  var $ = function(s){ return document.querySelector(s); };
+  var nf = new Intl.NumberFormat('fr-CA');
+  var nf1 = new Intl.NumberFormat('fr-CA', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  var nf2 = new Intl.NumberFormat('fr-CA', { maximumFractionDigits: 2 });
+  var nf5 = new Intl.NumberFormat('fr-CA', { minimumFractionDigits: 5, maximumFractionDigits: 5 });
+  var collator = new Intl.Collator('fr', { numeric: true, sensitivity: 'base' });
+  var YEAR = new Date().getFullYear();
+  var isMobile = function(){ return window.innerWidth <= 800; };
+
+  // ---------- Carte ----------
+  var map = null, canvas = null, group = null;
+  if (window.L) {
+    // Zoom fractionnaire : un cran de molette ≈ un demi-niveau, les petits événements
+    // d'une même rotation sont regroupés (évite le zoom « en escalier »).
+    map = L.map('map', {
+      preferCanvas: true, center: [47.0, -71.5], zoom: 6, minZoom: 4, maxZoom: 18,
+      zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 120, wheelDebounceTime: 80
+    });
+    // Tuiles Esri : aucune clé ni en-tête Referer requis (OSM et CARTO refusent les pages file://)
+    var ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+    var esri = function(service, maxNative, attribution){
+      return L.tileLayer(ESRI + service + '/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: maxNative, maxZoom: 18, attribution: attribution });
+    };
+    var SRC_DATA = ' · Données : MTMD / <a href="https://www.donneesquebec.ca/">Données Québec</a> (CC-BY 4.0)';
+    var FONDS = {
+      'Plan': esri('World_Topo_Map', 18, 'Fond © Esri, HERE, Garmin, USGS, Ressources naturelles Canada' + SRC_DATA),
+      'Gris clair': L.layerGroup([
+        esri('Canvas/World_Light_Gray_Base', 16, 'Fond © Esri, HERE, Garmin' + SRC_DATA),
+        esri('Canvas/World_Light_Gray_Reference', 16, '')
+      ]),
+      'Satellite': L.layerGroup([
+        esri('World_Imagery', 18, 'Imagerie © Esri, Maxar, Earthstar Geographics' + SRC_DATA),
+        esri('Reference/World_Boundaries_and_Places', 18, '')
+      ])
+    };
+    var fondNom = 'Plan';
+    try { if (FONDS[localStorage.getItem('pq-fond')]) fondNom = localStorage.getItem('pq-fond'); } catch (e) { /* stockage indisponible */ }
+    FONDS[fondNom].addTo(map);
+    L.control.layers(FONDS, null, { position: 'topright', collapsed: true }).addTo(map);
+    map.on('baselayerchange', function(e){ try { localStorage.setItem('pq-fond', e.name); } catch (err) { /* idem */ } });
+    map.attributionControl.setPrefix(false);
+    canvas = L.canvas({ padding: 0.5 });
+    group = L.layerGroup().addTo(map);
+  } else {
+    $('#map').textContent = 'Impossible de charger la carte (Leaflet indisponible).';
+    $('#map').style.cssText += ';display:flex;align-items:center;justify-content:center;color:#566e7c';
+  }
+
+  // ---------- Interface (indépendante des données) ----------
+  $('#notice-close').addEventListener('click', function(){ $('#notice').hidden = true; });
+  $('#collapse-inputs').addEventListener('click', function(){
+    var collapsed = $('#inputs').classList.toggle('collapsed');
+    this.textContent = collapsed ? '+' : '−';
+    this.setAttribute('aria-expanded', String(!collapsed));
+  });
+  function setFamilleUI(val){
+    $('#famille').querySelectorAll('button').forEach(function(x){
+      var on = x.getAttribute('data-famille') === val;
+      x.classList.toggle('active', on);
+      x.setAttribute('aria-pressed', String(on));
+    });
+  }
+
+  var D = window.STRUCTURES;
+  var META = window.PQ_META || {};
+  $('#release-version').textContent = 'v' + META.version + ' · ' + META.author;
+  $('#release-date').textContent = 'Mise à jour : ' + META.date + ' · Données : ' + ((D && D.generated) || '—');
+  if (!D || !D.rows) { $('#notice').hidden = false; return; }
+
+  // ---------- Constantes ----------
+  var ICG_COLOR = { '4': '#1f9d7a', '3': '#e3b23c', '2': '#d9742b', '1': '#c93a2b', 'AC': '#5b7fa8', 'SO': '#9aa8b1' };
+  var ICG_LABEL = { '4': 'Aucune intervention', '3': 'Réparations', '2': 'Travaux majeurs', '1': 'Travaux majeurs / remplacement', 'AC': 'Analyse en cours', 'SO': 'S. O.' };
+  var ICG_ORDER = ['4', '3', '2', '1', 'AC', 'SO'];
+  var IAS_COLOR = { vert: '#1f9d7a', jaune: '#e3b23c', rouge: '#c93a2b', SO: '#9aa8b1' };
+  var IAS_LABEL = { vert: 'Aucune restriction', jaune: 'Certaines restrictions', rouge: 'Fermée', SO: 'S. O.' };
+  var IAS_ORDER = ['vert', 'jaune', 'rouge', 'SO'];
+  var FAM_LABEL = { pont: 'Pont', ponceau: 'Ponceau', mur: 'Mur', tunnel: 'Tunnel', station: 'Station de pompage' };
+  var OUTLINE = '#0b1c28';
+  var C_TEAL = '#007f78', C_BAD = '#d9742b';   // histogramme : ICG 1–2 (orange) vs autres (teal)
+
+  function icgKey(v){ return (v == null || !ICG_COLOR[v]) ? 'SO' : v; }
+  function iasKey(v){ return (v == null || !IAS_COLOR[v]) ? 'SO' : v; }
+  function norm(s){ return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pct(a, b){ return b ? nf1.format(100 * a / b) + ' %' : '—'; }
+
+  // ---------- Pictogrammes de types (élévation latérale, trait 1,6 / 24 px) ----------
+  var G = 'M2 21h20';
+  var ICONS = {
+    poutres:   '<rect x="2" y="6" width="20" height="3"/><path d="M5 9v4M10 9v4M14 9v4M19 9v4M7.5 13v8M16.5 13v8M2 21h20"/>',
+    acier:     '<rect x="2" y="4" width="20" height="2"/><path d="M4 8h4M6 8v4M4 12h4M10 8h4M12 8v4M10 12h4M16 8h4M18 8v4M16 12h4M6 12v9M18 12v9M2 21h20"/>',
+    acierbois: '<path d="M4 2v3M8 2v3M12 2v3M16 2v3M20 2v3M2 5h20M4 8h4M6 8v4M4 12h4M10 8h4M12 8v4M10 12h4M16 8h4M18 8v4M16 12h4M6 12v9M18 12v9M2 21h20"/>',
+    bois:      '<path d="M4 3v3M8 3v3M12 3v3M16 3v3M20 3v3M2 6h20M5 12.5v8.5M19 12.5v8.5M2 21h20"/><circle cx="5" cy="10.5" r="2"/><circle cx="12" cy="10.5" r="2"/><circle cx="19" cy="10.5" r="2"/>',
+    dalle:     '<rect x="2" y="8" width="20" height="5"/><path d="M7 13v8M17 13v8M2 21h20"/>',
+    portique:  '<path d="M3 21V7h18v14M7 21v-9h10v9M2 21h20"/>',
+    bequilles: '<rect x="2" y="6" width="20" height="3"/><path d="M6 9l3 12M18 9l-3 12M2 21h20"/>',
+    caisson:   '<rect x="2" y="5" width="20" height="2"/><path d="M5 7l2.5 7h9L19 7M12 14v7M2 21h20"/>',
+    arc:       '<path d="M2 8h20M2 21h20M4 21c0-8 3.5-12 8-12s8 4 8 12"/>',
+    treillis:  '<path d="M2 16h20M2 16l4-8 4 8 4-8 4 8 4-8M6 8h16M4 16v5M20 16v5M2 21h20"/>',
+    couvert:   '<path d="M2 21h20M3 11l9-7 9 7M5 11v10M19 11v10M9 21v-6h6v6"/>',
+    suspendu:  '<path d="M6 5v16M18 5v16M2 17h20M2 10l4-5M22 10l-4-5M6 5Q12 17 18 5M9 9.5V17M12 11V17M15 9.5V17M2 21h20"/>',
+    haubans:   '<path d="M12 3v18M2 17h20M12 6L3 17M12 6l9 11M12 9.5L6.5 17M12 9.5l5.5 7.5M2 21h20"/>',
+    mobile:    '<path d="M2 15h9M13 15l8-8M6 15v6M12 15v6M2 21h20"/>',
+    ponceauC:  '<path d="M2 21h20M3 21l3-12h12l3 12"/><circle cx="12" cy="16" r="4"/>',
+    ponceauR:  '<path d="M2 21h20M3 21l3-12h12l3 12"/><rect x="8.5" y="14" width="7" height="7"/>',
+    mur:       '<rect x="5" y="4" width="5" height="17"/><path d="M10 8h11M10 12h11M10 16h11M2 21h20"/>',
+    tunnel:    '<path d="M2 21h20M3 21v-8a9 9 0 0 1 18 0v8M7 21v-7a5 5 0 0 1 10 0v7"/>',
+    station:   '<path d="M2 21h20M4 21V10l8-6 8 6v11M12 12c-2 2.5-3 3.5-3 5a3 3 0 0 0 6 0c0-1.5-1-2.5-3-5z"/>',
+    generique: '<path d="M2 9h20M2 21h20M6 9v12M18 9v12M6 21c0-5 3-8 6-8s6 3 6 8"/>'
+  };
+  var TYPE_ICON = {};
+  function mapIcon(key, codes){ codes.forEach(function(c){ TYPE_ICON[c] = key; }); }
+  mapIcon('ponceauR', [11, 12, 13, 21]);
+  mapIcon('ponceauC', [14, 15, 16, 17, 18]);
+  mapIcon('arc', [19, 20]);
+  mapIcon('dalle', [31, 32, 33, 34]);
+  mapIcon('portique', [35, 36, 37, 47]);
+  mapIcon('bequilles', [38, 39, 50, 51]);
+  mapIcon('poutres', [41, 42, 43, 52]);
+  mapIcon('acier', [44]);
+  mapIcon('acierbois', [45]);
+  mapIcon('bois', [46, 66, 77]);
+  mapIcon('caisson', [56, 57, 58]);
+  mapIcon('treillis', [61, 62, 63, 64, 65, 71, 72, 73, 74, 75, 76]);
+  mapIcon('couvert', [67]);
+  mapIcon('suspendu', [81]);
+  mapIcon('haubans', [82]);
+  mapIcon('mobile', [85]);
+  mapIcon('tunnel', [94]);
+  mapIcon('mur', [97]);
+  mapIcon('station', [98]);
+  function icon(code, size){
+    var k = TYPE_ICON[code] || 'generique';
+    size = size || 24;
+    return '<svg class="ico" viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' + ICONS[k] + '</svg>';
+  }
+
+  // ---------- Décodage unique des lignes ----------
+  var ci = {};
+  D.cols.forEach(function(c, i){ ci[c] = i; });
+  var E = D.enums || {};
+  function en(name, v){ return (v == null || !E[name]) ? null : (E[name][v] == null ? null : E[name][v]); }
+  var data = new Array(D.rows.length), byNum = {};
+  D.rows.forEach(function(r, k){
+    var t = D.types[r[ci.type]];
+    var o = {
+      num: r[ci.num], nom: r[ci.nom], tc: r[ci.type] == null ? null : String(r[ci.type]), tl: t ? t[0] : null, fam: t ? t[1] : null,
+      reseau: en('reseau', r[ci.reseau]), region: en('region', r[ci.region]),
+      muncp: r[ci.muncp], route: r[ci.route], obstacle: r[ci.obstacle],
+      annee: r[ci.annee], voies: r[ci.voies], long: r[ci.long], larg: r[ci.larg],
+      lat: r[ci.lat], lon: r[ci.lon], icg: r[ci.icg], ias: r[ci.ias], travaux: r[ci.travaux],
+      rapport: r[ci.rapport], limH: r[ci.limH], limP: r[ci.limP], charge: en('charge', r[ci.charge]),
+      hmin: r[ci.hmin], ide: r[ci.ide], cs: r[ci.cs], pub: r[ci.public], m: null, on: false
+    };
+    for (var key in o) if (o[key] === undefined) o[key] = null;
+    o.s = norm([o.num, o.nom, o.route, o.obstacle, o.muncp, o.tl].filter(function(x){ return x != null; }).join(' | '));
+    data[k] = o;
+    if (o.num != null) byNum[o.num] = o;
+  });
+
+  // ---------- Filtres : valeurs par défaut, état, hash ----------
+  var DEFAULTS = { q: '', famille: 'pont', type: '', region: '', reseau: '', icg: '', ias: '', amin: '', amax: '', lmin: '', h: '', lp: false, hp: false };
+  var state = {}, view = 'carte', selNum = null;
+  function copyDefaults(){ for (var k in DEFAULTS) state[k] = DEFAULTS[k]; }
+  copyDefaults();
+
+  var regions = (E.region || []).slice().sort(function(a, b){ return a.localeCompare(b, 'fr'); });
+  var rsel = $('#region');
+  regions.forEach(function(r){ var o = document.createElement('option'); o.value = r; o.textContent = r; rsel.appendChild(o); });
+
+  var HASH_KEYS = { q: 'q', famille: 'f', type: 't', region: 'r', reseau: 'n', icg: 'icg', ias: 'ias', amin: 'a0', amax: 'a1', lmin: 'l', h: 'h', lp: 'p', hp: 'hp' };
+  function numOk(v){ return v != null && v !== '' && isFinite(parseFloat(v)); }
+  function stateToHash(){
+    var p = new URLSearchParams();
+    for (var k in HASH_KEYS) {
+      var v = state[k];
+      if (v === DEFAULTS[k]) continue;
+      p.set(HASH_KEYS[k], typeof v === 'boolean' ? '1' : v);
+    }
+    if (view !== 'carte') p.set('v', view);
+    if (selNum != null) p.set('s', selNum);
+    return p.toString();
+  }
+  function hashToState(){
+    copyDefaults();
+    var p = new URLSearchParams(location.hash.replace(/^#/, ''));
+    var get = function(k){ return p.get(HASH_KEYS[k]); };
+    if (get('q') != null) state.q = get('q');
+    if (['pont', 'ponceau', 'mur', 'tunnel', 'tous'].indexOf(get('famille')) >= 0) state.famille = get('famille');
+    if (get('type') != null && D.types[get('type')]) state.type = get('type');
+    if (get('region') != null && regions.indexOf(get('region')) >= 0) state.region = get('region');
+    if (['superieur', 'municipal'].indexOf(get('reseau')) >= 0) state.reseau = get('reseau');
+    if (get('icg') != null && ICG_COLOR[get('icg')]) state.icg = get('icg');
+    if (get('ias') != null && IAS_COLOR[get('ias')]) state.ias = get('ias');
+    ['amin', 'amax', 'lmin', 'h'].forEach(function(k){ if (numOk(get(k))) state[k] = get(k); });
+    state.lp = get('lp') === '1';
+    state.hp = get('hp') === '1';
+    var v = p.get('v');
+    view = (v === 'stats' || v === 'liste') ? v : 'carte';
+    selNum = p.get('s');
+  }
+  function stateToUI(){
+    $('#q').value = state.q;
+    setFamilleUI(state.famille);
+    buildTypeOptions();
+    $('#type').value = state.type;
+    $('#region').value = state.region;
+    $('#reseau').value = state.reseau;
+    $('#icg').value = state.icg;
+    $('#ias').value = state.ias;
+    $('#annee-min').value = state.amin;
+    $('#annee-max').value = state.amax;
+    $('#long-min').value = state.lmin;
+    $('#hauteur-max').value = state.h;
+    $('#lim-poids').checked = state.lp;
+    $('#hors-public').checked = state.hp;
+  }
+  function uiToState(){
+    state.q = $('#q').value;
+    state.type = $('#type').value;
+    state.region = $('#region').value;
+    state.reseau = $('#reseau').value;
+    state.icg = $('#icg').value;
+    state.ias = $('#ias').value;
+    state.amin = $('#annee-min').value;
+    state.amax = $('#annee-max').value;
+    state.lmin = $('#long-min').value;
+    state.h = $('#hauteur-max').value;
+    state.lp = $('#lim-poids').checked;
+    state.hp = $('#hors-public').checked;
+  }
+
+  // « Type précis » : types de la famille choisie, avec effectifs (inventaire public selon la case cochée)
+  function buildTypeOptions(){
+    var cnt = {};
+    data.forEach(function(o){
+      if (o.tc == null) return;
+      if (!state.hp && o.pub !== 1) return;
+      if (state.famille !== 'tous' && o.fam !== state.famille) return;
+      cnt[o.tc] = (cnt[o.tc] || 0) + 1;
+    });
+    var codes = Object.keys(cnt);
+    var labelCount = {};
+    codes.forEach(function(c){ var l = D.types[c][0]; labelCount[l] = (labelCount[l] || 0) + 1; });
+    codes.sort(function(a, b){ return collator.compare(D.types[a][0], D.types[b][0]) || (a - b); });
+    var sel = $('#type');
+    sel.innerHTML = '';
+    var first = document.createElement('option'); first.value = ''; first.textContent = 'Tous les types'; sel.appendChild(first);
+    codes.forEach(function(c){
+      var l = D.types[c][0];
+      var op = document.createElement('option');
+      op.value = c;
+      op.textContent = l + (labelCount[l] > 1 ? ' [' + c + ']' : '') + ' (' + nf.format(cnt[c]) + ')';
+      sel.appendChild(op);
+    });
+    if (state.type && !cnt[state.type]) state.type = '';
+    sel.value = state.type;
+  }
+
+  // ---------- Filtrage ----------
+  var RESEAU_LABEL = { superieur: 'Supérieur', municipal: 'Municipal' };
+  function matches(o, c){
+    if (!c.hp && o.pub !== 1) return false;
+    if (c.famille === 'tous') { /* tout, stations incluses */ }
+    else if (o.fam !== c.famille) return false;
+    if (c.type && o.tc !== c.type) return false;
+    if (c.region && o.region !== c.region) return false;
+    if (c.reseau && o.reseau !== RESEAU_LABEL[c.reseau]) return false;
+    if (c.icg && icgKey(o.icg) !== c.icg) return false;
+    if (c.ias && iasKey(o.ias) !== c.ias) return false;
+    if (c.amin != null && !(o.annee != null && o.annee >= c.amin)) return false;
+    if (c.amax != null && !(o.annee != null && o.annee < c.amax)) return false;
+    if (c.lmin != null && !(o.long != null && o.long >= c.lmin)) return false;
+    if (c.hmax != null && !(o.hmin != null && o.hmin < c.hmax)) return false;
+    if (c.lp && o.limP !== 1) return false;
+    if (c.qn && o.s.indexOf(c.qn) < 0) return false;
+    return true;
+  }
+
+  // ---------- Marqueurs ----------
+  function radiusFor(z){ return Math.round(Math.min(7, Math.max(2.5, 2.5 + (z - 6) * 0.7)) * 2) / 2; }
+  var radius = map ? radiusFor(map.getZoom()) : 3;
+
+  function makeMarker(o){
+    var closed = o.ias === 'rouge';
+    var m = L.circleMarker([o.lat, o.lon], {
+      renderer: canvas, radius: radius, fillColor: ICG_COLOR[icgKey(o.icg)], fillOpacity: 0.88,
+      color: closed ? OUTLINE : '#ffffff', weight: closed ? 2 : 0.6, opacity: closed ? 1 : 0.8
+    });
+    m.bindTooltip(function(){ return esc(o.num + ' · ' + (o.nom || o.tl || '')); }, { sticky: true, direction: 'top', offset: [0, -4] });
+    m.on('click', function(){ select(o, { pan: true }); });
+    return m;
+  }
+
+  // ---------- Fiche détaillée ----------
+  var drawer = $('#drawer'), selRing = null;
+  var DET = window.STRUCTURE_DETAILS || null;
+  var detData = (DET && DET.data) || {};
+
+  function fmtDet(v, f){
+    if (typeof v === 'boolean') return v ? 'Oui' : 'Non';
+    if (typeof v === 'number') {
+      if (f.unit) return nf2.format(v) + ' ' + f.unit;
+      if (Math.floor(v) === v && v >= 1800 && v <= 2100) return String(v);
+      return nf2.format(v);
+    }
+    return String(v) + (f.unit ? ' ' + f.unit : '');
+  }
+  function badgeIcg(o){
+    if (o.icg == null) return null;
+    var k = icgKey(o.icg);
+    return '<span class="dot" style="background:' + ICG_COLOR[k] + '"></span>' + esc(k === 'SO' ? 'ICG S. O.' : 'ICG ' + o.icg + ' — ' + ICG_LABEL[k]);
+  }
+  function badgeIas(o){
+    if (o.ias == null) return null;
+    var k = iasKey(o.ias);
+    return '<span class="dot" style="background:' + IAS_COLOR[k] + '"></span>' + esc(k === 'SO' ? 'IAS S. O.' : IAS_LABEL[k]);
+  }
+
+  function ficheHtml(o){
+    var secs = [], byName = {};
+    function sec(name){
+      if (!byName[name]) { byName[name] = { name: name, rows: [], extra: '' }; secs.push(byName[name]); }
+      return byName[name];
+    }
+    function add(name, label, val, raw){
+      if (val == null || val === '') return;
+      sec(name).rows.push('<dt>' + esc(label) + '</dt><dd>' + (raw ? val : esc(val)) + '</dd>');
+    }
+    ['Identification', 'Localisation', 'Dimensions', 'État et interventions', 'Restrictions'].forEach(sec);
+    add('Identification', 'Type', o.tl);
+    add('Identification', 'Famille', FAM_LABEL[o.fam] || null);
+    add('Identification', 'Réseau', o.reseau);
+    add('Identification', 'Région', o.region);
+    add('Identification', 'Municipalité', o.muncp);
+    add('Identification', 'Année de construction', o.annee);
+    add('Localisation', 'Route', o.route);
+    add('Localisation', 'Obstacle', o.obstacle);
+    if (o.lat != null && o.lon != null) {
+      add('Localisation', 'Coordonnées', nf5.format(o.lat) + ', ' + nf5.format(o.lon));
+      byName['Localisation'].extra = '<div class="dr-act"><button type="button" data-act="center">Centrer la carte</button></div>';
+    }
+    // Les détails (OData) donnent des dimensions plus complètes : on n'affiche alors pas les valeurs de base
+    var det = (DET && DET.data && DET.data[o.num]) || null;
+    if (!det) {
+      add('Dimensions', 'Longueur', o.long != null ? nf2.format(o.long) + ' m' : null);
+      add('Dimensions', 'Largeur', o.larg != null ? nf2.format(o.larg) + ' m' : null);
+      add('Dimensions', 'Voies', o.voies);
+    }
+    add('État et interventions', 'ICG', badgeIcg(o), true);
+    add('État et interventions', 'IAS', badgeIas(o), true);
+    add('État et interventions', 'Travaux prévus', o.travaux);
+    if (!(det && det.p)) add('Restrictions', 'Limite de charge', o.charge);   // sinon : panneau détaillé
+    add('Restrictions', 'Hauteur libre min.', o.hmin != null ? nf2.format(o.hmin) + ' m' : null);
+    if (o.limH === 1) add('Restrictions', 'Limitation de hauteur', 'Oui');
+    if (o.limP === 1) add('Restrictions', 'Limitation de poids', 'Oui');
+
+    // Détails optionnels (details.js) : rendu générique selon l'ordre de `fields`
+    var d = detData[o.num], photo = null;
+    if (DET && d) {
+      (DET.fields || []).forEach(function(f){
+        var v = d[f.key];
+        if (v == null || v === '') return;
+        add(f.section || 'Détails', f.label || f.key, fmtDet(v, f));
+      });
+      if (d.photo === 1 && o.ide != null && DET.photoUrl) photo = DET.photoUrl.replace('{ide}', encodeURIComponent(o.ide));
+    }
+
+    var links = [];
+    if (o.cs && o.ide != null && D.ficheUrl) {
+      links.push('<a href="' + esc(D.ficheUrl.replace('{ide}', encodeURIComponent(o.ide)).replace('{cs}', encodeURIComponent(o.cs))) + '" target="_blank" rel="noopener">Fiche MTMD ↗</a>');
+    }
+    if (o.rapport === 1 && D.rapportUrl) {
+      links.push('<a href="' + esc(D.rapportUrl.replace('{num}', encodeURIComponent(o.num))) + '" target="_blank" rel="noopener">Rapport d’inspection ↗</a>');
+    }
+
+    var badges = [badgeIcg(o), badgeIas(o)].filter(Boolean).map(function(b){ return '<span class="badge">' + b + '</span>'; }).join('');
+    var h = '<div class="dr-head"><div class="dr-ico">' + icon(o.tc, 32) + '</div>' +
+      '<div class="dr-title"><h2>' + esc(o.nom || o.tl || 'Structure') + '</h2><div class="dr-num">N° ' + esc(o.num) + '</div>' +
+      (badges ? '<div class="dr-badges">' + badges + '</div>' : '') + '</div>' +
+      '<button type="button" class="dr-close" data-act="close" aria-label="Fermer la fiche" title="Fermer (Échap)">×</button></div>' +
+      '<div class="dr-body">';
+    if (photo) {
+      h += '<a class="dr-photo" href="' + esc(photo) + '" target="_blank" rel="noopener" aria-label="Ouvrir la photo en grand">' +
+        '<img src="' + esc(photo) + '" alt="Photo de la structure ' + esc(o.num) + '" loading="lazy" referrerpolicy="no-referrer"><figcaption>Photo : MTMD</figcaption></a>';
+    }
+    secs.forEach(function(s){
+      if (!s.rows.length) return;
+      h += '<section class="dr-sec"><h3>' + esc(s.name) + '</h3><dl class="dr-grid">' + s.rows.join('') + '</dl>' + s.extra + '</section>';
+    });
+    if (links.length) h += '<section class="dr-sec"><h3>Liens</h3><div class="dr-links">' + links.join('') + '</div></section>';
+    return h + '</div>';
+  }
+
+  function select(o, opt){
+    opt = opt || {};
+    selNum = o.num;
+    drawer.innerHTML = ficheHtml(o);
+    var img = drawer.querySelector('.dr-photo img');
+    if (img) img.addEventListener('error', function(){ var a = img.closest('.dr-photo'); if (a) a.hidden = true; });
+    drawer.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    var body = drawer.querySelector('.dr-body'); if (body) body.scrollTop = 0;
+    if (map && o.lat != null) {
+      var ll = [o.lat, o.lon];
+      if (!selRing) selRing = L.circleMarker(ll, { renderer: canvas, interactive: false, fill: false, color: '#102d41', weight: 3, opacity: 0.95 }).addTo(map);
+      selRing.setLatLng(ll).setRadius(radius + 5);
+      if (opt.center) centerOn(o); else if (opt.pan) ensureVisible(o);
+    }
+    var cb = drawer.querySelector('.dr-close');
+    if (cb && opt.focus !== false && !opt.pan) cb.focus({ preventScroll: true });
+    if (!opt.noHash) writeHash();
+  }
+  function closeFiche(){
+    if (selNum == null) return;
+    selNum = null;
+    drawer.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    if (selRing && map) { map.removeLayer(selRing); selRing = null; }
+    writeHash();
+  }
+  // Garde la structure sélectionnée dans la partie de la carte non recouverte par la fiche
+  function ensureVisible(o){
+    if (!map) return;
+    var sz = map.getSize(), p = map.latLngToContainerPoint([o.lat, o.lon]);
+    if (isMobile()) {
+      var fh = sz.y * 0.28;
+      if (p.y > fh || p.y < 24) map.panBy([0, p.y - fh / 2], { animate: true });
+    } else {
+      var fw = sz.x - 396;
+      if (p.x > fw - 16 || p.x < 24) map.panBy([p.x - fw / 2, 0], { animate: true });
+    }
+  }
+  function centerOn(o){
+    if (!map) return;
+    map.invalidateSize();
+    map.setView([o.lat, o.lon], Math.max(map.getZoom(), 14), { animate: false });
+    ensureVisible(o);
+  }
+  drawer.addEventListener('click', function(e){
+    var b = e.target.closest('[data-act]');
+    if (!b) return;
+    if (b.getAttribute('data-act') === 'close') closeFiche();
+    else if (b.getAttribute('data-act') === 'center' && selNum != null && byNum[selNum]) centerOn(byNum[selNum]);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape' && selNum != null) { closeFiche(); }
+  });
+
+  // ---------- Application des filtres ----------
+  var visible = [];
+  function criteria(){
+    return {
+      hp: state.hp, famille: state.famille, type: state.type, region: state.region, reseau: state.reseau, icg: state.icg, ias: state.ias,
+      lp: state.lp, qn: norm(state.q.trim()),
+      amin: numOk(state.amin) ? parseFloat(state.amin) : null,
+      amax: numOk(state.amax) ? parseFloat(state.amax) : null,
+      lmin: numOk(state.lmin) ? parseFloat(state.lmin) : null,
+      hmax: numOk(state.h) ? parseFloat(state.h) : null
+    };
+  }
+  function apply(){
+    var c = criteria();
+    var vis = [];
+    for (var i = 0; i < data.length; i++) {
+      var o = data[i];
+      var ok = o.lat != null && o.lon != null && matches(o, c);
+      if (ok) vis.push(o);
+      if (!ok && o.on) { if (group) group.removeLayer(o.m); o.on = false; }
+    }
+    // ajouts : fermées en dernier pour qu'elles restent visibles au-dessus
+    for (var pass = 0; group && pass < 2; pass++) {
+      for (var j = 0; j < vis.length; j++) {
+        var v = vis[j];
+        if ((v.ias === 'rouge') !== (pass === 1) || v.on) continue;
+        if (!v.m) v.m = makeMarker(v);
+        group.addLayer(v.m); v.on = true;
+      }
+    }
+    if (selRing) selRing.bringToFront();
+    visible = vis;
+    $('#map-empty').hidden = vis.length > 0;
+    metrics(vis);
+    sortedDirty = true; listN = 200;
+    renderActive();
+  }
+
+  function metrics(vis){
+    var n = vis.length, bad = 0, fer = 0, ages = 0, an = 0;
+    vis.forEach(function(o){
+      if (o.icg === '1' || o.icg === '2') bad++;
+      if (o.ias === 'rouge') fer++;
+      if (o.annee != null && o.annee > 1700 && o.annee <= YEAR) { ages += YEAR - o.annee; an++; }
+    });
+    $('#m-count').textContent = nf.format(n);
+    $('#m-icg-bad').innerHTML = esc(nf.format(bad)) + (n ? ' <small>(' + nf1.format(100 * bad / n) + ' %)</small>' : '');
+    $('#m-fermees').textContent = nf.format(fer);
+    $('#m-age').innerHTML = an ? esc(nf1.format(ages / an)) + ' <small>ans</small>' : '—';
+  }
+
+  // ---------- Vues ----------
+  function renderActive(){
+    if (view === 'stats') renderStats();
+    else if (view === 'liste') renderList();
+  }
+  function showView(v){
+    view = v;
+    $('#view-tabs').querySelectorAll('button').forEach(function(b){
+      var on = b.getAttribute('data-view') === v;
+      b.classList.toggle('active', on);
+      if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+    $('#view-carte').hidden = v !== 'carte';
+    $('#view-stats').hidden = v !== 'stats';
+    $('#view-liste').hidden = v !== 'liste';
+    if (v === 'carte' && map) setTimeout(function(){ map.invalidateSize(); reframe(false); }, 0);
+    renderActive();
+  }
+  $('#view-tabs').addEventListener('click', function(e){
+    var b = e.target.closest('button');
+    if (!b) return;
+    showView(b.getAttribute('data-view'));
+    writeHash();
+  });
+
+  // ---------- Infobulle des graphiques ----------
+  var tip = $('#tip');
+  function tipShow(el, x, y){
+    tip.textContent = '';
+    el.getAttribute('data-tip').split('\n').forEach(function(t, i){
+      var d = document.createElement('div'); d.textContent = t; if (i === 0) d.className = 'tip-v'; tip.appendChild(d);
+    });
+    tip.hidden = false;
+    var w = tip.offsetWidth, h = tip.offsetHeight;
+    var px = Math.min(Math.max(8, x + 12), window.innerWidth - w - 8);
+    var py = y - h - 12; if (py < 8) py = y + 16;
+    tip.style.left = px + 'px'; tip.style.top = py + 'px';
+  }
+  var statsEl = $('#view-stats');
+  statsEl.addEventListener('pointermove', function(e){ var t = e.target.closest('[data-tip]'); if (t) tipShow(t, e.clientX, e.clientY); else tip.hidden = true; });
+  statsEl.addEventListener('pointerleave', function(){ tip.hidden = true; });
+  statsEl.addEventListener('focusin', function(e){ var t = e.target.closest('[data-tip]'); if (t) { var r = t.getBoundingClientRect(); tipShow(t, r.left + r.width / 2, r.top); } });
+  statsEl.addEventListener('focusout', function(){ tip.hidden = true; });
+
+  // ---------- Vue Statistiques ----------
+  function renderStats(){
+    var vis = visible, el = statsEl;
+    if (!vis.length) { el.innerHTML = '<div class="card"><div class="empty">Aucune structure ne correspond aux filtres.</div></div>'; return; }
+    var n = vis.length, icg = {}, ias = {}, dec = {}, types = {}, regs = {};
+    var lenSum = 0, lenN = 0, lens = [], widSum = 0, widN = 0;
+    ICG_ORDER.forEach(function(k){ icg[k] = 0; }); IAS_ORDER.forEach(function(k){ ias[k] = 0; });
+    vis.forEach(function(o){
+      var bad = o.icg === '1' || o.icg === '2';
+      icg[icgKey(o.icg)]++; ias[iasKey(o.ias)]++;
+      var age = (o.annee != null && o.annee > 1700 && o.annee <= YEAR) ? YEAR - o.annee : null;
+      if (age != null) {
+        var d = o.annee < 1900 ? 1800 : Math.floor(o.annee / 10) * 10;
+        var e = dec[d] || (dec[d] = { n: 0, bad: 0 }); e.n++; if (bad) e.bad++;
+      }
+      if (o.long != null) { lenSum += o.long; lenN++; lens.push(o.long); }
+      if (o.larg != null) { widSum += o.larg; widN++; }
+      var t = types[o.tc] || (types[o.tc] = { n: 0, ls: 0, ln: 0 });
+      t.n++; if (o.long != null) { t.ls += o.long; t.ln++; }
+      var rk = o.region || 'Non précisée';
+      var g = regs[rk] || (regs[rk] = { n: 0, bad: 0, fer: 0, as: 0, an: 0, ls: 0, ln: 0, ws: 0, wn: 0 });
+      g.n++; if (bad) g.bad++; if (o.ias === 'rouge') g.fer++;
+      if (age != null) { g.as += age; g.an++; }
+      if (o.long != null) { g.ls += o.long; g.ln++; }
+      if (o.larg != null) { g.ws += o.larg; g.wn++; }
+    });
+    lens.sort(function(a, b){ return a - b; });
+    var med = lens.length ? (lens.length % 2 ? lens[(lens.length - 1) / 2] : (lens[lens.length / 2 - 1] + lens[lens.length / 2]) / 2) : null;
+
+    var h = '<div class="metrics" aria-label="Dimensions">' +
+      tile('Longueur cumulée', lenN ? nf1.format(lenSum / 1000) : '—', lenN ? 'km' : '') +
+      tile('Longueur moyenne', lenN ? nf1.format(lenSum / lenN) : '—', lenN ? 'm' : '') +
+      tile('Longueur médiane', med != null ? nf1.format(med) : '—', med != null ? 'm' : '') +
+      tile('Largeur moyenne', widN ? nf1.format(widSum / widN) : '—', widN ? 'm' : '') + '</div>';
+
+    h += '<div class="stats-grid">';
+    h += '<div class="card"><h2>Indice de condition générale (ICG)</h2><p class="sub">Part des ' + nf.format(n) + ' structures par classe</p>' +
+      stacked(ICG_ORDER, icg, n, ICG_COLOR, function(k){ return k === 'SO' ? 'S. O. / inconnu' : k + ' — ' + ICG_LABEL[k]; }) + '</div>';
+    h += '<div class="card"><h2>Indice d’accessibilité (IAS)</h2><p class="sub">Restrictions de circulation en vigueur</p>' +
+      stacked(IAS_ORDER, ias, n, IAS_COLOR, function(k){ return IAS_LABEL[k]; }) + '</div>';
+
+    // Histogramme par décennie
+    var dk = Object.keys(dec).map(Number).sort(function(a, b){ return a - b; });
+    h += '<div class="card wide"><h2>Année de construction</h2><p class="sub">Nombre de structures par décennie</p>';
+    if (dk.length) {
+      var d0 = dk[0], d1 = Math.floor(YEAR / 10) * 10, bins = [], mx = 0;
+      for (var d = d0; d <= d1; d += (d === 1800 ? 100 : 10)) { var v = dec[d] || { n: 0, bad: 0 }; bins.push({ d: d, n: v.n, bad: v.bad }); if (v.n > mx) mx = v.n; }
+      var top = niceMax(mx);
+      h += '<div class="key"><span><i style="background:' + C_TEAL + '"></i>Autres ICG</span><span><i style="background:' + C_BAD + '"></i>ICG 1–2</span></div>';
+      h += '<div class="hist" role="img" aria-label="Histogramme du nombre de structures par décennie de construction">';
+      [0, 0.5, 1].forEach(function(f){ h += '<div class="gl" style="bottom:' + (f * 100) + '%"><span>' + nf.format(Math.round(top * f)) + '</span></div>'; });
+      h += '<div class="hcols">';
+      bins.forEach(function(b){
+        var lab = binLabel(b.d), tipTxt = nf.format(b.n) + ' structure' + (b.n > 1 ? 's' : '') + '\n' + lab + ' · ICG 1–2 : ' + nf.format(b.bad) + ' (' + pct(b.bad, b.n) + ')';
+        h += '<div class="hcol" tabindex="0" data-tip="' + esc(tipTxt) + '" aria-label="' + esc(lab + ' : ' + b.n + ' structures') + '">';
+        if (b.n) {
+          h += '<div class="hbar" style="height:' + (100 * b.n / top) + '%">' + (b.n === mx ? '<span class="hv">' + nf.format(b.n) + '</span>' : '');
+          if (b.bad) h += '<span style="flex:' + b.bad + ' 1 0;background:' + C_BAD + '"></span>';
+          if (b.n - b.bad) h += '<span style="flex:' + (b.n - b.bad) + ' 1 0;background:' + C_TEAL + '"></span>';
+          h += '</div>';
+        }
+        h += '</div>';
+      });
+      h += '</div></div><div class="hx">' + bins.map(function(b){ return '<span>' + esc(binLabel(b.d, true)) + '</span>'; }).join('') + '</div>';
+      h += '<details class="tbl-twin"><summary>Voir en tableau</summary><div class="tscroll"><table class="tbl"><thead><tr><th>Décennie</th><th>Structures</th><th>ICG 1–2</th><th>% ICG 1–2</th></tr></thead><tbody>' +
+        bins.map(function(b){ return '<tr><td>' + esc(binLabel(b.d)) + '</td><td>' + nf.format(b.n) + '</td><td>' + nf.format(b.bad) + '</td><td>' + pct(b.bad, b.n) + '</td></tr>'; }).join('') + '</tbody></table></div></details>';
+    } else h += '<div class="empty">Aucune année de construction renseignée.</div>';
+    h += '</div>';
+
+    // Top 12 types
+    var tk = Object.keys(types).sort(function(a, b){ return types[b].n - types[a].n; }).slice(0, 12);
+    var tmax = tk.length ? types[tk[0]].n : 1;
+    h += '<div class="card"><h2>Types les plus fréquents</h2><p class="sub">12 premiers · effectif et longueur moyenne</p>';
+    tk.forEach(function(c){
+      var t = types[c], lab = c === 'null' ? 'Type inconnu' : (D.types[c] ? D.types[c][0] : c);
+      h += '<div class="trow" data-tip="' + esc(nf.format(t.n) + ' structures\n' + lab) + '"><div class="ti">' + icon(c, 26) + '</div><div class="tl">' + esc(lab) + '</div><div class="tn">' + nf.format(t.n) + '</div>' +
+        '<div><div class="tb" style="width:' + Math.max(1, 100 * t.n / tmax) + '%"></div></div><div class="tm">' + (t.ln ? 'moy. ' + nf1.format(t.ls / t.ln) + ' m' : '—') + '</div></div>';
+    });
+    h += '</div>';
+
+    // Régions
+    var rk = Object.keys(regs).sort(function(a, b){ return regs[b].n - regs[a].n; });
+    var tot = { n: n, bad: 0, fer: 0, as: 0, an: 0, ls: lenSum, ln: lenN, ws: widSum, wn: widN };
+    rk.forEach(function(k){ var g = regs[k]; tot.bad += g.bad; tot.fer += g.fer; tot.as += g.as; tot.an += g.an; });
+    function row(name, g, tag){
+      return '<tr><td>' + esc(name) + '</td><td>' + nf.format(g.n) + '</td><td>' + pct(g.bad, g.n) + '</td><td>' + nf.format(g.fer) + '</td><td>' +
+        (g.an ? nf1.format(g.as / g.an) : '—') + '</td><td>' + (g.ln ? nf1.format(g.ls / g.ln) : '—') + '</td><td>' + (g.wn ? nf1.format(g.ws / g.wn) : '—') + '</td></tr>';
+    }
+    h += '<div class="card wide"><h2>Par région administrative</h2><p class="sub">Âge en années · longueur et largeur en mètres</p><div class="tscroll"><table class="tbl"><thead><tr><th>Région</th><th>Structures</th><th>% ICG 1–2</th><th>Fermées</th><th>Âge moyen</th><th>Long. moy.</th><th>Larg. moy.</th></tr></thead><tbody>' +
+      rk.map(function(k){ return row(k, regs[k]); }).join('') + '</tbody><tfoot>' + row('Ensemble', tot).replace(/<tr>/, '<tr>') + '</tfoot></table></div></div>';
+    h += '</div>';
+    el.innerHTML = h;
+  }
+  function tile(label, value, unit){ return '<div class="metric"><div class="metric-label">' + esc(label) + '</div><div class="metric-value">' + esc(value) + (unit ? ' <small>' + esc(unit) + '</small>' : '') + '</div></div>'; }
+  function niceMax(m){
+    var p = Math.pow(10, Math.floor(Math.log10(Math.max(m, 1)))), f = m / p;
+    var nice = f <= 1 ? 1 : f <= 2 ? 2 : f <= 4 ? 4 : f <= 5 ? 5 : 10;
+    return nice * p;
+  }
+  function binLabel(d, short){ return d === 1800 ? (short ? '<1900' : 'Avant 1900') : (short ? String(d) : d + 's'); }
+  function stacked(order, counts, n, colors, labelFn){
+    var bar = '<div class="sbar" role="img" aria-label="Répartition">', lg = '<div class="lg">';
+    order.forEach(function(k){
+      var c = counts[k], lab = labelFn(k);
+      if (c) bar += '<span style="flex:' + c + ' 1 0;background:' + colors[k] + '" data-tip="' + esc(nf.format(c) + ' structures (' + pct(c, n) + ')\n' + lab) + '"></span>';
+      lg += '<i class="dot" style="background:' + colors[k] + '"></i><span>' + esc(lab) + '</span><span class="n">' + nf.format(c) + '</span><span class="p">' + pct(c, n) + '</span>';
+    });
+    return bar + '</div>' + lg + '</div>';
+  }
+
+  // ---------- Vue Liste ----------
+  var COLS = [
+    { k: 'num', l: 'N°', get: function(o){ return o.num; } },
+    { k: 'type', l: 'Type', get: function(o){ return o.tl; } },
+    { k: 'nom', l: 'Nom', get: function(o){ return o.nom; } },
+    { k: 'muncp', l: 'Municipalité', get: function(o){ return o.muncp; } },
+    { k: 'route', l: 'Route', get: function(o){ return o.route; } },
+    { k: 'obstacle', l: 'Obstacle', get: function(o){ return o.obstacle; } },
+    { k: 'annee', l: 'Année', num: true, get: function(o){ return o.annee; } },
+    { k: 'long', l: 'Long. (m)', num: true, get: function(o){ return o.long; } },
+    { k: 'icg', l: 'ICG', get: function(o){ return o.icg == null ? null : (isFinite(+o.icg) ? +o.icg : (o.icg === 'AC' ? 5 : 6)); }, num: true },
+    { k: 'ias', l: 'IAS', get: function(o){ return o.ias == null ? null : IAS_ORDER.indexOf(iasKey(o.ias)); } , num: true }
+  ];
+  var sortKey = 'num', sortDir = 1, sorted = [], sortedDirty = true, listN = 200;
+  $('#list-head').innerHTML = COLS.map(function(c){
+    return '<th scope="col" data-k="' + c.k + '"' + (c.k === sortKey ? ' aria-sort="ascending"' : '') + '><button type="button" class="th-btn">' + esc(c.l) + '</button></th>';
+  }).join('');
+  $('#list-head').addEventListener('click', function(e){
+    var th = e.target.closest('th'); if (!th) return;
+    var k = th.getAttribute('data-k');
+    if (sortKey === k) sortDir = -sortDir; else { sortKey = k; sortDir = 1; }
+    sortedDirty = true; listN = 200;
+    $('#list-head').querySelectorAll('th').forEach(function(t){
+      if (t === th) t.setAttribute('aria-sort', sortDir > 0 ? 'ascending' : 'descending'); else t.removeAttribute('aria-sort');
+    });
+    renderList();
+  });
+  function sortRows(){
+    var col = COLS.filter(function(c){ return c.k === sortKey; })[0], dir = sortDir;
+    sorted = visible.slice();
+    var keyed = sorted.map(function(o){ return { o: o, v: col.get(o) }; });
+    keyed.sort(function(a, b){
+      var x = a.v, y = b.v;
+      if (x == null && y == null) return 0;
+      if (x == null) return 1;                       // valeurs absentes toujours en fin de liste
+      if (y == null) return -1;
+      var r = (typeof x === 'number' && typeof y === 'number') ? x - y : collator.compare(String(x), String(y));
+      return r * dir;
+    });
+    sorted = keyed.map(function(k){ return k.o; });
+    sortedDirty = false;
+  }
+  function listRow(o){
+    var ik = icgKey(o.icg), ak = iasKey(o.ias);
+    return '<tr tabindex="0" data-num="' + esc(o.num) + '"><td>' + esc(o.num) + '</td>' +
+      '<td><div class="tcell">' + icon(o.tc, 20) + '<span>' + esc(o.tl || '') + '</span></div></td>' +
+      '<td>' + esc(o.nom || '') + '</td><td>' + esc(o.muncp || '') + '</td><td>' + esc(o.route || '') + '</td><td>' + esc(o.obstacle || '') + '</td>' +
+      '<td>' + (o.annee != null ? esc(o.annee) : '') + '</td><td>' + (o.long != null ? nf1.format(o.long) : '') + '</td>' +
+      '<td>' + (o.icg == null ? '' : '<span class="dot" style="background:' + ICG_COLOR[ik] + '"></span> ' + esc(ik === 'SO' ? 'S. O.' : ik)) + '</td>' +
+      '<td>' + (o.ias == null ? '' : '<span class="dot" style="background:' + IAS_COLOR[ak] + '"></span> ' + esc(IAS_LABEL[ak])) + '</td></tr>';
+  }
+  function renderList(){
+    if (sortedDirty) sortRows();
+    var shown = Math.min(listN, sorted.length);
+    $('#list-body').innerHTML = sorted.slice(0, shown).map(listRow).join('');
+    $('#list-count').textContent = sorted.length ? 'Affichage de ' + nf.format(shown) + ' sur ' + nf.format(sorted.length) + ' structures' : 'Aucune structure ne correspond aux filtres.';
+    var more = $('#list-more');
+    more.hidden = shown >= sorted.length;
+    $('#list-more-btn').textContent = 'Afficher ' + Math.min(200, sorted.length - shown) + ' de plus';
+    $('#export-csv').disabled = !sorted.length;
+  }
+  $('#list-more-btn').addEventListener('click', function(){ listN += 200; renderList(); });
+  function rowOpen(tr){
+    var o = tr && byNum[tr.getAttribute('data-num')];
+    if (!o) return;
+    showView('carte');
+    select(o, { center: true });
+  }
+  $('#list-body').addEventListener('click', function(e){ rowOpen(e.target.closest('tr')); });
+  $('#list-body').addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); rowOpen(e.target.closest('tr')); } });
+
+  // Export CSV : jeu filtré, colonnes de base, UTF-8 avec BOM, séparateur « ; », décimales à la virgule
+  function csvCell(v){
+    if (v == null) return '';
+    if (typeof v === 'number') return String(v).replace('.', ',');
+    var s = String(v);
+    return /[;"\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function buildCsv(rows){
+    var head = ['num', 'nom', 'code_type', 'type', 'famille', 'reseau', 'region', 'municipalite', 'route', 'obstacle', 'annee', 'voies', 'longueur_m', 'largeur_m', 'latitude', 'longitude', 'icg', 'ias', 'travaux', 'rapport', 'limite_hauteur', 'limite_poids', 'limite_charge', 'hauteur_libre_min_m', 'ide', 'public'];
+    var lines = [head.join(';')];
+    rows.forEach(function(o){
+      lines.push([o.num, o.nom, o.tc, o.tl, o.fam, o.reseau, o.region, o.muncp, o.route, o.obstacle, o.annee, o.voies, o.long, o.larg, o.lat, o.lon, o.icg, o.ias, o.travaux, o.rapport, o.limH, o.limP, o.charge, o.hmin, o.ide, o.pub].map(csvCell).join(';'));
+    });
+    return '﻿' + lines.join('\r\n') + '\r\n';
+  }
+  $('#export-csv').addEventListener('click', function(){
+    if (sortedDirty) sortRows();
+    var d = new Date(), p2 = function(x){ return (x < 10 ? '0' : '') + x; };
+    var name = 'ponts-qc-' + d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()) + '.csv';
+    var url = URL.createObjectURL(new Blob([buildCsv(sorted)], { type: 'text/csv;charset=utf-8' }));
+    var a = document.createElement('a'); a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  });
+
+  // ---------- Cadrage ----------
+  // Recadre sur les résultats quand la recherche ou la région change ; vue province sinon.
+  var HOME = { center: [47.0, -71.5], zoom: 6 }, lastFocus = null;
+  function focusKey(){ return state.q.trim() + '|' + state.region; }
+  function reframe(force){
+    var k = focusKey();
+    if (!map || map.getSize().x === 0 || view !== 'carte') return;   // carte masquée : on recadrera à son retour
+    if (!force && k === lastFocus) return;
+    lastFocus = k;
+    if (k === '|' || !visible.length) { map.flyTo(HOME.center, HOME.zoom, { duration: 0.6 }); return; }
+    var b = L.latLngBounds(visible.map(function(o){ return [o.lat, o.lon]; }));
+    map.flyToBounds(b, { padding: [40, 40], maxZoom: 13, duration: 0.6 });
+  }
+
+  // ---------- Événements ----------
+  var timer = null, syncing = false;
+  function writeHash(){
+    syncing = true;
+    var h = stateToHash();
+    try { history.replaceState(null, '', location.pathname + location.search + (h ? '#' + h : '')); } catch (e) { /* file:// ou iframe */ }
+    syncing = false;
+  }
+  function commit(){
+    uiToState();
+    buildTypeOptions();           // la liste des types dépend de la famille et de l'inventaire public
+    writeHash();
+    apply();
+    reframe(false);
+  }
+  var debounced = function(){ clearTimeout(timer); timer = setTimeout(commit, 150); };
+  $('#q').addEventListener('input', debounced);
+  ['#annee-min', '#annee-max', '#long-min', '#hauteur-max'].forEach(function(s){ $(s).addEventListener('input', debounced); });
+  ['#type', '#region', '#reseau', '#icg', '#ias', '#lim-poids', '#hors-public'].forEach(function(s){ $(s).addEventListener('change', commit); });
+  $('#famille').addEventListener('click', function(e){
+    var b = e.target.closest('button');
+    if (!b) return;
+    state.famille = b.getAttribute('data-famille');
+    setFamilleUI(state.famille);
+    commit();
+  });
+  $('#reset-filtres').addEventListener('click', function(){
+    clearTimeout(timer);
+    var keepSel = selNum;
+    copyDefaults(); stateToUI(); commit();
+    selNum = keepSel; writeHash();
+  });
+  window.addEventListener('hashchange', function(){
+    if (syncing) return;
+    var before = selNum;
+    hashToState(); stateToUI(); showView(view); apply(); reframe(false);
+    if (selNum != null && byNum[selNum]) select(byNum[selNum], { center: view === 'carte', noHash: true });
+    else if (before != null && selNum == null) { selNum = before; closeFiche(); }
+  });
+
+  if (map) {
+    map.on('zoomend', function(){
+      var r = radiusFor(map.getZoom());
+      if (r === radius) return;
+      radius = r;
+      for (var i = 0; i < visible.length; i++) visible[i].m.setRadius(r);
+      if (selRing) selRing.setRadius(r + 5);
+    });
+    // Légende
+    var legend = L.control({ position: 'bottomleft' });
+    legend.onAdd = function(){
+      var d = L.DomUtil.create('div', 'legend');
+      var h = '<b role="button" tabindex="0" aria-expanded="true" title="Afficher ou masquer la légende">ICG <span aria-hidden="true">▾</span></b>';
+      ICG_ORDER.forEach(function(k){
+        h += '<div><i style="background:' + ICG_COLOR[k] + '"></i>' + (k === 'SO' ? 'S. O. / inconnu' : k + ' — ' + esc(ICG_LABEL[k])) + '</div>';
+      });
+      h += '<div><i class="closed"></i>Contour foncé = fermée</div>';
+      d.innerHTML = h;
+      L.DomEvent.disableClickPropagation(d);
+      var t = d.querySelector('b');
+      function toggle(){ var c = d.classList.toggle('collapsed'); t.setAttribute('aria-expanded', String(!c)); }
+      t.addEventListener('click', toggle);
+      t.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+      if (isMobile()) toggle();
+      return d;
+    };
+    legend.addTo(map);
+  }
+
+  // ---------- Démarrage ----------
+  hashToState();
+  stateToUI();
+  var startView = view, startSel = selNum;
+  view = 'carte'; selNum = null;                 // la carte est mesurable pendant l'initialisation
+  if (map) {
+    apply();
+    lastFocus = '|';                       // vue initiale = province
+    if (focusKey() !== '|' && visible.length) map.fitBounds(L.latLngBounds(visible.map(function(o){ return [o.lat, o.lon]; })), { padding: [40, 40], maxZoom: 13 });
+    lastFocus = focusKey();
+    if (startSel != null && byNum[startSel]) select(byNum[startSel], { center: true, noHash: true, focus: false });
+  } else { apply(); }
+  if (startView !== 'carte') showView(startView);
+  writeHash();
+})();
+</script>
+</body>
+</html>

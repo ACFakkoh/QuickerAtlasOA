@@ -1,0 +1,287 @@
+MTMD 11701
+AQ 11321
+OSM routes 2406
+data-forestiers.js 0.81 Mo ; gzip 0.23 Mo
+data-ferroviaire.js 0.45 Mo ; gzip 0.07 Mo
+{
+ "mtmd_total": 11701,
+ "mtmd_obst": {
+  "Cours d'eau": 8944,
+  "": 917,
+  "Route": 1520,
+  "Autre": 48,
+  "Piétons, cyclistes, VTT": 60,
+  "Chemin de fer": 177,
+  "Mixte": 3,
+  "Faune": 32
+ },
+ "aq_total": 11321,
+ "aq_par_couche": {
+  "1": 5126,
+  "2": 5130,
+  "3": 1065
+ },
+ "aq_par_source": {
+  "DGIG": 754,
+  "Sépaq": 60,
+  "ROUTARD": 2530,
+  "BDTQ": 55,
+  "AQ": 7440,
+  "AQ_FO": 482
+ },
+ "aq_doublons_30": 6500,
+ "aq_doublons_100": 6980,
+ "aq_par_source_doublons": {
+  "AQ": 6388,
+  "AQ_FO": 93,
+  "ROUTARD": 11,
+  "DGIG": 7,
+  "Sépaq": 0,
+  "BDTQ": 1
+ },
+ "aq_hors_mtmd_par_source": {
+  "AQ": 1052,
+  "AQ_FO": 389,
+  "ROUTARD": 2519,
+  "DGIG": 747,
+  "Sépaq": 60,
+  "BDTQ": 54
+ },
+ "aq_hors_mtmd_total": 4821,
+ "aq_hors_mtmd_statut": {
+  "O": 2387,
+  "INC": 1371,
+  "F": 1063
+ },
+ "aq_hors_mtmd_cap_connue": 1905,
+ "aq_hors_mtmd_cap_nulle": 1092,
+ "aq_hors_mtmd_id_pattern": {
+  "H999-999": 2512,
+  "None": 806,
+  "999999": 556,
+  "R9999-99": 364,
+  "AQ9999999": 327,
+  "99999": 142,
+  "9999999": 82,
+  "MTQ99999999": 9
+ },
+ "regions": {
+  "slsj": {
+   "mtmd": 608,
+   "aq_total": 1245,
+   "aq_hors_mtmd": 846,
+   "aq_hors_par_source": {
+    "DGIG": 98,
+    "Sépaq": 15,
+    "ROUTARD": 588,
+    "BDTQ": 14,
+    "AQ": 34,
+    "AQ_FO": 97
+   },
+   "aq_dup_par_source": {
+    "ROUTARD": 1,
+    "AQ": 391,
+    "AQ_FO": 7
+   },
+   "aq_fo_total": 783,
+   "aq_fo_osm_50": 215,
+   "osm_total": 1244,
+   "osm_par_classe": {
+    "Chemins et pistes": 252,
+    "Routes locales": 555,
+    "Sentiers piétons et vélo": 251,
+    "Routes principales": 186
+   },
+   "osm_hors_mtmd_ni_aq": {
+    "Chemins et pistes": 187,
+    "Routes locales": 212,
+    "Sentiers piétons et vélo": 213,
+    "Routes principales": 19
+   },
+   "osm_tags": {
+    "name": 548,
+    "maxweight": 1,
+    "surface": 770
+   },
+   "osm_longueur_moy_m": 41.5,
+   "rail_rfn": 92,
+   "rail_osm": 92
+  },
+  "cote-nord": {
+   "mtmd": 193,
+   "aq_total": 374,
+   "aq_hors_mtmd": 267,
+   "aq_hors_par_source": {
+    "DGIG": 27,
+    "ROUTARD": 198,
+    "AQ": 11,
+    "AQ_FO": 30,
+    "BDTQ": 1
+   },
+   "aq_dup_par_source": {
+    "ROUTARD": 2,
+    "AQ": 104,
+    "AQ_FO": 1
+   },
+   "aq_fo_total": 255,
+   "aq_fo_osm_50": 100,
+   "osm_total": 422,
+   "osm_par_classe": {
+    "Routes locales": 188,
+    "Routes principales": 87,
+    "Sentiers piétons et vélo": 76,
+    "Chemins et pistes": 71
+   },
+   "osm_hors_mtmd_ni_aq": {
+    "Routes locales": 80,
+    "Routes principales": 9,
+    "Sentiers piétons et vélo": 60,
+    "Chemins et pistes": 53
+   },
+   "osm_tags": {
+    "name": 134,
+    "maxweight": 0,
+    "surface": 328
+   },
+   "osm_longueur_moy_m": 73.4,
+   "rail_rfn": 17,
+   "rail_osm": 21
+  },
+  "abitibi": {
+   "mtmd": 422,
+   "aq_total": 563,
+   "aq_hors_mtmd": 261,
+   "aq_hors_par_source": {
+    "Sépaq": 4,
+    "ROUTARD": 195,
+    "BDTQ": 4,
+    "AQ": 14,
+    "AQ_FO": 27,
+    "DGIG": 17
+   },
+   "aq_dup_par_source": {
+    "AQ": 282,
+    "AQ_FO": 19,
+    "DGIG": 1
+   },
+   "aq_fo_total": 239,
+   "aq_fo_osm_50": 91,
+   "osm_total": 740,
+   "osm_par_classe": {
+    "Routes locales": 386,
+    "Routes principales": 106,
+    "Chemins et pistes": 180,
+    "Sentiers piétons et vélo": 68
+   },
+   "osm_hors_mtmd_ni_aq": {
+    "Routes locales": 111,
+    "Chemins et pistes": 159,
+    "Sentiers piétons et vélo": 57,
+    "Routes principales": 4
+   },
+   "osm_tags": {
+    "name": 378,
+    "maxweight": 2,
+    "surface": 268
+   },
+   "osm_longueur_moy_m": 35.7,
+   "rail_rfn": 54,
+   "rail_osm": 59
+  }
+ },
+ "osm_total_3_regions": 2406,
+ "rfn_types": {
+  "Pont": 1348,
+  "Tunnel": 15,
+  "Pont mobile": 9
+ },
+ "rfn_ponts": 1357,
+ "rfn_groupes": {
+  "Courtes lignes et industriels": 418,
+  "CPKC": 278,
+  "Autre ou inconnu": 7,
+  "CN": 654
+ },
+ "rfn_exploitants": {
+  "CN": 654,
+  "CPKC": 278,
+  "CFQG": 110,
+  "SCFG(MTQ)": 85,
+  "CFQC(MTQ)": 70,
+  "CFC": 29,
+  "SLQ": 28,
+  "VDS": 22,
+  "AMIC": 17,
+  "APM": 13,
+  "CFRS": 9,
+  "CSXT": 7,
+  "STO": 5,
+  "QNSL": 5,
+  "RTFT": 4
+ },
+ "rfn_proprietaires": {
+  "Canadien National": 654,
+  "Chemin de fer Canadien Pacifique Kansas City": 282,
+  "Ministère des Transports du Québec": 156,
+  "Genesee & Wyoming Canada Inc.": 133,
+  "Train touristique de Charlevoix inc.": 29,
+  "Immeuble VDS": 22,
+  "Cartier Railway Company": 15,
+  "Administration portuaire de Montréal": 13
+ },
+ "rfn_statut": {
+  "Opérationnel": 1242,
+  "Inexploité": 110,
+  "Abandonné": 3,
+  "Inconnu": 2
+ },
+ "rfn_long_totale_m": 86303,
+ "rfn_long_moy_m": 63.6,
+ "rfn_mtq_ponts": 156,
+ "rfn_mtq_avec_ouvrage_mtmd_30": 44,
+ "rfn_mtmd_30": 149,
+ "rfn_mtmd_30_obst": {
+  "": 18,
+  "Cours d'eau": 82,
+  "Route": 45,
+  "Chemin de fer": 4
+ },
+ "rfn_osm_30": 1010,
+ "nrwn_types": {
+  "Bridge": 1350,
+  "Tunnel": 87,
+  "Bridge Moveable": 9,
+  "Unknown": 1,
+  "Culvert": 100
+ },
+ "osm_rail_total": 1170,
+ "osm_rail_groupes": {
+  "Courtes lignes et industriels": 286,
+  "CN": 652,
+  "Autre ou inconnu": 45,
+  "CPKC": 187
+ },
+ "osm_rail_bridge_type": {
+  "yes": 1126,
+  "movable": 7,
+  "viaduct": 26,
+  "trestle": 10,
+  "cantilever": 1
+ },
+ "osm_rail_long_totale_m": 79885,
+ "osm_rail_mtmd_30": 104,
+ "osm_rail_mtmd_30_obst": {
+  "Route": 40,
+  "Cours d'eau": 43,
+  "": 18,
+  "Chemin de fer": 3
+ },
+ "osm_rail_rfn_30": 1011,
+ "osm_rail_tags": {
+  "name": 1080,
+  "op": 1150,
+  "ow": 677,
+  "us": 1066,
+  "ly": 855
+ }
+}

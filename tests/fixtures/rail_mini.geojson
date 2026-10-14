@@ -1,0 +1,324 @@
+{
+ "type": "FeatureCollection",
+ "numberMatched": 4,
+ "name": "rail_mini",
+ "features": [
+  {
+   "type": "Feature",
+   "id": 1,
+   "properties": {
+    "idsegchfer": 49.0,
+    "nomvoie": "Aucun",
+    "classvoie": "Inconnu",
+    "classvoic": -1,
+    "typeutilis": "Voyageurs",
+    "typeutilic": 2,
+    "etat": "Opérationnel",
+    "etatc": 3,
+    "nmfrexploi": "Immeuble VDS",
+    "siglexploi": "VDS",
+    "debsubexpl": 38.72,
+    "finsubexpl": 74.25,
+    "nmfrpropr": "Immeuble VDS",
+    "nmfruti1vo": "VIA Rail/Amtrak",
+    "siguti1vo": "VIA/Amtrak",
+    "nmfruti2vo": "EXO",
+    "siguti2vo": "EXO",
+    "nomsubdiv1": "St-Hyacinthe",
+    "debsubdiv1": 38.72,
+    "finsubdiv1": 74.25,
+    "nomsubdiv2": "Aucun",
+    "debsubdiv2": -1.0,
+    "finsubdiv2": -1.0,
+    "nivhierar": "Non-classifié",
+    "nivhierarc": 0.0,
+    "datdebappl": 20160101,
+    "typstruc": "Tunnel",
+    "version": "20260608",
+    "objectid": 88
+   },
+   "bbox": [
+    -73.564215,
+    45.498943,
+    -73.56392,
+    45.499306
+   ],
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -73.56392,
+      45.498943
+     ],
+     [
+      -73.563931,
+      45.498953
+     ],
+     [
+      -73.563986,
+      45.499
+     ],
+     [
+      -73.564028,
+      45.499036
+     ],
+     [
+      -73.564047,
+      45.499062
+     ],
+     [
+      -73.564069,
+      45.499096
+     ],
+     [
+      -73.56413,
+      45.499187
+     ],
+     [
+      -73.564138,
+      45.4992
+     ],
+     [
+      -73.56417,
+      45.499243
+     ],
+     [
+      -73.564215,
+      45.499306
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 2,
+   "properties": {
+    "idsegchfer": 1.0,
+    "nomvoie": "Lachine",
+    "classvoie": "Épi",
+    "classvoic": 3,
+    "typeutilis": "Marchandises",
+    "typeutilic": 1,
+    "etat": "Opérationnel",
+    "etatc": 3,
+    "nmfrexploi": "Canadien National",
+    "siglexploi": "CN",
+    "debsubexpl": 0.0,
+    "finsubexpl": 11.6,
+    "nmfrpropr": "Canadien National",
+    "nmfruti1vo": "Aucun",
+    "siguti1vo": "Aucun",
+    "nmfruti2vo": "Aucun",
+    "siguti2vo": "Aucun",
+    "nomsubdiv1": "Montreal",
+    "debsubdiv1": 0.0,
+    "finsubdiv1": 11.6,
+    "nomsubdiv2": "Aucun",
+    "debsubdiv2": -1.0,
+    "finsubdiv2": -1.0,
+    "nivhierar": "Non-classifié",
+    "nivhierarc": 0.0,
+    "datdebappl": 20160101,
+    "typstruc": "",
+    "version": "20260608",
+    "objectid": 11
+   },
+   "bbox": [
+    -73.662981,
+    45.438963,
+    -73.659177,
+    45.439681
+   ],
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       -73.659177,
+       45.439681
+      ],
+      [
+       -73.659484,
+       45.439622
+      ],
+      [
+       -73.66025,
+       45.439477
+      ],
+      [
+       -73.662981,
+       45.438963
+      ]
+     ],
+     [
+      [
+       -74.184894,
+       45.088869
+      ],
+      [
+       -74.186657,
+       45.088561
+      ],
+      [
+       -74.189039,
+       45.088134
+      ],
+      [
+       -74.189608,
+       45.08803
+      ],
+      [
+       -74.190716,
+       45.087837
+      ],
+      [
+       -74.19214,
+       45.087567
+      ],
+      [
+       -74.193484,
+       45.087332
+      ],
+      [
+       -74.194815,
+       45.087097
+      ],
+      [
+       -74.196223,
+       45.08684
+      ],
+      [
+       -74.196749,
+       45.086748
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 3,
+   "properties": {
+    "idsegchfer": 33.0,
+    "nomvoie": "South Bank Branch",
+    "classvoie": "Épi",
+    "classvoic": 3,
+    "typeutilis": "Marchandises",
+    "typeutilic": 1,
+    "etat": "Abandonné",
+    "etatc": 2,
+    "nmfrexploi": "Chemin de fer Canadien Pacifique Kansas City",
+    "siglexploi": "CPKC",
+    "debsubexpl": 20.0,
+    "finsubexpl": 49.1,
+    "nmfrpropr": "Chemin de fer Canadien Pacifique Kansas City",
+    "nmfruti1vo": "Aucun",
+    "siguti1vo": "Aucun",
+    "nmfruti2vo": "Aucun",
+    "siguti2vo": "Aucun",
+    "nomsubdiv1": "Adirondack",
+    "debsubdiv1": 0.0,
+    "finsubdiv1": 49.1,
+    "nomsubdiv2": "Aucun",
+    "debsubdiv2": -1.0,
+    "finsubdiv2": -1.0,
+    "nivhierar": "Non-classifié",
+    "nivhierarc": 0.0,
+    "datdebappl": 20160101,
+    "datmodif": 20251209,
+    "typstruc": "",
+    "version": "20260608",
+    "objectid": 81
+   },
+   "bbox": [
+    -73.634495,
+    45.44502,
+    -73.631725,
+    45.44615
+   ],
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -73.634495,
+      45.44502
+     ],
+     [
+      -73.632936,
+      45.445636
+     ],
+     [
+      -73.632161,
+      45.445952
+     ],
+     [
+      -73.631725,
+      45.44615
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 4,
+   "properties": {
+    "idsegchfer": 76.0,
+    "nomvoie": "Aucun",
+    "classvoie": "Principale",
+    "classvoic": 1,
+    "typeutilis": "Marchandises et voyageurs",
+    "typeutilic": 4,
+    "etat": "Opérationnel",
+    "etatc": 3,
+    "nmfrexploi": "Canadien National",
+    "siglexploi": "CN",
+    "debsubexpl": 0.0,
+    "finsubexpl": 125.4,
+    "nmfrpropr": "Canadien National",
+    "nmfruti1vo": "VIA Rail",
+    "siguti1vo": "VIA",
+    "nmfruti2vo": "Aucun",
+    "siguti2vo": "Aucun",
+    "nomsubdiv1": "La Tuque",
+    "debsubdiv1": 0.0,
+    "finsubdiv1": 125.4,
+    "nomsubdiv2": "Aucun",
+    "debsubdiv2": -1.0,
+    "finsubdiv2": -1.0,
+    "nivhierar": "Tronçon important",
+    "nivhierarc": 2.0,
+    "datdebappl": 20160101,
+    "typstruc": "Pont",
+    "version": "20260608",
+    "objectid": 117
+   },
+   "bbox": [
+    -72.778649,
+    47.456761,
+    -72.778572,
+    47.458003
+   ],
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -72.778572,
+      47.456761
+     ],
+     [
+      -72.778611,
+      47.457376
+     ],
+     [
+      -72.778649,
+      47.458002
+     ],
+     [
+      -72.778649,
+      47.458003
+     ]
+    ]
+   }
+  }
+ ]
+}

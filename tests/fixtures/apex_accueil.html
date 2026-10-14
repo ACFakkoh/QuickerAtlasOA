@@ -1,0 +1,483 @@
+<html lang="fr-ca" xmlns:htmldb="http://htmldb.oracle.com">
+   <head>
+<meta http-equiv="x-ua-compatible" content="IE=edge" />
+      <title>Infrastructures de transport  - Structures</title>
+      <link rel="stylesheet" type="text/css" href="apex_pes/r/files/static/v7Y/stylesheet_0.css" />
+      <link rel="stylesheet" type="text/css" href="apex_pes/r/files/static/v7Y/piv_mtq.css" />
+      <link rel="stylesheet" type="text/css" href="apex_pes/r/files/static/v7Y/acc_1.css" />
+      <link rel="stylesheet" type="text/css" href="apex_pes/r/files/static/v7Y/APEX_MTQ_511.css" />
+      <link rel="stylesheet" href="/i/21.1.0/app_ui/css/Core.min.css?v=21.1.1" type="text/css" />
+<link rel="stylesheet" href="/i/21.1.0/app_ui/css/Theme-Standard.min.css?v=21.1.1" type="text/css" />
+
+<link rel="stylesheet" href="/i/21.1.0/legacy_ui/css/5.0.min.css?v=21.1.1" type="text/css" />
+
+
+
+
+<style type="text/css">
+.t3PageBody {
+    padding-left: 0px;
+}
+.t3ReportsRegion100Width
+{
+   margin-top: 0px;
+}
+.t3RegionwithoutButtonsandTitles {
+   margin-top: 0px;
+}
+
+.note {
+   padding-left: 40px;
+   position: relative;
+   padding-bottom: 10px;
+}
+.note:before {
+   content: 'Note :';
+   position: absolute;
+   left: 5;
+}
+
+</style>
+
+
+<script>
+var apex_img_dir = "/i/21.1.0/", htmldb_Img_Dir = apex_img_dir;
+</script>
+<script src="/i/21.1.0/libraries/apex/minified/desktop_all.min.js?v=21.1.1"></script>
+<script src="wwv_flow.js_messages?p_app_id=122&p_lang=fr-ca&p_version=21.1.1-278061054582"></script>
+<script src="/i/21.1.0/libraries/apex/minified/legacy_pre18.min.js?v=21.1.1"></script>
+<script src="/i/21.1.0/libraries/apex/minified/legacy_18.min.js?v=21.1.1"></script>
+<script src="/i/21.1.0/libraries/jquery-migrate/3.3.2/jquery-migrate-3.3.2.min.js?v=21.1.1"></script>
+
+
+
+
+<script type="text/javascript">
+function REINIT_FILTRE(pELEMENT)
+{
+
+  var v_ELEMENT1 = document.getElementById(pELEMENT);
+      v_ELEMENT1.value='';
+      v_ELEMENT1 = document.getElementById(pELEMENT+"_HIDDENVALUE");
+      v_ELEMENT1.value='';
+
+}
+
+function REINIT_SELECT(){     
+   var Obj_P56_DIR_TERRT = document.getElementById('P56_DIR_TERRT_0002');   
+   var Obj_P56_ROUTE     = document.getElementById('P56_NOM_ROUTE_0003');  
+   
+    //alert('Obj_P56_DIR_TERRT :' + Obj_P56_DIR_TERRT.value);
+   //Si valeur de DIR_TERRT est toutes
+   if(Obj_P56_DIR_TERRT != undefined && Obj_P56_DIR_TERRT.selectedIndex == 0){
+      Obj_P56_ROUTE.disabled= true;           
+   }else{      
+      if(Obj_P56_ROUTE != undefined && (Obj_P56_ROUTE.selectedIndex == 0 || Obj_P56_ROUTE.selectedIndex == -1)){           
+      majSelectListe('/ords/pes/APEX_PES.P_PESB_AJAX_LISTE'   ,Obj_P56_DIR_TERRT.value ,'P56_DIR_TERRT_0002' ,'');     
+      } 
+   }
+}
+</script>
+<meta http-equiv="cache-control,must-revalidate" CONTENT="no-cache">
+<meta http-equiv="cache-control" CONTENT="no-store">
+<meta http-equiv="Expires" CONTENT="-1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+
+<style type="text/css">
+                /* Annuler touch-action: pan-y; 
+                Annuler -webkit-user-drag: none;
+                Annuler -webkit-tap-highlight-color: rgba(0, 0, 0, 0); Pour que l'utilisteur peut bouger la page dans son Mobile*/
+                .ActiveScrollingMobile {
+                        touch-action: auto  !important;  
+                        -webkit-user-drag: auto  !important;
+                        -webkit-tap-highlight-color: initial  !important;
+                }
+ </style>
+
+   </head>
+   <body style="margin:0 5px;" class="ActiveScrollingMobile"  ><form action="wwv_flow.accept" method="post" name="wwv_flow" id="wwvFlowForm" data-oj-binding-provider="none" novalidate >
+<input type="hidden" name="p_flow_id" value="122" id="pFlowId" /><input type="hidden" name="p_flow_step_id" value="56" id="pFlowStepId" /><input type="hidden" name="p_instance" value="3991059643958" id="pInstance" /><input type="hidden" name="p_page_submission_id" value="241406957451014682831231174152182621682" id="pPageSubmissionId" /><input type="hidden" name="p_request" value="" id="pRequest" /><input type="hidden" name="p_reload_on_submit" value="A" id="pReloadOnSubmit" /><input type="hidden" value="241406957451014682831231174152182621682" id="pSalt" />
+      <table width="100%" style="margin-left:auto; margin-right:auto;" border="0" cellpadding="0" cellspacing="0" summary="" align="center">         
+         <tr>
+            <td>
+               <table summary="" cellpadding="0" cellspacing="0" border="0" class="t3RegionwithoutButtonsandTitles" id="R267052036628506142">
+<tr>
+<td><script language="JavaScript1.1" type="text/javascript"> 
+   /****************************************************************
+   *
+   * Fonction qui maj les element d'un select de maniere asynchrone
+   *
+   ****************************************************************/
+   function majSelectListe(strUrl, strVALUE, strThis, strListeInit){       
+      var listeSelectInit = strListeInit.split(":");
+      
+      for(var i=0; i < listeSelectInit.length; i += 2){
+         if(listeSelectInit[i] != undefined && listeSelectInit[i+1] != undefined){
+            initListe(listeSelectInit[i], '%', listeSelectInit[i+1]);
+         }
+      }
+      strUrl = strUrl + encodeURI('?P_VC_ITEM=' + strThis + '&P_VC_VAL_ITEM=' + strVALUE);
+      try{
+         var xmlhttp = null;
+         if (window.XMLHttpRequest){
+            // code for all new browsers
+            xmlhttp=new XMLHttpRequest();
+         }
+         else{
+            if (window.ActiveXObject) {
+               // code for IE5 and IE6
+               xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");                
+            }
+         }
+         
+         if(xmlhttp != null){
+            xmlhttp.onreadystatechange = function(){
+               if (xmlhttp.readyState == 4){// 4 = "loaded"
+                  if (xmlhttp.status == 200){
+                     MajListe(xmlhttp.responseXML);
+                  }
+               }
+            };
+            xmlhttp.open("GET", strUrl, true);
+            xmlhttp.send(null);
+         }
+         else{ 
+            alert("Your browser does not support XMLHTTP."); 
+         } 
+      }
+      catch (ex) {
+         window.status = "un exception s'est produite dans le script.\n Erreurr nom: " + ex.name + ". Erreurr message: " + ex.message;    
+      }
+   }
+
+   /****************************************************************
+   *
+   * Fonction qui maj les elements d'un select à partir d'un flux XML
+   *
+   ****************************************************************/
+   function MajListe(objXmlResl){ 
+      var objXmlSelects = objXmlResl.getElementsByTagName("element")
+      var numNbrSelect  = objXmlSelects.length;
+      var objSelect     = null;
+      
+      //parcourir l'ensemble des elements (select) a maj
+      for(j = 0; j < numNbrSelect; j++) { 
+         // obtenir id de l'element
+         var strSelectId = objXmlSelects[j].getAttribute('value');
+          
+         objSelect = $x(strSelectId);
+          
+         // obtenir le noeud asocier a l'elment en cours 
+         objXmlSelect = objXmlResl.getElementsByTagName("element")[j];
+         
+         if(objXmlSelect && objSelect){   
+            var numCount = objXmlSelect.getElementsByTagName("option").length;   
+            objSelect.length = 0;
+            
+            if(numCount > 1){
+               objSelect.disabled = false;
+               // set focus pour la premiere liste 
+               if(j == 0){
+                  objSelect.focus();
+               }
+            }
+            else{
+               objSelect.disabled = true;
+            }
+            //maj des elements
+            for(var i=0;i<numCount;i++){
+               var objOptXml = objXmlSelect.getElementsByTagName("option")[i];
+               ajoutElmntSelect(objSelect, objOptXml.getAttribute('value'), objOptXml.firstChild.nodeValue);
+            }
+         }
+      }
+   }
+
+   /****************************************************************
+   *
+   * Fonction qui ajout un element a un select
+   *
+   ****************************************************************/
+   function ajoutElmntSelect(pSelect, pValue, pContent){
+      var l_Opt = document.createElement("option");
+      l_Opt.value = pValue;
+      
+      if(document.all){
+         pSelect.options.add(l_Opt);
+         l_Opt.innerText = pContent;
+      }
+      else{
+         l_Opt.appendChild(document.createTextNode(pContent));
+         pSelect.appendChild(l_Opt);
+      }
+     
+   }
+
+   /****************************************************************
+   *
+   * Fonction qui supprime les element d'un select
+   *
+   ****************************************************************/
+   function initListe(strSelect, strValue, strContent){
+      var objSelect = $x(strSelect);
+      objSelect.length = 0;
+      objSelect.disabled = true;
+      ajoutElmntSelect(objSelect, strValue, strContent); 
+   }
+   
+   function popupFieldHelpMtq(curentItemId, sessionId, closeButtonName){
+      var closeButton;
+      var largeur = 500;
+      var hauteur = 450;
+
+      if (closeButtonName){
+         closeButton = '&p_close_button_name='+closeButtonName;
+      }
+      else{
+         closeButton = '';
+      }
+      
+      html_PopUp("wwv_flow_item_help.show_help?p_item_id=" + curentItemId + "&p_session=" + sessionId + closeButton, 'Help', largeur, hauteur);
+      //apex.theme.popupFieldHelp(curentItemId, sessionId);
+      
+      return;
+   }
+   
+   function pop_url(url){
+      var newwindow = window.open(url, 'Localisation', 'height=800,width=1024,resizable=yes,scrollbars=yes');
+      
+      if (window.focus) {
+         newwindow.focus()
+      }
+      
+      return;
+   }
+</script></td>
+</tr>
+</table>
+
+<div style="visibility:hidden;display:none;"><table id="apex_layout_296601161613540992" border="0" class="formlayout"  role="presentation"><tr><td  align="left"><a class="t3optionalwithhelp" href="javascript:popupFieldHelpMtq('262942343266215773','3991059643958')" tabindex="999">Aide ICG</a><span id="P56_AIDE_ICG_0010"  class="display_only&#x20;apex-item-display-only" ><a class="t3optionalwithhelp" href="javascript:popupFieldHelpMtq('262942343266215773','3991059643958')"><img src="apex_pes/r/files/static/v7Y/Aide.gif" alt="Afficher la légende" title="Afficher la légende"/></a></span><a class="t3optionalwithhelp" href="javascript:popupFieldHelpMtq('262943658396215786','3991059643958')" tabindex="999">Aide IAS</a><span id="P56_AIDE_IAS_0011"  class="display_only&#x20;apex-item-display-only" ><a class="t3optionalwithhelp" href="javascript:popupFieldHelpMtq('262943658396215786','3991059643958')"><img src="apex_pes/r/files/static/v7Y/Aide.gif" alt="Afficher la légende" title="Afficher la légende"/></a></span><a class="t3optionalwithhelp" href="javascript:popupFieldHelpMtq('265024734616604352','3991059643958')" tabindex="999">Coordonnées GPS</a><span id="P56_AIDE_GPS_0012"  class="display_only&#x20;apex-item-display-only" ><a class="t3optionalwithhelp" href="javascript:popupFieldHelpMtq('265024734616604352','3991059643958')"><img src="apex_pes/r/files/static/v7Y/Aide.gif" title="Afficher le texte d'aide." alt="Afficher le texte d'aide."/></a></span></td></tr></table>
+</div><div></div>
+               
+               <!--table summary="" cellpadding="0" border="0" cellspacing="0" width="100%">
+                  <tr valign="bottom">
+                     <td style="text-align:right;" align="right" valign="bottom"></td>
+                  </tr>
+               </table-->
+               
+               
+               
+               <table width="100%" summary="" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                     <td class="t3PageBody">
+                        <div class="t3Messages" align="center"><span id="APEX_ERROR_MESSAGE" data-template-id="258941934673601923_E" class="apex-page-error u-hidden"></span><span id="APEX_SUCCESS_MESSAGE" data-template-id="258941934673601923_S" class="apex-page-success u-hidden"></span></div><table cellpadding="0" cellspacing="0" border="0" summary="" width="100%" class="t3ReportsRegion100Width" id="R275684134346672421">
+   <tr>
+      <td class="t3RegionHeader">Structures <span style="color: black; font-size: 14px;font-weight:normal;">*</span></td>
+      <td class="t3ButtonHolder">&nbsp;&nbsp;&nbsp;</td>
+   </tr>
+   <tr>
+      <td class="t3Body" colspan="2"><p>
+ 
+</p><p>* Ponts, ponceaux, murs de soutènement et tunnels sur le réseau routier du Ministère.</p>
+</td>
+   </tr>
+</table><table cellpadding="0" cellspacing="0" border="0" summary="" width="100%" class="t3ReportsRegion100Width" id="R262940454703215754">
+   <tr>
+      <td class="t3RegionHeader"><table cellspacing="0" cellpadding="0" border="0" width="100%"><tr><td style="border-bottom: 0px none; padding: 0pt;" class="t3RegionHeader">Critères de recherche</td><td align="right">Information mise à jour le 2026-10-10</td></tr></table</td>
+   </tr>
+   <tr>
+      <td class="t3Body"><p><strong>Avis concernant l'accessibilité</strong>: cette page peut comporter des obstacles à l'<a href="https://www.transports.gouv.qc.ca/fr/Pages/accessibilite.aspx" target="_top">accessibilité</a>. Vous pouvez obtenir de l'aide en <a href="https://www.transports.gouv.qc.ca/fr/nous-joindre" target="_top">communiquant avec nous</a>.</p><input type="hidden" id="P56_DAT_MAJ_SECTN_0001" name="P56_DAT_MAJ_SECTN_0001" value="2026-10-10"><table id="apex_layout_262940454703215754" border="0" class="formlayout"  role="presentation"><tr><td nowrap="nowrap" align="right">&nbsp&nbsp&nbsp&nbsp<label for="P56_DIR_TERRT_0002" id="P56_DIR_TERRT_0002_LABEL"><span class="t3Optional">Région</span></label></td><td  align="left"><select  id="P56_DIR_TERRT_0002" name="P56_DIR_TERRT_0002" class="selectlist&#x20;apex-item-select" style="width:260px;" valign="bottom"  onchange="majSelectListe('/ords/pes/APEX_PES.P_PESB_AJAX_LISTE',this.value,'P56_DIR_TERRT_0002',''); " size="1" ><option value="&#x25;" selected="selected" >(Toutes)</option>
+<option value="5391">Abitibi-Témiscamingue</option>
+<option value="5365">Bas-Saint-Laurent</option>
+<option value="4881">Bureau de la coordination du Nord-du-Québec</option>
+<option value="5371">Capitale-Nationale</option>
+<option value="5364">Centre-du-Québec</option>
+<option value="5366">Chaudière-Appalaches</option>
+<option value="5367">Côte-Nord</option>
+<option value="5393">Eeyou Istchee Baie-James</option>
+<option value="5390">Estrie</option>
+<option value="5363">Gaspésie - Îles-de-la-Madeleine</option>
+<option value="5388">Laurentides - Lanaudière</option>
+<option value="5370">Mauricie</option>
+<option value="5229">Métropole</option>
+<option value="5386">Montérégie</option>
+<option value="5389">Outaouais</option>
+<option value="5368">Saguenay-Lac-Saint-Jean</option>
+<option value="5393"></option>
+<option value="5368"></option>
+</select></td></tr><tr><td nowrap align="right">&nbsp&nbsp&nbsp&nbsp<label for="P56_NOM_ROUTE_0003" id="P56_NOM_ROUTE_0003_LABEL"><span class="t3Optional">Route</span></label></td><td  align="left"><select  id="P56_NOM_ROUTE_0003" name="P56_NOM_ROUTE_0003" class="selectlist&#x20;apex-item-select" style="width:260px;" valign="bottom" size="1" ><option value="&#x25;" selected="selected" > (Toutes)</option>
+</select></td></tr><tr><td  align="right"><label for="P56_COD_TYPE_RESPN" id="P56_COD_TYPE_RESPN_LABEL"><span class="t3Optional">Réseau</span></label></td><td  align="left"><select  id="P56_COD_TYPE_RESPN" name="P56_COD_TYPE_RESPN" class="selectlist&#x20;apex-item-select" style="width:260px;" valign="bottom" size="1" ><option value="&#x25;" selected="selected" >(Tous)</option>
+<option value="10">Supérieur</option>
+<option value="13">Municipal</option>
+</select></td></tr><tr><td nowrap align="right"><span>Structures faisant l'objet  de ?</span></td><td  align="left"><div tabindex="-1"  id="P56_LIMTN_CHARGE_0004" class="checkbox_group&#x20;apex-item-group&#x20;apex-item-group--rc&#x20;apex-item-checkbox"  role="group">
+<div class="apex-item-option"><input type="checkbox" id="P56_LIMTN_CHARGE_0004_0" name="P56_LIMTN_CHARGE_0004" value="H"  ><label class="u-checkbox" for="P56_LIMTN_CHARGE_0004_0">Limitation de hauteur libre sous la structure</label></div>
+<div class="apex-item-option"><input type="checkbox" id="P56_LIMTN_CHARGE_0004_1" name="P56_LIMTN_CHARGE_0004" value="C"  ><label class="u-checkbox" for="P56_LIMTN_CHARGE_0004_1">Limitation de poids</label></div>
+<div class="apex-item-option"><input type="checkbox" id="P56_LIMTN_CHARGE_0004_2" name="P56_LIMTN_CHARGE_0004" value="R"  ><label class="u-checkbox" for="P56_LIMTN_CHARGE_0004_2">Rapport d'inspection générale</label></div>
+</div>
+</td></tr><tr><td nowrap="nowrap" align="right"><label for="P56_RECHR_0005" id="P56_RECHR_0005_LABEL"><span class="t3Optional">Mots clés</span></label></td><td  align="left"><input type="text"  id="P56_RECHR_0005" name="P56_RECHR_0005" class="text_field&#x20;apex-item-text" style="width:260px;" value="" size="30" maxlength="2000" onkeypress="return apex.submit({request:'P56_RECHR_0005',submitIfEnter:event})" data-trim-spaces="NONE"  /></td></tr><tr><td  align="left"> <input type="button" value="Afficher les résultats" onclick="apex.submit({request:'RECHR'});" id="P56_BTN_RECHR" class="" /><input type="hidden" id="P56_RECHR_ACTIF_0007" name="P56_RECHR_ACTIF_0007" value=""><input type="hidden" id="P56_VAL_ICG_0008" name="P56_VAL_ICG_0008" value=""><input type="hidden" id="P56_VAL_IAS_0009" name="P56_VAL_IAS_0009" value=""><input type="hidden" data-for="P56_VAL_IAS_0009" value="of_KD9jB6Xxu2t1twfi3sSQW1WMKlsifStlq-NqUTctILO5tFuZKvmbLEXsambzfomToRUyZgS7oMsR-YAGQdQ"></td></tr></table></td>
+   </tr>
+</table><table class="regionlayout" width="100%" summary="" cellspacing="0" cellpadding="0" border="0" role="presentation"><tr><td valign=top><table width="100%" border="0" cellspacing="0" cellpadding="0" id="R276082440644717031" class="t3ReportsRegion" summary="">
+   <tr>
+      <td valign="bottom" class="t3RegionHeader">Indice de condition générale (ICG) &nbsp;  <a class="t3optionalwithhelp" href="javascript:popupFieldHelpMtq('262942343266215773','3991059643958')"><img src="apex_pes/r/files/static/v7Y/Aide.gif" alt="Afficher la légende" title="Afficher la légende"/></a><a name="R276082440644717031"/></td>
+      <td class="t3ButtonHolder" align="right">&nbsp;&nbsp;&nbsp;</td>
+   </tr>
+   <tr class="t3instructiontext">
+      <td colspan="2" valign="top" class="t3Body"><table class="t3standard" summary="Report">
+             <tr>
+                 <th class="t3header">Indice</th>
+                 <th class="t3header">État</th>
+                 <th class="t3header">N<span style="font-size:5pt;"><sup>bre</sup></span> de structures</th>
+             </tr>
+<tr>
+                         <td class="t3data" align="left"><a href="javascript:doSubmit('ICG_4');" style="color: black;">4</a></td> 
+                         <td class="t3data" align="left"><a href="javascript:doSubmit('ICG_4');" style="color: black;">Structure ne nécessitant aucune intervention</a></td> 
+                         <td class="t3data" align="right"><a href="javascript:doSubmit('ICG_4');" style="color: black;">6825</a></td>
+                      </tr>
+<tr>
+                         <td class="t3data" align="left"><a href="javascript:doSubmit('ICG_3');" style="color: black;">3</a></td> 
+                         <td class="t3data" align="left"><a href="javascript:doSubmit('ICG_3');" style="color: black;">Structure nécessitant des réparations</a></td> 
+                         <td class="t3data" align="right"><a href="javascript:doSubmit('ICG_3');" style="color: black;">1836</a></td>
+                      </tr>
+<tr>
+                         <td class="t3data" align="left"><a href="javascript:doSubmit('ICG_2');" style="color: black;">2</a></td> 
+                         <td class="t3data" align="left"><a href="javascript:doSubmit('ICG_2');" style="color: black;">Structure nécessitant des travaux majeurs</a></td> 
+                         <td class="t3data" align="right"><a href="javascript:doSubmit('ICG_2');" style="color: black;">139</a></td>
+                      </tr>
+<tr>
+                         <td class="t3data" align="left"><a href="javascript:doSubmit('ICG_1');" style="color: black;">1</a></td> 
+                         <td class="t3data" align="left"><a href="javascript:doSubmit('ICG_1');" style="color: black;">Structure nécessitant des travaux majeurs pouvant aller jusqu'au remplacement</a></td> 
+                         <td class="t3data" align="right"><a href="javascript:doSubmit('ICG_1');" style="color: black;">293</a></td>
+                      </tr>
+<tr>
+                         <td class="t3data" align="left"><a href="javascript:doSubmit('ICG_AC');" style="color: black;">AC</a></td> 
+                         <td class="t3data" align="left"><a href="javascript:doSubmit('ICG_AC');" style="color: black;">Analyse en cours *</a></td> 
+                         <td class="t3data" align="right"><a href="javascript:doSubmit('ICG_AC');" style="color: black;">777</a></td>
+                      </tr>
+<tr>
+                         <td class="t3data" align="left"><a href="javascript:doSubmit('ICG_S. O.');" style="color: black;">S. O.</a></td> 
+                         <td class="t3data" align="left"><a href="javascript:doSubmit('ICG_S. O.');" style="color: black;">Sans objet</a></td> 
+                         <td class="t3data" align="right"><a href="javascript:doSubmit('ICG_S. O.');" style="color: black;">10</a></td>
+                      </tr>
+<tr height="20px">
+                <td align="left"  class="t3dataHighlight" colspan="2">Total</td>
+                <td align="right" class="t3dataHighlight">9880</td>
+             </tr>
+</table>* Des analyses additionnelles sont requises
+</td>
+   </tr>
+</table><table width="100%" border="0" cellspacing="0" cellpadding="0" id="R284923757543094860" class="t3ReportsRegion" summary="">
+   <tr>
+      <td valign="bottom" class="t3RegionHeader">Téléchargements&nbsp;<a class="t3optionalwithhelp" href="javascript:popupFieldHelpMtq('265024734616604352','3991059643958')"><img src="apex_pes/r/files/static/v7Y/Aide.gif" title="Afficher le texte d'aide." alt="Afficher le texte d'aide."/></a><a name="R284923757543094860"/></td>
+      <td class="t3ButtonHolder" align="right">&nbsp;&nbsp;&nbsp;</td>
+   </tr>
+   <tr class="t3instructiontext">
+      <td colspan="2" valign="top" class="t3Body"><table class="t3standard" summary="Report" width="100%">  
+   <tr>
+      <th class="t3header" align="left">Coordonnées GPS</th>
+      <th class="t3header" style="text-decoration: underline; background-color: #FFFFFF;">
+         <a href="/ords/pes/APEX_PES.P_PESB_GENRT_CSV?p_vc_DT=&p_vc_ROUTE=&p_vc_OPT_CHARGE=">(format .csv)</a><br>
+         <a href="/ords/pes/APEX_PES.P_PESB_GENRT_GPX?p_vc_DT=&p_vc_ROUTE=&p_vc_OPT_CHARGE=">(format .gpx)</a>
+      </th>
+   </tr>
+</table>
+</td>
+   </tr>
+</table></td><td valign=top><table width="100%" border="0" cellspacing="0" cellpadding="0" id="R262940246607215751" class="t3ReportsRegion" summary="">
+   <tr>
+      <td valign="bottom" class="t3RegionHeader">Indice d'accessibilité (IAS)&nbsp;<a class="t3optionalwithhelp" href="javascript:popupFieldHelpMtq('262943658396215786','3991059643958')"><img src="apex_pes/r/files/static/v7Y/Aide.gif" alt="Afficher la légende" title="Afficher la légende"/></a><a name="R262940246607215751"/></td>
+      <td class="t3ButtonHolder" align="right">&nbsp;&nbsp;&nbsp;</td>
+   </tr>
+   <tr class="t3instructiontext">
+      <td colspan="2" valign="top" class="t3Body"><table class="t3standard" summary="Report">
+             <tr>
+                <th class="t3header">Indice</th>
+                <th class="t3header">État</th>
+                <th class="t3header">N<span style="font-size:5pt;"><sup>bre</sup></span> de structures</th>
+             </tr>
+<tr>
+                   <td class="t3data" align="center"><a href="javascript:doSubmit('IAS_V');" style="color:black"><img src="apex_pes/r/files/static/v7Y/feuvert.jpg" alt="Structure n'étant soumise à aucune restriction" title="Structure n'étant soumise à aucune restriction"/></a></td>
+                   <td class="t3data" align="left"><a href="javascript:doSubmit('IAS_V');" style="color:black">Structure n'étant soumise à aucune restriction</a></td>
+                   <td class="t3data" align="right"><a href="javascript:doSubmit('IAS_V');" style="color:black">7780</a></td>
+                </tr>
+<tr>
+                   <td class="t3data" align="center"><a href="javascript:doSubmit('IAS_J');" style="color:black"><img src="apex_pes/r/files/static/v7Y/feujaune.jpg" alt="Structure soumise à certaines restrictions" title="Structure soumise à certaines restrictions"/></a></td>
+                   <td class="t3data" align="left"><a href="javascript:doSubmit('IAS_J');" style="color:black">Structure soumise à certaines restrictions</a></td>
+                   <td class="t3data" align="right"><a href="javascript:doSubmit('IAS_J');" style="color:black">1408</a></td>
+                </tr>
+<tr>
+                   <td class="t3data" align="center"><a href="javascript:doSubmit('IAS_R');" style="color:black"><img src="apex_pes/r/files/static/v7Y/feurouge.jpg" alt="Structure fermée" title="Structure fermée"/></a></td>
+                   <td class="t3data" align="left"><a href="javascript:doSubmit('IAS_R');" style="color:black">Structure fermée</a></td>
+                   <td class="t3data" align="right"><a href="javascript:doSubmit('IAS_R');" style="color:black">81</a></td>
+                </tr>
+<tr>
+                   <td class="t3data" align="center"><a href="javascript:doSubmit('IAS_S. O.');" style="color:black">S. O.</a></td>
+                   <td class="t3data" align="left"><a href="javascript:doSubmit('IAS_S. O.');" style="color:black">Sans objet</a></td>
+                   <td class="t3data" align="right"><a href="javascript:doSubmit('IAS_S. O.');" style="color:black">611</a></td>
+                </tr>
+<tr height="20px">
+                 <td colspan="2" class="t3dataHighlight" align="left">Total</td>
+                 <td colspan="1" class="t3dataHighlight" align="right">9880</td>
+             </tr>
+</table>
+</td>
+   </tr>
+</table></td></tr></table>
+                     </td>
+                  </tr>
+                  <!--<tr>
+                     <td></td>
+                  </tr>-->
+               </table>            </td>
+         </tr>
+         <tr>
+            <td>
+               <div class="t3customize"></div>
+               
+               <input type="hidden" id="pPageFormRegionChecksums" value="&#x5B;&#x5D;">
+<input type="hidden" id="pPageItemsRowVersion" value="" /><input type="hidden" id="pPageItemsProtected" value="UDU2X1ZBTF9JQVNfMDAwOQ&#x2F;Q1PBNuOZJ_vHKs1qWIbHsJ0nDVWBCrWPPXFVAJncUup3kqxZ9ODreaZ1Ds35zrwFDJGEQkDI5lHlgAfzblgUOg" /></form>
+            </td>
+         </tr>
+      </table>
+      
+      <script type="text/javascript">
+   <!--
+   xtnv     = document;
+   xtsd     = "";
+   xtsite   = "";
+   xtn2     = "1";
+   xt_multc = "&x1=f";
+   if (window.xtparam!=null){window.xtparam+=xt_multc;}else{window.xtparam=xt_multc;}; 
+   //-->
+</script> 
+<script type="text/javascript" src="https://www.transports.gouv.qc.ca/_layouts/15/SCRIPTS/MTQ/MSP/AnalyzerNx/xtcore.js"></script> 
+<noscript><img width="1" height="1" alt="" src=".xiti.com/hit.xiti?s=&s2=1&p=&di=&an=&ac=&x1=f" ></noscript>
+   
+
+
+
+
+
+
+<script type="text/javascript">
+apex.jQuery( function() {
+apex.page.init( this, function() {
+try {
+(function(){apex.widget.selectList("#P56_DIR_TERRT_0002",{"nullValue":"\u0025","ajaxIdentifier":"SVRFTSBUWVBFfjUxMjB-MjYyOTQ0MzQyOTI5MjE1Nzg4\u002FXgD8kwUmzTF024KkjEEu_y2LaK5aTf6fU4F7itWt6_BULwVUoD7OznWY0ejjZPVdiq6tNjoSGLVxC8brE4hJ8Q"});})();
+(function(){apex.widget.selectList("#P56_NOM_ROUTE_0003",{"nullValue":"\u0025","ajaxIdentifier":"SVRFTSBUWVBFfjUxMjB-MjYyOTQzMjQxMjkwMjE1Nzg1\u002F-tKVhcv5E15WN8qQ5bontx3h_NG_Fc-BtbX0446az-mmJYg-ZUVD-cMYUn_ky_LulaajOJ0S0Jvu6je1j32tFw"});})();
+(function(){apex.widget.selectList("#P56_COD_TYPE_RESPN",{"nullValue":"\u0025","ajaxIdentifier":"SVRFTSBUWVBFfjUxMjB-MjExNTcwMjMwMTc0Njk1OTM\u002FBehu3oVGNB2FqN8WG8PshoVXlxxxU_21df2e01SBIjHimfpAXKtkp4385t-Ck_itv7zqTLpV2PaPu9zTVuC74g"});})();
+(function(){apex.widget.checkboxAndRadio("#P56_LIMTN_CHARGE_0004","checkbox",{"ajaxIdentifier":"SVRFTSBUWVBFfjUxMjB-MjYzMTU5NjU5Njk2MjUxNjk1\u002FizW-J5il66zGLTzdQ0R_1jhIYcuu1ycUJ5vcJK0RCGX0tXBz1iC3JQAr9NZE4iVdnewYlxe3Aec2xUQ13nmYRg","optimizeRefresh":true,"inputName":"P56_LIMTN_CHARGE_0004"});})();
+} catch(e) {apex.debug.error(e)};
+apex.jQuery.when.apply( apex.jQuery, apex.page.loadingDeferreds ).done(function() {
+try {
+
+REINIT_SELECT();
+} finally {
+apex.event.trigger(apex.gPageContext$,'apexreadyend');
+};
+});
+});
+});</script>
+
+</body>
+</html>

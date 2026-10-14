@@ -1,0 +1,15 @@
+{
+ "west": -74.277654364,
+ "south": 45.227454039,
+ "east": -73.045654364,
+ "north": 46.075454039,
+ "step": 0.004,
+ "image": "couche_classes_site_mtl.png (4 px/cellule, palette YlGnBu, alpha 200)",
+ "classes": {
+  "A": ">1500",
+  "B": "760-1500",
+  "C": "360-760",
+  "D": "180-360",
+  "E": "<180 m/s"
+ }
+}

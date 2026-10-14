@@ -1,0 +1,60 @@
+// Test de fumée de js/sismique.js (sans navigateur) : `node tests/js/sismique_smoke.mjs`
+//  - parité de shardOf avec etl.sismique.shard_of (valeurs figées + 3 000 n° comparés à Python si disponible) ;
+//  - décodage des entiers (échelle logarithmique), rang des valeurs, période de retour.
+import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import path from 'node:path';
+
+const ici = path.dirname(fileURLToPath(import.meta.url));
+const racine = path.resolve(ici, '..', '..');
+globalThis.window = { QA_MOD: {} };
+await import(pathToFileURL(path.join(racine, 'js', 'sismique.js')).href);
+const T = window.QA_MOD.sismique._t;
+assert.ok(T && typeof window.QA_MOD.sismique.render === 'function', 'module non enregistré');
+
+let n = 0;
+const ok = (nom, f) => { f(); n++; console.log('ok  ' + nom); };
+
+// mêmes valeurs que SHARDS_REF dans tests/test_sismique.py
+const REF = { '00002': '65', '00003': '2a', '03226': '62', '13247A': '77', '14346C': '58', '14949N': '2e', '99999': '68', '1': '04', 'ABC': '03', 'X-1': '6d' };
+ok('shardOf : valeurs de référence', () => { for (const k of Object.keys(REF)) assert.equal(T.shardOf(k), REF[k], k); });
+
+ok('shardOf : parité avec Python sur 3 000 n°', () => {
+  const nums = [];
+  for (let i = 1; i <= 3000; i++) nums.push(String(i * 3).padStart(5, '0') + (i % 7 === 0 ? 'ABCDNS'[i % 6] : ''));
+  let py;
+  try {
+    py = JSON.parse(execFileSync('python', ['-I', '-c',
+      'import json,sys; sys.path.insert(0, sys.argv[1]); from etl.sismique import shard_of; print(json.dumps([shard_of(n) for n in json.loads(sys.argv[2])]))',
+      racine, JSON.stringify(nums)], { encoding: 'utf8' }));
+  } catch (e) { console.log('    (Python indisponible : parité large ignorée)'); return; }
+  assert.deepEqual(nums.map(T.shardOf), py);
+});
+
+ok('shardOf : clés valides', () => {
+  for (let i = 0; i < 2000; i++) { const k = T.shardOf(String(i)); assert.match(k, /^[0-9a-f]{2}$/); assert.ok(parseInt(k, 16) < T.N_SHARDS); }
+});
+
+ok('decode : échelle logarithmique 1e-4 × 10^(q/1000)', () => {
+  const rel = (a, b) => Math.abs(a - b) / b;
+  assert.ok(rel(T.decode(0), 1e-4) < 1e-12);
+  assert.ok(rel(T.decode(1000), 1e-3) < 1e-12);
+  assert.ok(rel(T.decode(4000), 1) < 1e-12);
+  assert.ok(rel(T.decode(2777), 0.05984115950603199) < 1e-12);   // valeurs calculées par etl.sismique.decoder
+  assert.ok(rel(T.decode(4609), 4.064433291652128) < 1e-12);
+  assert.ok(rel(T.decode(74), 0.00011857687481671603) < 1e-12);
+});
+
+ok('index et vec : classe → probabilité → mesure', () => {
+  assert.equal(T.index(0, 0, 0), 0); assert.equal(T.index(0, 1, 0), 11); assert.equal(T.index(1, 0, 0), 33); assert.equal(T.index(4, 2, 10), 164);
+  const row = [3]; for (let i = 0; i < T.NB_VAL; i++) row.push(1000 + i);
+  const v = T.vec(row, 2, 1);                                      // classe C, 5 %
+  assert.equal(v.length, 11);
+  assert.ok(Math.abs(v[0] - T.decode(1000 + T.index(2, 1, 0))) < 1e-15);
+  assert.ok(Math.abs(v[10] - T.decode(1000 + T.index(2, 1, 10))) < 1e-15);
+});
+
+ok('retour : période de retour (2 % ≈ 2 475 ans, 5 % ≈ 975, 10 % ≈ 475)', () => { assert.equal(T.retour(2), 2475); assert.equal(T.retour(5), 975); assert.equal(T.retour(10), 475); });
+
+console.log(n + ' tests réussis');

@@ -1,0 +1,914 @@
+[
+ {
+  "name": "Query",
+  "kind": "OBJECT",
+  "fields": [
+   {
+    "name": "zone",
+    "args": [
+     {
+      "name": "latitude",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     },
+     {
+      "name": "longitude",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     }
+    ],
+    "type": {
+     "name": "ModelZone",
+     "kind": "OBJECT",
+     "ofType": null
+    }
+   },
+   {
+    "name": "NBC2025",
+    "args": [
+     {
+      "name": "latitude",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     },
+     {
+      "name": "longitude",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     }
+    ],
+    "type": {
+     "name": "CanSHM6P1Point",
+     "kind": "OBJECT",
+     "ofType": null
+    }
+   },
+   {
+    "name": "canSHM6P1",
+    "args": [
+     {
+      "name": "latitude",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     },
+     {
+      "name": "longitude",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     }
+    ],
+    "type": {
+     "name": "CanSHM6P1Point",
+     "kind": "OBJECT",
+     "ofType": null
+    }
+   },
+   {
+    "name": "NBC2020",
+    "args": [
+     {
+      "name": "latitude",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     },
+     {
+      "name": "longitude",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     }
+    ],
+    "type": {
+     "name": "CanSHM6Point",
+     "kind": "OBJECT",
+     "ofType": null
+    }
+   },
+   {
+    "name": "canSHM6",
+    "args": [
+     {
+      "name": "latitude",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     },
+     {
+      "name": "longitude",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     }
+    ],
+    "type": {
+     "name": "CanSHM6Point",
+     "kind": "OBJECT",
+     "ofType": null
+    }
+   }
+  ],
+  "enumValues": null,
+  "inputFields": null
+ },
+ {
+  "name": "ModelZone",
+  "kind": "OBJECT",
+  "fields": [
+   {
+    "name": "id",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": "String",
+      "kind": "SCALAR",
+      "ofType": null
+     }
+    }
+   },
+   {
+    "name": "geometry",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": "GeometryPoint",
+      "kind": "OBJECT",
+      "ofType": null
+     }
+    }
+   }
+  ],
+  "enumValues": null,
+  "inputFields": null
+ },
+ {
+  "name": "String",
+  "kind": "SCALAR",
+  "fields": null,
+  "enumValues": null,
+  "inputFields": null
+ },
+ {
+  "name": "GeometryPoint",
+  "kind": "OBJECT",
+  "fields": [
+   {
+    "name": "type",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": "String",
+      "kind": "SCALAR",
+      "ofType": null
+     }
+    }
+   },
+   {
+    "name": "coordinates",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": null,
+      "kind": "LIST",
+      "ofType": {
+       "name": "Float",
+       "kind": "SCALAR"
+      }
+     }
+    }
+   }
+  ],
+  "enumValues": null,
+  "inputFields": null
+ },
+ {
+  "name": "Float",
+  "kind": "SCALAR",
+  "fields": null,
+  "enumValues": null,
+  "inputFields": null
+ },
+ {
+  "name": "CanSHM6P1Point",
+  "kind": "OBJECT",
+  "fields": [
+   {
+    "name": "geometry",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": "GeometryPoint",
+      "kind": "OBJECT",
+      "ofType": null
+     }
+    }
+   },
+   {
+    "name": "metadata",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": "CanSHM6P1Metadata",
+      "kind": "OBJECT",
+      "ofType": null
+     }
+    }
+   },
+   {
+    "name": "siteDesignationsXs",
+    "args": [
+     {
+      "name": "siteClass",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "CanSHM6P1SiteClass",
+        "kind": "ENUM",
+        "ofType": null
+       }
+      }
+     },
+     {
+      "name": "poe50",
+      "type": {
+       "name": null,
+       "kind": "LIST",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     }
+    ],
+    "type": {
+     "name": null,
+     "kind": "LIST",
+     "ofType": {
+      "name": "CanSHM6P1SiteDesignation",
+      "kind": "OBJECT",
+      "ofType": null
+     }
+    }
+   },
+   {
+    "name": "siteDesignationsXv",
+    "args": [
+     {
+      "name": "vs30",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     },
+     {
+      "name": "poe50",
+      "type": {
+       "name": null,
+       "kind": "LIST",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     }
+    ],
+    "type": {
+     "name": null,
+     "kind": "LIST",
+     "ofType": {
+      "name": "CanSHM6P1SiteDesignation",
+      "kind": "OBJECT",
+      "ofType": null
+     }
+    }
+   }
+  ],
+  "enumValues": null,
+  "inputFields": null
+ },
+ {
+  "name": "CanSHM6P1Metadata",
+  "kind": "OBJECT",
+  "fields": [
+   {
+    "name": "projX",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": "Float",
+      "kind": "SCALAR",
+      "ofType": null
+     }
+    }
+   },
+   {
+    "name": "projY",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": "Float",
+      "kind": "SCALAR",
+      "ofType": null
+     }
+    }
+   },
+   {
+    "name": "zones",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "LIST",
+     "ofType": {
+      "name": "String",
+      "kind": "SCALAR",
+      "ofType": null
+     }
+    }
+   }
+  ],
+  "enumValues": null,
+  "inputFields": null
+ },
+ {
+  "name": "CanSHM6P1SiteDesignation",
+  "kind": "OBJECT",
+  "fields": [
+   {
+    "name": "sa0p05",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa0p1",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa0p2",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa0p3",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa0p5",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa1p0",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa2p0",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa5p0",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa10p0",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "poe50",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "foe",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "pga",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "pgv",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "vs30",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": null,
+      "kind": "LIST",
+      "ofType": {
+       "name": "Float",
+       "kind": "SCALAR"
+      }
+     }
+    }
+   }
+  ],
+  "enumValues": null,
+  "inputFields": null
+ },
+ {
+  "name": "CanSHM6P1SiteClass",
+  "kind": "ENUM",
+  "fields": null,
+  "enumValues": [
+   {
+    "name": "A"
+   },
+   {
+    "name": "B"
+   },
+   {
+    "name": "C"
+   },
+   {
+    "name": "D"
+   },
+   {
+    "name": "E"
+   }
+  ],
+  "inputFields": null
+ },
+ {
+  "name": "CanSHM6Point",
+  "kind": "OBJECT",
+  "fields": [
+   {
+    "name": "geometry",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": "GeometryPoint",
+      "kind": "OBJECT",
+      "ofType": null
+     }
+    }
+   },
+   {
+    "name": "metadata",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": "CanSHM6Metadata",
+      "kind": "OBJECT",
+      "ofType": null
+     }
+    }
+   },
+   {
+    "name": "siteDesignationsXs",
+    "args": [
+     {
+      "name": "siteClass",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "CanSHM6SiteClass",
+        "kind": "ENUM",
+        "ofType": null
+       }
+      }
+     },
+     {
+      "name": "poe50",
+      "type": {
+       "name": null,
+       "kind": "LIST",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     }
+    ],
+    "type": {
+     "name": null,
+     "kind": "LIST",
+     "ofType": {
+      "name": "CanSHM6SiteDesignation",
+      "kind": "OBJECT",
+      "ofType": null
+     }
+    }
+   },
+   {
+    "name": "siteDesignationsXv",
+    "args": [
+     {
+      "name": "vs30",
+      "type": {
+       "name": null,
+       "kind": "NON_NULL",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     },
+     {
+      "name": "poe50",
+      "type": {
+       "name": null,
+       "kind": "LIST",
+       "ofType": {
+        "name": "Float",
+        "kind": "SCALAR",
+        "ofType": null
+       }
+      }
+     }
+    ],
+    "type": {
+     "name": null,
+     "kind": "LIST",
+     "ofType": {
+      "name": "CanSHM6SiteDesignation",
+      "kind": "OBJECT",
+      "ofType": null
+     }
+    }
+   }
+  ],
+  "enumValues": null,
+  "inputFields": null
+ },
+ {
+  "name": "CanSHM6Metadata",
+  "kind": "OBJECT",
+  "fields": [
+   {
+    "name": "projX",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": "Float",
+      "kind": "SCALAR",
+      "ofType": null
+     }
+    }
+   },
+   {
+    "name": "projY",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": "Float",
+      "kind": "SCALAR",
+      "ofType": null
+     }
+    }
+   },
+   {
+    "name": "zones",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "LIST",
+     "ofType": {
+      "name": "String",
+      "kind": "SCALAR",
+      "ofType": null
+     }
+    }
+   }
+  ],
+  "enumValues": null,
+  "inputFields": null
+ },
+ {
+  "name": "CanSHM6SiteDesignation",
+  "kind": "OBJECT",
+  "fields": [
+   {
+    "name": "sa0p05",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa0p1",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa0p2",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa0p3",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa0p5",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa1p0",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa2p0",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa5p0",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "sa10p0",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "poe50",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "foe",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "pga",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "pgv",
+    "args": [],
+    "type": {
+     "name": "Float",
+     "kind": "SCALAR",
+     "ofType": null
+    }
+   },
+   {
+    "name": "vs30",
+    "args": [],
+    "type": {
+     "name": null,
+     "kind": "NON_NULL",
+     "ofType": {
+      "name": null,
+      "kind": "LIST",
+      "ofType": {
+       "name": "Float",
+       "kind": "SCALAR"
+      }
+     }
+    }
+   }
+  ],
+  "enumValues": null,
+  "inputFields": null
+ },
+ {
+  "name": "CanSHM6SiteClass",
+  "kind": "ENUM",
+  "fields": null,
+  "enumValues": [
+   {
+    "name": "A"
+   },
+   {
+    "name": "B"
+   },
+   {
+    "name": "C"
+   },
+   {
+    "name": "D"
+   },
+   {
+    "name": "E"
+   }
+  ],
+  "inputFields": null
+ },
+ {
+  "name": "Boolean",
+  "kind": "SCALAR",
+  "fields": null,
+  "enumValues": null,
+  "inputFields": null
+ }
+]

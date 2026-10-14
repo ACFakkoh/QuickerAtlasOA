@@ -1,0 +1,105 @@
+# Critique design — QuickerAtlasOA v0.5.2 (2026-10-11)
+
+Méthode : double évaluation indépendante (A : revue design + simulation daltonisme protan/deutan/tritan ; B : détecteur Impeccable CLI + overlay navigateur sur 3 vues + mesures de contraste). Cible : `QuickerAtlasOA-v0.5.2-2026-10-11.html`.
+
+## Score de santé (heuristiques de Nielsen)
+
+| # | Heuristique | Note | Point clé |
+|---|---|---|---|
+| 1 | Visibilité de l'état du système | 3 | LiDAR : spinner + message, mais ~10 s sans progression ni annulation ; pas de « n affichés / 7 858 » sur la carte quand un filtre est actif |
+| 2 | Correspondance avec le monde réel | 3 | Vocabulaire métier juste ; ICG, IAS, MNS, MNT, RTSS, BDG, MRC jamais expliqués |
+| 3 | Contrôle et liberté | 3 | Échap, X, réinitialiser, état dans l'URL ; pas d'annulation de filtre |
+| 4 | Cohérence et standards | 3 | Badge ICG point+texte cohérent partout ; fiche (tiroir 64 %), journal (panneau), LiDAR (dialogue) se ferment/se placent différemment |
+| 5 | Prévention des erreurs | 2 | La fiche couvre jusqu'à 64 % de la carte (`--dw:min(820px,64%)`) et cache le point cliqué ; « Inclure les ouvrages des villes » sans explication |
+| 6 | Reconnaissance plutôt que rappel | 2 | Il faut mémoriser 6 couleurs ICG et une palette de 16 couleurs ; pictogrammes de type illisibles à 40×15 px |
+| 7 | Flexibilité et efficacité | 3 | 4 vues, filtres dans l'URL, tri ; aucun raccourci clavier |
+| 8 | Esthétique et minimalisme | 2 | Filtres + KPI + légende + carte + tiroir se disputent l'écran ; carte ≈ 760 px de large à 1440 px |
+| 9 | Récupération des erreurs | 3 | « Réessayer avec OpenStreetMap », avis « lancer un serveur » utile ; avertissement et erreur partagent le même style ambre |
+| 10 | Aide et documentation | 2 | Aucune aide intégrée, sens de l'échelle ICG (4 = bon, 1 = pire) non expliqué |
+| **Total** | | **26/40** | **Acceptable** |
+
+## Verdict de spécificité
+
+**Revue (A)** : ~65 % propre au produit. Ce qui est vraiment « atlas des ouvrages » : pictogrammes de coupe transversale MTMD, dialogue Profil LiDAR (MNS / MNT / MNT interpolé, étiquettes directes), KPI « ICG 1-2 », légendes RTSS / ferroviaire, losanges Montréal / carrés Sherbrooke. Ce qui est générique : rangée de KPI, contrôle segmenté en pilules, cartes blanches sur gris-bleu, bandeau marine + accent menthe. C'est le thème QuickerBridge appliqué (exigence légitime), mais la carte — cœur du produit — n'a pas d'identité propre : le fond topo Esri concurrence la couche de données.
+
+**Détecteur (B)** : 13 constats CLI (code 2). Vrais : contraste ambre `#b66c16` du KPI « 377 » (4,08:1), sous-titre en majuscules de 89 caractères, onglet actif teal sur `#f0f4f7` (4,41:1), lien d'attribution `#0078a8` sur `#ddd` (3,64:1). Overlay navigateur : **41 à 58 textes fonctionnels sous 11,5 px** selon la vue (compteurs de types 10,9 px, « Couleur selon » 10,6 px, titres de légende, axes LiDAR 10 px) — confirme la revue A (116 nœuds texte < 11,5 px). Faux positifs : « dark-glow » (ombres marine normales), em-dash (format « 4 — Aucune intervention » voulu), tuiles à opacité 0 (fondu Leaflet), padding de l'attribution Leaflet, « nested cards » (contrôle Leaflet dans la carte).
+
+## Impression générale
+
+Un outil métier sérieux, crédible et riche — le dialogue LiDAR est le meilleur moment de l'app. Mais **la carte, qui doit répondre à « où sont les ouvrages en mauvais état ? », encode cette réponse uniquement par une couleur rouge/orange/jaune/vert sur des points de 2,5 à 7 px** : exactement l'encodage qu'un daltonien ne lit pas. Le plus gros levier : rendre l'état lisible sans la couleur.
+
+## Ce qui fonctionne
+
+1. **Badge ICG point + code + libellé** (fiche, journal, liste) : « ICG 3 · Réparations » se lit sans couleur. C'est le modèle à porter sur la carte.
+2. **Profil LiDAR** : profil long en tirets teal, profil transversal plein rouge, étiquettes directes (« tablier 237,1 m », « 11,2 m »). Survit aux trois simulations de daltonisme grâce au tiret et à l'épaisseur, pas à la teinte.
+3. **Pictogrammes de type** : vraies coupes transversales MTMD redessinées en SVG `currentColor` sur grille 64×24, fidèles aux GIF à grande taille.
+
+## Problèmes prioritaires
+
+### [P0] L'état ICG/IAS sur la carte n'est encodé que par la couleur — illisible pour un daltonien
+- **Constat** : `ICG_COLOR` (l. 746) = 4 `#1f9d7a`, 3 `#e3b23c`, 2 `#d9742b`, 1 `#c93a2b`, AC `#5b7fa8`, SO `#9aa8b1`. Tous des cercles identiques (`styleFor`, l. 1078), contour blanc 0,6 px. En deutéranopie simulée : 4 → `#898680` (gris-beige), 3 → `#d3be41`, 2 → `#a99729`, 1 → `#877924` — **1, 2 et 4 tombent tous dans des olive/kaki**. ΔE 3↔2 = 15,6 et 2↔1 = 15,7 (seuil de confusion ~15 pour des points de 3–7 px). 4, AC et SO forment une seule masse gris-bleu. Les ouvrages fermés n'ont plus aucun marqueur distinct depuis la v0.5.2 (rouges seulement en mode IAS). Contraste point/fond : ICG 3 = 1,96:1 sur blanc, encore moins sur le topo.
+- **Pourquoi** : la question n° 1 d'un ingénieur (« où sont les problèmes ? ») devient impossible pour toi, et difficile pour tout le monde sur fond vert forêt.
+- **Correctif** :
+  - Échelle divergente ordonnée en luminosité, sûre pour les trois types : 4 `#2c7bb6` (bleu), 3 `#fee090` (jaune pâle), 2 `#f46d43` (orange), 1 `#a50026` (rouge très foncé) → ΔE ≥ 26 entre paires sous toutes les simulations.
+  - **Forme redondante** (via `Pin._updatePath`, l. 1054–1076, qui sait déjà faire croix/losange/carré) : 4 = cercle, 3 = cercle, 2 = triangle, 1 = carré/losange plein ; AC = anneau creux ; SO = petit anneau creux. Villes : hexagone / plus pour rester uniques.
+  - **Taille** : 1 et 2 plus gros (le mécanisme `rmul` existe déjà), 4 plus petit et en dessous (`prio`).
+  - Halo sombre 1 px `#0b1c28` (constante OUTLINE déjà présente) au lieu du blanc 0,6 px.
+  - Fermés : marqueur indépendant de la couleur (croix ou anneau épais).
+  - Même traitement pour IAS ; option « Mode daltonien » dans la légende si tu veux garder l'ancienne palette par défaut pour les autres.
+- **Commande** : `/impeccable colorize` (palette) + `/impeccable harden` (redondance de forme)
+
+### [P1] Palettes catégorielles (16 couleurs PAL, Obstacle, RTSS) indistinguables
+- **Constat** : PAL a 16 teintes pour régions/types (`#d62728` vs `#2a9d3a`, `#8c564b`/`#a26b15`/`#843c39`, `#1f6fb4`/`#58a7e8`…). Obstacle en deutéranopie : piétons↔faune ΔE 6,4, mixte↔autre 7,3 ; en protanopie : route↔piétons 7,3. Routes : autoroute `#b3261e` / nationale `#e8590c` / régionale `#f2a900` / collectrice `#8a5a2b` se confondent en protan/deutan.
+- **Pourquoi** : personne (daltonien ou non) ne distingue 16 teintes sur des points de 3 px ; la légende devient un exercice de mémoire.
+- **Correctif** : plafonner à 8 couleurs Okabe-Ito (`#0072B2 #E69F00 #009E73 #D55E00 #CC79A7 #56B4E9 #F0E442 #000000`) ; « Région » (17 classes) devrait être un filtre, pas un mode couleur. Routes : jouer sur l'épaisseur + tirets (autoroute épaisse double, nationale épaisse, régionale moyenne, collectrice fine, local pointillé) plutôt que sur la teinte.
+- **Commande** : `/impeccable colorize`, `/impeccable distill`
+
+### [P1] Lisibilité : texte trop petit partout
+- **Constat** : 41–58 textes fonctionnels < 11,5 px par vue (10–11 px : compteurs `.tc` .68rem, `.vtag` .62rem, `.nw-cats` .72rem, axes LiDAR 10 px, « Couleur selon », titres de légende). Sous-titre du bandeau en MAJUSCULES espacées à 10 px sur 89 caractères. Pastilles de légende de 11 px couleur seule.
+- **Pourquoi** : un outil qu'on utilise des heures ; petit corps + couleur faible = fatigue, et ça aggrave le daltonisme (les petites surfaces exigent plus d'écart de couleur).
+- **Correctif** : plancher 12 px (12,5 px pour les libellés interactifs), sous-titre en casse normale et raccourci (« Atlas des ouvrages d'art du Québec »), pastilles de légende = vraies formes de marqueurs à 14 px.
+- **Commande** : `/impeccable typeset`
+
+### [P1] Pictogrammes de type illisibles à la taille de la liste ; icône d'onglet confuse à 16 px
+- **Constat** : `.tchk svg` à 40×15 px, traits de 0,8–1,2 dans un viewBox 64×24 → ~0,5 px rendus : 37/38/39/50/51 identiques, 44/45 identiques ; libellés tronqués (« Pont à dalle plein… »). Pictos noirs alors que les GIF MTMD sont bleus (`--ico #1660ab` existe déjà). Types 35, 36, 62, 75, 76, 77 sans GIF MTMD de référence (dessins originaux).
+- **Favicon** : marine `#102d41` + menthe `#73e4c2`, fleur de lys sur tablier sur arche. À 16 px : la fleur et le tablier fusionnent, l'arche (1 px) disparaît → lu comme « fleur de lys sur une table ». Le logo du bandeau (l. 426–434) est un autre dessin que le favicon.
+- **Correctif** : liste à 64×24 min., traits ≥ 1,4, couleur `--ico`, nom complet en infobulle, colonne libellé élargie. Favicon : version 16 px simplifiée (une arche épaisse + tablier, fleur retirée), la fleur gardée à ≥ 32 px ; un seul dessin partagé favicon/bandeau.
+- **Commande** : `/impeccable polish`
+
+### [P2] Mise en page dense, carte écrasée
+- **Constat** : à 1440 px la carte fait ~760 px ; la légende en occupe ~¼ ; la fiche couvre jusqu'à 64 %. À 375 px : sous-titre coupé à « MTMD », date tronquée, panneau de filtres en défilement imbriqué qui pousse la carte sous la ligne de flottaison.
+- **Correctif** : légende repliable en clé horizontale compacte, fiche qui redimensionne la carte (côte à côte) et recentre le point cliqué, filtres en feuille inférieure sur mobile.
+- **Commande** : `/impeccable layout`, `/impeccable adapt`
+
+## Signaux d'alerte par persona
+
+**Toi, daltonien (persona « Sam » adapté)**
+- ICG 4 / AC / SO indiscernables (gris-bleu/beige) ; 3 vs 2 et 2 vs 1 peu fiables ; aucun marqueur pour les fermés.
+- Légende = pastilles de couleur 11 px sans forme.
+- Modes Région / Type / Obstacle inutilisables ; réseau routier rouge/orange/ambre/brun confondus.
+- KPI « ICG 1-2 » en ambre sans icône.
+- Positif : badges texte partout ailleurs, tirets LiDAR, étiquettes directes sur les profils, mode « Restrictions » avec le « x ».
+
+**Alex (utilisateur expert)**
+- Aucun raccourci clavier (changer de mode couleur = 3 clics, pas de touche pour la fiche suivante/précédente, recherche sans `/`).
+- La fiche cache le point cliqué.
+- Pas de compteur « n affichés » après filtrage ; « ICG 1-2 » ne reflète pas le filtre sur la carte.
+- Profil LiDAR ~10 s sans annulation.
+
+## Observations mineures
+- Avertissement et erreur partagent le style ambre (`.notice` / `.ld-warn`) : différencier par icône + libellé, pas seulement par couleur.
+- Onglet actif « Carte » teal `#007f78` sur `#f0f4f7` = 4,41:1 (limite AA) ; lien d'attribution `#0078a8` sur `#ddd` = 3,64:1.
+- KPI « 377 » ambre `#b66c16` = 4,08:1 (passe en grand texte, mais c'est de la signification par couleur).
+- « Tous » passe à la ligne dans le segment Pont/Ponceau/Mur/Tunnel/Tous.
+- Fiche : la puce « 3 — Réparations » est partiellement recouverte par un élément voisin (overlay détecteur).
+- Bandes en dégradé répétitif sur le bandeau (overlay) : décoratif, à questionner.
+- Rangée d'actions de la fiche : 5 boutons sans hiérarchie claire (seul LiDAR est foncé).
+- Le calcul `closed` dans `styleFor` (l. 1079) n'est plus utilisé depuis le retrait du contour noir.
+
+## Questions à se poser
+1. Si la question est « quels ouvrages ont besoin de travaux ? », pourquoi 5 074 points verts sont-ils aussi visibles que 377 points ICG 1-2 ? Une carte « problèmes en avant, le reste en gris discret » répondrait mieux — et serait lisible en daltonisme par construction.
+2. Les 7 modes de couleur répondent-ils chacun à une décision réelle, ou remplacent-ils des filtres ?
+3. Si les pictogrammes MTMD sont la langue visuelle officielle des types, pourquoi ne pas les utiliser comme marqueurs aux grands zooms, et libérer la couleur pour l'état seul ?
+
+---
+Détecteur : 13 constats CLI (dark-glow 4, low-contrast 2, nested-cards 2, gpt-thin-border-wide-shadow 2, all-caps-body 1, cramped-padding 1, em-dash-overuse 1) ; overlay 51 / ~60 / ~90 marqueurs sur 3 vues, majoritairement « texte sous-dimensionné ».

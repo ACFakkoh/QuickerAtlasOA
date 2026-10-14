@@ -1,0 +1,6 @@
+Commande: python -m pytest -q tests
+Code de sortie: 0
+........................................................................ [ 61%]
+.............................................                            [100%]
+
+JavaScript: 2 scripts inline compilés; 9 fichiers de données chargés en VM.

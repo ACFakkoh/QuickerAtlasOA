@@ -1,0 +1,442 @@
+{
+ "type": "FeatureCollection",
+ "numberMatched": 5,
+ "name": "rtss_mini",
+ "features": [
+  {
+   "type": "Feature",
+   "id": 1,
+   "properties": {
+    "ide_infrm_": 53801918,
+    "ide_sous_r": 74086,
+    "num_rts": "000200608141L0",
+    "num_route": "00020",
+    "num_tronc": "06",
+    "num_sectn": "081",
+    "cod_sous_r": "4",
+    "seq_sous_r": "1",
+    "cod_sous_c": "L",
+    "cod_cote_c": "0",
+    "chang_debu": 0.0,
+    "val_longr_": 93,
+    "des_sourc_": "Longueur 2D",
+    "sta_sous_r": "A",
+    "cod_clasf_": "10",
+    "des_clasf_": "Autoroute",
+    "nom_sous_r": "",
+    "ide_orgns_": 268,
+    "nom_orgns_": "MTQ",
+    "ide_orgn00": 268,
+    "nom_orgn00": "MTQ",
+    "cod_unite_": "53661000",
+    "val_locls_": "Fin du terre-plein peint",
+    "des_unite_": "Centre de services de Lévis",
+    "des_type_r": "Aucun",
+    "val_repr_d": 0,
+    "val_locl00": "Début du terre-plein peint vers A-20 Ouest",
+    "des_type00": "Marque de peinture au sol",
+    "val_repr00": 0,
+    "dat_debut_": "20230614",
+    "dah_cretn": "20250926",
+    "objectid": "182"
+   },
+   "bbox": [
+    -71.187234,
+    46.756678,
+    -71.186975,
+    46.757484
+   ],
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -71.186975,
+      46.757484
+     ],
+     [
+      -71.187048,
+      46.757343
+     ],
+     [
+      -71.187105,
+      46.757222
+     ],
+     [
+      -71.187157,
+      46.757102
+     ],
+     [
+      -71.187197,
+      46.756979
+     ],
+     [
+      -71.187221,
+      46.756863
+     ],
+     [
+      -71.187232,
+      46.756771
+     ],
+     [
+      -71.187234,
+      46.756678
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 2,
+   "properties": {
+    "ide_infrm_": 54631324,
+    "ide_sous_r": 71282,
+    "num_rts": "0011708121000D",
+    "num_route": "00117",
+    "num_tronc": "08",
+    "num_sectn": "121",
+    "cod_sous_r": "0",
+    "seq_sous_r": "0",
+    "cod_sous_c": "0",
+    "cod_cote_c": "D",
+    "chang_debu": 0.0,
+    "val_longr_": 48,
+    "des_sourc_": "Longueur 2D",
+    "sta_sous_r": "A",
+    "cod_clasf_": "20",
+    "des_clasf_": "Nationale",
+    "nom_sous_r": "Boulevard Tétrault",
+    "ide_orgns_": 268,
+    "nom_orgns_": "MTQ",
+    "ide_orgn00": 268,
+    "nom_orgn00": "MTQ",
+    "cod_unite_": "53910600",
+    "val_locls_": "Début des voies séparées et terre-plein Rte 117-397",
+    "des_unite_": "Centre de services de Val-d'Or",
+    "des_type_r": "Aucun",
+    "val_repr_d": 0,
+    "val_locl00": "Fin terre-plein giratoire voie gauche route 117",
+    "des_type00": "Aucun",
+    "val_repr00": 0,
+    "dat_debut_": "20260908",
+    "dah_cretn": "20260908",
+    "objectid": "45"
+   },
+   "bbox": [
+    -77.782259,
+    48.112554,
+    -77.781648,
+    48.112685
+   ],
+   "geometry": {
+    "type": "MultiLineString",
+    "coordinates": [
+     [
+      [
+       -77.781648,
+       48.112554
+      ],
+      [
+       -77.781771,
+       48.11258
+      ],
+      [
+       -77.781852,
+       48.112585
+      ],
+      [
+       -77.781935,
+       48.112593
+      ],
+      [
+       -77.782009,
+       48.112604
+      ],
+      [
+       -77.782077,
+       48.11262
+      ],
+      [
+       -77.782148,
+       48.112641
+      ],
+      [
+       -77.782208,
+       48.112665
+      ],
+      [
+       -77.782259,
+       48.112685
+      ]
+     ],
+     [
+      [
+       -77.795181,
+       48.11285
+      ],
+      [
+       -77.795207,
+       48.112867
+      ],
+      [
+       -77.795248,
+       48.112884
+      ],
+      [
+       -77.795284,
+       48.112897
+      ],
+      [
+       -77.795325,
+       48.112905
+      ],
+      [
+       -77.79536,
+       48.112907
+      ],
+      [
+       -77.795389,
+       48.112908
+      ],
+      [
+       -77.79542,
+       48.112906
+      ],
+      [
+       -77.795457,
+       48.1129
+      ],
+      [
+       -77.795493,
+       48.112891
+      ],
+      [
+       -77.795516,
+       48.112881
+      ],
+      [
+       -77.79554,
+       48.112871
+      ],
+      [
+       -77.795565,
+       48.112857
+      ],
+      [
+       -77.795587,
+       48.112843
+      ]
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 3,
+   "properties": {
+    "ide_infrm_": 53260046,
+    "ide_sous_r": 71493,
+    "num_rts": "0021601023G1A0",
+    "num_route": "00216",
+    "num_tronc": "01",
+    "num_sectn": "023",
+    "cod_sous_r": "G",
+    "seq_sous_r": "1",
+    "cod_sous_c": "A",
+    "cod_cote_c": "0",
+    "chang_debu": 0.0,
+    "val_longr_": 15,
+    "des_sourc_": "LIDAR",
+    "sta_sous_r": "A",
+    "cod_clasf_": "40",
+    "des_clasf_": "Collectrice",
+    "nom_sous_r": "Chemin de Sainte-Catherine",
+    "ide_orgns_": 268,
+    "nom_orgns_": "MTQ",
+    "ide_orgn00": 268,
+    "nom_orgn00": "MTQ",
+    "cod_unite_": "53900800",
+    "val_locls_": "Giratoire",
+    "des_unite_": "Centre de services de Sherbrooke",
+    "des_type_r": "Aucun",
+    "val_repr_d": 0,
+    "val_locl00": "Giratoire",
+    "des_type00": "Aucun",
+    "val_repr00": 0,
+    "dat_debut_": "20250704",
+    "dah_cretn": "20250704",
+    "objectid": "5970"
+   },
+   "bbox": [
+    -71.954942,
+    45.348981,
+    -71.954754,
+    45.348996
+   ],
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -71.954942,
+      45.34899
+     ],
+     [
+      -71.954932,
+      45.348988
+     ],
+     [
+      -71.954907,
+      45.348983
+     ],
+     [
+      -71.954881,
+      45.348981
+     ],
+     [
+      -71.954855,
+      45.348981
+     ],
+     [
+      -71.95483,
+      45.348982
+     ],
+     [
+      -71.954804,
+      45.348985
+     ],
+     [
+      -71.954778,
+      45.348991
+     ],
+     [
+      -71.954754,
+      45.348996
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 4,
+   "properties": {
+    "ide_infrm_": 37346981,
+    "ide_sous_r": 61600,
+    "num_rts": "0002004231U1A0",
+    "num_route": "00020",
+    "num_tronc": "04",
+    "num_sectn": "231",
+    "cod_sous_r": "U",
+    "seq_sous_r": "1",
+    "cod_sous_c": "A",
+    "cod_cote_c": "0",
+    "chang_debu": 0.0,
+    "val_longr_": 28,
+    "des_sourc_": "GPS",
+    "sta_sous_r": "A",
+    "cod_clasf_": "00",
+    "des_clasf_": "Sans classe",
+    "nom_sous_r": "Autoroute 20",
+    "ide_orgns_": 268,
+    "nom_orgns_": "MTQ",
+    "ide_orgn00": 268,
+    "nom_orgn00": "MTQ",
+    "cod_unite_": "53640800",
+    "val_locls_": "Intersection 20 Est",
+    "des_unite_": "Centre de services de Drummondville",
+    "des_type_r": "Aucun",
+    "val_repr_d": 0,
+    "val_locl00": "Intersection 20 Ouest",
+    "des_type00": "Aucun",
+    "val_repr00": 0,
+    "dat_debut_": "20200402",
+    "dah_cretn": "20200604",
+    "objectid": "15"
+   },
+   "bbox": [
+    -72.480278,
+    45.916209,
+    -72.479986,
+    45.91636
+   ],
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -72.479986,
+      45.916209
+     ],
+     [
+      -72.48014,
+      45.916289
+     ],
+     [
+      -72.480278,
+      45.91636
+     ]
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": 5,
+   "properties": {
+    "ide_infrm_": 37882994,
+    "ide_sous_r": 60553,
+    "num_rts": "1931601010000C",
+    "num_route": "19316",
+    "num_tronc": "01",
+    "num_sectn": "010",
+    "cod_sous_r": "0",
+    "seq_sous_r": "0",
+    "cod_sous_c": "0",
+    "cod_cote_c": "C",
+    "chang_debu": 0.0,
+    "val_longr_": 154,
+    "des_sourc_": "Odomètre",
+    "sta_sous_r": "A",
+    "cod_clasf_": "60",
+    "des_clasf_": "Accès aux ressources",
+    "nom_sous_r": "Chemin de la Pépinière",
+    "ide_orgns_": 268,
+    "nom_orgns_": "MTQ",
+    "ide_orgn00": 268,
+    "nom_orgn00": "MTQ",
+    "cod_unite_": "53910800",
+    "val_locls_": "Fin bretelle à",
+    "des_unite_": "Centre de services d'Amos",
+    "des_type_r": "",
+    "val_locl00": "Barrière de la Pépinière",
+    "des_type00": "",
+    "dat_debut_": "20200706",
+    "dah_cretn": "20200708",
+    "objectid": "2885"
+   },
+   "bbox": [
+    -78.255304,
+    48.570721,
+    -78.255297,
+    48.572106
+   ],
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -78.255297,
+      48.570721
+     ],
+     [
+      -78.255303,
+      48.570984
+     ],
+     [
+      -78.255304,
+      48.571643
+     ],
+     [
+      -78.255298,
+      48.572106
+     ]
+    ]
+   }
+  }
+ ]
+}
