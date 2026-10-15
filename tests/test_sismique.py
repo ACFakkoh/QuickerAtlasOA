@@ -195,27 +195,150 @@ def test_ecrire_shards(tmp_path):
     assert m["doi"] == s.DOI and m["mesures"][0] == "pga" and m["echelle"]["v"].startswith("1e-4")
 
 
-# --- Classes de site de Montréal -----------------------------------------------------------------
-def test_classe_mtl():
-    g = {"north": 46.0, "west": -74.0, "step": 0.004, "nx": 3, "ny": 2, "rows": ["0AB", "CDE"]}
-    assert s.classe_mtl(g, 45.9985, -73.9985) == 0          # cellule vide
-    assert s.classe_mtl(g, 45.9985, -73.9935) == 1          # A
-    assert s.classe_mtl(g, 45.9985, -73.9895) == 2          # B
-    assert s.classe_mtl(g, 45.9925, -73.9985) == 3          # C
-    assert s.classe_mtl(g, 45.9925, -73.9895) == 5          # E
-    assert s.classe_mtl(g, 46.5, -73.99) == 0 and s.classe_mtl(g, 45.99, -73.0) == 0
+# --- Classes de site du Québec (Rosset et al. 2025) ----------------------------------------------
+SEUILS_VS30 = {"A": (1500, 1e9), "B": (760, 1500), "C": (360, 760), "D": (180, 360), "E": (0, 180)}
 
 
-def test_grille_mtl_embarquee():
-    g = s.charger_grille_mtl()
-    assert g["nx"] == 308 and g["ny"] == 212 and len(g["rows"]) == 212 and len(g["rows"][0]) == 308
-    # 1 512 des 11 701 structures du MTMD tombent dans une cellule classée (rapport du prototype) : on retrouve
-    # la classe de cellules connues, au centre de la cellule
-    j, i = 100, 150
-    ch = g["rows"][j][i]
-    lat, lon = g["north"] - (j + 0.5) * g["step"], g["west"] + (i + 0.5) * g["step"]
-    assert s.classe_mtl(g, lat, lon) == "0ABCDE".index(ch)
-    assert sum(r.count(c) for r in g["rows"] for c in "ABCDE") > 30000
+def test_tableau3_classes_coherentes_avec_le_vs30():
+    """Chaque classe du tableau 3 correspond au Vs30 moyen pondéré publié (seuils du CNBC)."""
+    assert len(s.TABLEAU3) == 21
+    for code, (_, vs, cl) in s.TABLEAU3.items():
+        lo, hi = SEUILS_VS30[cl]
+        assert lo <= vs < hi, (code, vs, cl)
+    # valeurs de l'article : glissements D, roc A, argile marine profonde C, till B
+    assert [s.TABLEAU3[c][2] for c in ("Cg", "R", "MGa", "T", "Ap", "A")] == list("DACBBC")
+
+
+def test_code_vers_classe_alias_et_codes_non_classes():
+    assert s.code_vers_classe("R") == 1 and s.code_vers_classe("Cg") == 4 and s.code_vers_classe("MGa") == 3
+    assert s.code_vers_classe("Qa") == s.code_vers_classe("Q") == 2          # Q de l'article = Qa du SIGEOM
+    for c in ("Qf", "Ce", "Gxi", "H", "Ac", "zz"):
+        assert s.code_vers_classe(c) == s.NON_CLASSE
+    assert s.code_vers_classe("L") == s.EAU and s.TABLEAU3["L"][2] == "B"     # lacs : figure 10 en bleu
+    assert set(s.CODES_SIGEOM) >= set(s.TABLEAU3) - {"Q"}                     # tout le tableau est cartographiable
+
+
+def test_couleurs_sigeom_distinctes_et_couleurs_de_l_article():
+    cols = list(s.COULEURS_SIGEOM.values())
+    assert len(cols) == len(set(cols)) == len(s.CODES_SIGEOM) == 26          # décodage sans ambiguïté
+    assert [c[0] for c in s.CLASSES_QC] == list("ABCD")
+    assert [c[2] for c in s.CLASSES_QC] == ["#36bf29", "#2306ff", "#e4ff04", "#cf15d8"]   # figure 10 de l'article
+
+
+def test_tuiles_couvrent_la_grille_sans_recouvrement():
+    g = s.grille_qc_vide()
+    assert (g["nx"], g["ny"]) == (7600, 8900)
+    couvert = np.zeros((g["ny"], g["nx"]), np.int8)
+    for ti, tj, (o, sd, e, n), w, h in s.tuiles(g):
+        couvert[ti * s.TUILE:ti * s.TUILE + h, tj * s.TUILE:tj * s.TUILE + w] += 1
+        assert e - o == pytest.approx(w * g["dlon"]) and n - sd == pytest.approx(h * g["dlat"])
+        assert n == pytest.approx(g["north"] - ti * s.TUILE * g["dlat"]) and o == pytest.approx(g["west"] + tj * s.TUILE * g["dlon"])
+    assert (couvert == 1).all()
+    u = s.url_tuile((-74.0, 45.0, -73.0, 46.0), 10, 20)
+    assert "antialias%3Anone" in u and "SRS=EPSG%3A4269" in u and "BBOX=-74.000000000%2C45.000000000" in u
+
+
+def test_decoder_tuile_couleurs_exactes_et_transparence():
+    codes = s.CODES_SIGEOM
+    rgba = np.zeros((2, 3, 4), np.uint8)
+    for k, (j, i) in enumerate([(0, 0), (0, 1), (1, 2)]):
+        rgba[j, i, :3] = s.hex_rgb(s.COULEURS_SIGEOM[codes[k * 5]])
+        rgba[j, i, 3] = 255
+    rgba[1, 0] = (255, 255, 255, 0)                                          # transparent : aucun polygone
+    rgba[1, 1] = (*s.hex_rgb(s.COULEURS_SIGEOM["R"])[:2], 3, 255)            # couleur presque exacte
+    v, inconnus = s.decoder_tuile(rgba)
+    assert v[0, 0] == 1 and v[0, 1] == 6 and v[1, 2] == 11 and v[1, 0] == 0
+    assert codes[v[1, 1] - 1] == "R" and inconnus == 1
+
+
+def _grille_test():
+    codes = list(s.CODES_SIGEOM)
+    k = {c: codes.index(c) + 1 for c in codes}
+    v = np.array([[0, k["R"], k["T"], k["MGa"]],
+                  [k["Cg"], k["Qf"], k["Qa"], 0]], np.uint8)
+    return {"north": 46.0, "west": -74.0, "dlat": 0.002, "dlon": 0.003, "nx": 4, "ny": 2, "codes": codes, "v": v}
+
+
+def test_classe_et_code_d_une_cellule():
+    g = _grille_test()
+    assert s.code_qc(g, 45.999, -73.9985) is None and s.classe_qc(g, 45.999, -73.9985) == 0     # aucun polygone
+    assert s.code_qc(g, 45.999, -73.9955) == "R" and s.classe_qc(g, 45.999, -73.9955) == 1
+    assert s.classe_qc(g, 45.999, -73.9925) == 2 and s.classe_qc(g, 45.999, -73.9895) == 3
+    assert s.classe_qc(g, 45.997, -73.9985) == 4                                                 # Cg → D
+    assert s.code_qc(g, 45.997, -73.9955) == "Qf" and s.classe_qc(g, 45.997, -73.9955) == 0      # non classé
+    assert s.classe_qc(g, 45.997, -73.9925) == 2                                                 # Qa → B
+    assert s.classe_qc(g, 47.0, -73.99) == 0 and s.classe_qc(g, 45.999, -72.0) == 0              # hors grille
+    cl = s.classes_de_grille(g)
+    assert cl.tolist() == [[0, 1, 2, 3], [4, s.NON_CLASSE, 2, 0]]
+    assert s.classes_structures([("a", 45.999, -73.9955), ("b", 45.997, -73.9955), ("c", 45.0, -73.0)], g) == {"a": 1}
+
+
+def test_ecrire_et_relire_la_grille(tmp_path):
+    g = _grille_test()
+    s.ecrire_grille_qc(g, tmp_path, today="2026-10-15")
+    r = s.charger_grille_qc(tmp_path)
+    assert (r["v"] == g["v"]).all() and r["codes"] == g["codes"] and r["generated"] == "2026-10-15"
+    assert r["comptes_classes"]["A"] == 1 and r["comptes_classes"]["non classé"] == 1 and r["alias"] == {"Qa": "Q"}
+    assert r["comptes_classes"]["eau"] == 0 and "L" in r["eau"]
+    assert r["url"] == s.URL_ARTICLE and "Geotechnics 5(2):24" in r["source"]
+
+
+def test_ecrire_classes_site(tmp_path):
+    f = tmp_path / "classes-site.js"
+    s.ecrire_classes_site({"00002": 2, "13247A": 4, "00010": 1}, f, today="2026-10-15")
+    t = f.read_text(encoding="utf-8")
+    assert t.startswith("window.PQ_CLASSE_SITE={") and t.endswith(";\n")
+    d = json.loads(t.split("=", 1)[1].rstrip().rstrip(";"))
+    assert d["_"]["url"] == s.URL_ARTICLE and d["_"]["generated"] == "2026-10-15" and d["_"]["source"]
+    assert {k: v for k, v in d.items() if k != "_"} == {"00002": "B", "00010": "A", "13247A": "D"}
+
+
+def test_png_classes_qc_majorite_et_transparence(tmp_path):
+    from PIL import Image
+    codes = list(s.CODES_SIGEOM)
+    k = {c: codes.index(c) + 1 for c in codes}
+    v = np.zeros((40, 60), np.uint8)
+    v[:, :20] = k["R"]                       # A
+    v[:, 20:40] = k["MGa"]                   # C
+    v[:, 40:] = k["Qf"]                      # non classé → transparent
+    g = {"north": 46.0, "west": -74.0, "dlat": 0.002, "dlon": 0.003, "nx": 60, "ny": 40, "codes": codes, "v": v}
+    info = s.png_classes_qc(g, tmp_path / "c.png", largeur=30)
+    im = Image.open(tmp_path / "c.png").convert("RGBA")
+    assert im.size == (30, info["h"]) and info["bounds"] == [[45.92, -74.0], [46.0, -73.82]]
+    y = info["h"] // 2
+    assert im.getpixel((2, y))[:3] == s.hex_rgb("#36bf29") and im.getpixel((2, y))[3] == 255
+    assert im.getpixel((15, y))[:3] == s.hex_rgb("#e4ff04")
+    assert im.getpixel((25, y))[3] == 0
+    assert info["classes"][0] == 10 * info["h"] and info["classes"][2] == 10 * info["h"]
+
+
+def test_masque_quebec_bouche_les_lacs():
+    v = np.zeros((100, 100), np.uint8)
+    v[10:90, 10:90] = 1
+    v[40:60, 40:60] = 0                      # lac intérieur sans polygone
+    g = {"north": 46.0, "west": -74.0, "dlat": 0.01, "dlon": 0.01, "nx": 100, "ny": 100, "v": v}
+    lats = 46.0 - (np.arange(100) + 0.5) * 0.01
+    lons = -74.0 + (np.arange(100) + 0.5) * 0.01
+    m = s.masque_quebec(g, lats, lons, marge_px=0)
+    assert m[50, 50] and m[15, 15] and not m[5, 5] and not m[95, 50]
+    assert s.masque_quebec(g, lats, lons, marge_px=2)[8, 50]
+
+
+GRILLE_OK = (s.DONNEES / s.GRILLE_QC_JSON).exists() and (s.DONNEES / s.GRILLE_QC_PNG).exists()
+
+
+@pytest.mark.skipif(not GRILLE_OK, reason="grille versionnée absente (python -m etl.sismique)")
+def test_grille_qc_embarquee():
+    g = s.charger_grille_qc()
+    assert (g["nx"], g["ny"]) == (7600, 8900) and g["codes"] == list(s.CODES_SIGEOM)
+    cl = s.classes_de_grille(g)
+    n = {k: int((cl == k).sum()) for k in range(7)}
+    assert n[1] > 1e6 and n[2] > 1e6 and n[3] > 1e5 and n[4] > 0 and n[5] == 0     # pas de classe E dans l'article
+    # roc du Bouclier (A ou B) à Chibougamau, argile de la mer de Champlain (C) à Saint-Hyacinthe
+    assert s.classe_qc(g, 45.62, -72.95) == 3
+    assert s.classe_qc(g, 49.91, -74.37) in (1, 2)
+    # Montréal est couverte (la couche de Montréal de 2023 est retirée)
+    assert s.code_qc(g, 45.52, -73.62) is not None
 
 
 # --- Rasters Web Mercator ------------------------------------------------------------------------
@@ -267,34 +390,27 @@ def test_masque_proximite_rayon_en_kilometres():
     assert m.sum() < 0.1 * m.size
 
 
-def test_palettes_clarte_monotone_et_nombre_de_couleurs():
+def test_palette_pga_clarte_monotone_et_nombre_de_couleurs():
     assert len(s.PGA_COULEURS) == len(s.PGA_BREAKS) + 1 and s.PGA_BREAKS == sorted(s.PGA_BREAKS)
-    for pal in (s.PGA_COULEURS, [c[2] for c in s.CLASSES_MTL]):
-        L = [s.luminance(c) for c in pal]
-        assert all(a > b + 3 for a, b in zip(L, L[1:])), L          # clarté strictement décroissante (daltonisme)
-
-
-def test_png_classes_mtl(tmp_path):
-    from PIL import Image
-    g = {"north": 46.0, "west": -74.0, "step": 0.004, "nx": 4, "ny": 3, "rows": ["0ABC", "DE00", "ABCD"]}
-    info = s.png_classes_mtl(g, tmp_path / "c.png", px_par_maille=5)
-    im = Image.open(tmp_path / "c.png")
-    assert im.size == (20, info["h"]) and im.mode == "P"
-    assert info["bounds"] == [[pytest.approx(46.0 - 3 * 0.004), -74.0], [46.0, pytest.approx(-74.0 + 4 * 0.004)]]
-    rgba = im.convert("RGBA")
-    assert rgba.getpixel((2, 2))[3] == 0                                  # cellule vide : transparente
-    assert rgba.getpixel((7, 2))[:3] == s.hex_rgb(s.CLASSES_MTL[0][2]) and rgba.getpixel((7, 2))[3] == 255
-    assert rgba.getpixel((17, info["h"] - 2))[:3] == s.hex_rgb(s.CLASSES_MTL[3][2])    # D, coin inférieur droit
+    L = [s.luminance(c) for c in s.PGA_COULEURS]
+    assert all(a > b + 3 for a, b in zip(L, L[1:])), L              # clarté strictement décroissante (daltonisme)
+    # les classes de site gardent les couleurs de l'article (demande explicite), pas une rampe de clarté
 
 
 def test_couche_contrat_avec_la_carte():
-    c = s.couche({"bounds": [[44, -80], [59, -56]]}, {"bounds": [[45, -74], [46, -73]]}, today="2026-10-14")
+    c = s.couche({"bounds": [[44, -80], [63, -57]], "province": True}, {"bounds": [[44.9, -79.8], [62.7, -57.0]]},
+                 today="2026-10-15")
     p = c["pga"]
     assert p["img"] == "data/sismique/pga-c-2pc.png" and len(p["colors"]) == len(p["breaks"]) + 1
-    assert all(k in p for k in ("bounds", "titre", "source", "licence", "doi"))
-    m = c["mtl"]
-    assert m["img"] == "data/sismique/classes-mtl.png" and [x["k"] for x in m["classes"]] == list("ABCDE")
-    assert all(x["label"] and x["color"].startswith("#") for x in m["classes"]) and "Geosciences 13(9):256" in m["source"]
+    assert all(k in p for k in ("bounds", "titre", "source", "licence", "doi", "avertissement"))
+    assert "50 km" not in p["avertissement"] and "territoire québécois" in p["avertissement"]
+    k = c["classes"]
+    assert k["img"] == "data/sismique/classes-qc.png" and k["bounds"] == [[44.9, -79.8], [62.7, -57.0]]
+    assert [x["k"] for x in k["classes"]] == list("ABCD") and all(x["label"] and x["color"].startswith("#") for x in k["classes"])
+    assert k["url"] == "https://www.mdpi.com/2673-7094/5/2/24" and k["source"] == "Rosset et al. (2025), Geotechnics 5(2):24"
+    assert all(k.get(x) for x in ("titre", "avertissement")) and "mtl" not in c
+    # repli sans grille du Québec : ancien masque de 50 km
+    assert "50 km" in s.couche({"bounds": [[44, -80], [59, -56]], "province": False}, None)["pga"]["avertissement"]
 
 
 # --- VALIDATION contre l'API de RNCan ------------------------------------------------------------
@@ -347,17 +463,17 @@ class TestDonneesReelles:
 
     def test_ouvrage_exemple(self, mail):
         # pont Honoré-Mercier (03226), classe C, 2 % : PGA 0,463 g, Sa(0,2) 0,845 g, Sa(1,0) 0,259 g (API) ;
-        # il est sur le fleuve : pas de classe de site dans la grille de Montréal (0)
-        out, manq = s.calculer(mail, [("03226", 45.41752, -73.65429)], s.charger_grille_mtl())
+        # k = classe de site fournie (ici absente : 0)
+        out, manq = s.calculer(mail, [("03226", 45.41752, -73.65429)], {})
         q = out["03226"]
         v = lambda mi: float(s.decoder(q[1 + s.index_val(2, 0, mi)]))
         assert not manq
         assert v(0) == pytest.approx(0.463, rel=0.01) and v(4) == pytest.approx(0.845, rel=0.01)
         assert v(7) == pytest.approx(0.259, rel=0.01)
         assert q[0] == 0
-        # un ouvrage terrestre de Montréal (classe lue dans la grille)
-        out, _ = s.calculer(mail, [("x", 45.5, -73.6)], s.charger_grille_mtl())
-        assert out["x"][0] in (1, 2, 3, 4, 5)
+        # la classe estimée est recopiée telle quelle en tête de l'entrée
+        out, _ = s.calculer(mail, [("x", 45.5, -73.6)], {"x": 3})
+        assert out["x"][0] == 3
 
     def test_raster_pga_coherent_avec_l_interpolation_aux_structures(self, mail):
         """La classe de couleur d'un pixel proche d'un ouvrage = celle du PGA (C, 2 %) interpolé à cet ouvrage."""

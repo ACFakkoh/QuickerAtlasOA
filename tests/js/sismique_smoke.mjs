@@ -1,6 +1,7 @@
 // Test de fumée de js/sismique.js (sans navigateur) : `node tests/js/sismique_smoke.mjs`
 //  - parité de shardOf avec etl.sismique.shard_of (valeurs figées + 3 000 n° comparés à Python si disponible) ;
-//  - décodage des entiers (échelle logarithmique), rang des valeurs, période de retour.
+//  - décodage des entiers (échelle logarithmique), rang des valeurs, période de retour ;
+//  - classe de site estimée (data/classes-site.js prioritaire, sinon k du lot) et axe des périodes LINÉAIRE du graphique.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -56,5 +57,28 @@ ok('index et vec : classe → probabilité → mesure', () => {
 });
 
 ok('retour : période de retour (2 % ≈ 2 475 ans, 5 % ≈ 975, 10 % ≈ 475)', () => { assert.equal(T.retour(2), 2475); assert.equal(T.retour(5), 975); assert.equal(T.retour(10), 475); });
+
+ok('classeEstimee : classes-site.js prioritaire, sinon k du lot, sinon null', () => {
+  const row = [2]; for (let i = 0; i < T.NB_VAL; i++) row.push(1000);
+  assert.equal(T.classeEstimee('00002', row, null), 'B');
+  assert.equal(T.classeEstimee('00002', row, { '00002': 'D' }), 'D');
+  assert.equal(T.classeEstimee('00002', row, { '00002': 'Z' }), 'B');          // valeur invalide ignorée
+  assert.equal(T.classeEstimee('00002', [0].concat(row.slice(1)), {}), null);
+  assert.equal(T.classeEstimee('x', null, undefined), null);
+});
+
+ok('axe des périodes linéaire : graduations 0 à 10 s, abscisses proportionnelles à T', () => {
+  assert.deepEqual(T.periodTicks(false), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  assert.deepEqual(T.periodTicks(true), [0, 2, 4, 6, 8, 10]);
+  const v = [0.5, 0.4]; for (let i = 0; i < 9; i++) v.push(0.3);
+  for (const narrow of [false, true]) {
+    const ch = T.chart([{ id: 'C', label: 'Classe C', tag: 'C', est: false, st: { c: '#009E73', dash: '', m: 'tri' }, v }], narrow);
+    const xs = ch.xs.slice(1), P = [0.05, 0.1, 0.2, 0.3, 0.5, 1, 2, 5, 10];
+    const pente = (xs[8] - xs[7]) / (10 - 5);
+    for (let k = 1; k < P.length; k++) assert.ok(Math.abs((xs[k] - xs[0]) - pente * (P[k] - P[0])) < 1e-6, 'abscisse non linéaire');
+    assert.ok(ch.xs[0] < xs[0], 'PGA à gauche des périodes');
+    assert.ok(!/logarithm/i.test(ch.svg) && /Période T \(s\)/.test(ch.svg));
+  }
+});
 
 console.log(n + ' tests réussis');

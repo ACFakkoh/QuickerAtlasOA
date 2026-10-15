@@ -3,7 +3,9 @@
    Sources (toutes interrogeables depuis le navigateur, CORS ouvert) :
    - MELCCFP, ArcGIS REST : couche 101 (ordre de Strahler), 27 à 34 (bassins nommés), 22 (zones inondables BDZI) ;
    - ECCC, API OGC : stations, statistiques annuelles et moyennes mensuelles (HYDAT) ;
-   - MRNF : GRHQ simple (tuiles WMS, image seulement). */
+   - MRNF : GRHQ simple (tuiles WMS, image seulement).
+   v0.6.0 : les repères (Strahler, bassin, zone inondable, station, maximum et étiage) sont réunis dans un tableau
+   récapitulatif (classe qa-recap, styles injectés par le module) au lieu de cartes côte à côte. */
 (function(){
   'use strict';
   window.QA_MOD = window.QA_MOD || {};
@@ -269,11 +271,21 @@
 
   /* ================= Interface ================= */
   function injectCss(){
-    if (document.getElementById('hy-css')) return;
-    var st = document.createElement('style'); st.id = 'hy-css';
+    if (document.getElementById('qa-hydro-css')) return;
+    var st = document.createElement('style'); st.id = 'qa-hydro-css';
     st.textContent =
-      '.hy-sm{display:block;font-size:.75rem;color:var(--muted);font-weight:400;margin-top:1px;max-width:24em;line-height:1.35}' +
-      '.hy-chip{max-width:100%}.hy-chip b{font-size:1rem}.hy-hit{border:2px solid var(--navy)}' +
+      // v0.6.0 : tableau récapitulatif (mêmes règles que la fenêtre LiDAR, injectées ici aussi : l'un peut s'ouvrir sans l'autre)
+      '.qa-recap{width:100%;border-collapse:collapse;font-size:.8rem;line-height:1.35}' +
+      '.qa-recap th,.qa-recap td{padding:4px 8px;border-bottom:1px solid var(--line);vertical-align:baseline;text-align:left}' +
+      '.qa-recap th{font-weight:500;color:var(--ink);white-space:nowrap}' +
+      '.qa-recap td.qa-v{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:650;color:var(--navy)}' +
+      '.qa-recap td.qa-n{color:var(--muted);font-size:.75rem;width:100%}.qa-recap td.qa-n b{color:var(--ink);font-weight:600}' +
+      '.qa-recap tr.qa-g th{padding:9px 8px 3px;font-size:.6875rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:650;border-bottom:1px solid #b9c8d2}' +
+      '.qa-recap tbody:first-child tr.qa-g:first-child th{padding-top:0}' +
+      '.qa-recap tr.hy-hit th{font-weight:700;color:var(--navy);box-shadow:inset 3px 0 0 var(--navy)}.qa-recap tr.hy-hit td{background:#f6f9fb}' +
+      '.qa-recap td.qa-v .hy-ko{font-weight:400}' +
+      '@media(max-width:600px){.qa-recap tr{display:grid;grid-template-columns:minmax(0,1fr) auto}.qa-recap th{white-space:normal}' +
+      '.qa-recap td.qa-n{grid-column:1/-1;padding-top:0}.qa-recap tr:not(.qa-g) th,.qa-recap tr:not(.qa-g) td.qa-v{border-bottom:0}.qa-recap tr.qa-g th{grid-column:1/-1}}' +
       '.hy-ph{color:var(--muted);font-size:.78rem}.hy-ko{color:var(--muted);font-size:.8rem;font-style:italic}' +
       '.hy-mk-b{width:16px;height:16px;background:var(--navy);border:2px solid #fff;box-shadow:0 0 0 1px var(--navy)}' +
       '.hy-mk-s{width:14px;height:14px;transform:rotate(45deg);background:#e69f00;border:2px solid var(--navy)}' +
@@ -312,9 +324,11 @@
     ['Zéro d’échelle, datum', 'Point de départ de l’échelle de niveau de la station. Souvent arbitraire (propre à la station) ; parfois lié à un référentiel géodésique, auquel cas les niveaux sont des altitudes.']
   ];
 
-  function chipHtml(label, val, small, cls, title){
-    return '<span>' + esc(label) + '</span>' + val + (small ? '<small class="hy-sm">' + small + '</small>' : '');
+  // Ligne du tableau récapitulatif (v0.6.0) : libellé, valeur courte (HTML), note (HTML échappé par l'appelant)
+  function rowHtml(label, val, note){
+    return '<th scope="row">' + esc(label) + '</th><td class="qa-v">' + val + '</td><td class="qa-n">' + (note || '') + '</td>';
   }
+  function groupHtml(t){ return '<tr class="qa-g"><th colspan="3" scope="rowgroup">' + esc(t) + '</th></tr>'; }
 
   function render(o, body, ctx){
     var Q = window.QA;
@@ -326,13 +340,13 @@
     var eau = o.obstacle || 'cours d’eau sans nom';
 
     function q(s){ return body.querySelector('[data-hy="' + s + '"]'); }
-    function chipSkel(k, label){ return '<div class="ld-chip hy-chip" data-hy="' + k + '"><span>' + esc(label) + '</span><small class="hy-sm">chargement…</small></div>'; }
+    function rowSkel(k, label){ return '<tr data-hy="' + k + '">' + rowHtml(label, '…', '<span class="hy-ph">chargement…</span>') + '</tr>'; }
     function setChip(k, label, val, small, cls){
       var el = q(k); if (!el) return;
-      el.className = 'ld-chip hy-chip' + (cls ? ' ' + cls : '');
-      el.innerHTML = chipHtml(label, val, small);
+      el.className = cls || '';
+      el.innerHTML = rowHtml(label, val, small);
     }
-    function ko(k, label){ var el = q(k); if (el) { el.innerHTML = '<span>' + esc(label) + '</span><b>indisponible</b>'; } }
+    function ko(k, label){ var el = q(k); if (el) { el.className = ''; el.innerHTML = rowHtml(label, '<span class="hy-ko">indisponible</span>', '<span class="hy-ko">service sans réponse</span>'); } }
     function settled(failed){
       if (failed) fails++;
       if (--pending > 0 || !ctx.alive()) return;
@@ -351,7 +365,9 @@
         '<span><i style="width:22px;height:0;border-top:1.5px solid #8a3c73"></i>Contour de zone inondable</span></div>' +
       '<p class="ld-meta">Fond Esri ; cours d’eau : GRHQ simple (MRNF), cochable dans le menu de la carte. Station la plus proche seulement.</p></div>' +
       '<div class="ld-right">' +
-        '<div class="ld-chips">' + chipSkel('c-str', 'Ordre de Strahler') + chipSkel('c-bas', 'Bassin versant') + chipSkel('c-zi', 'Zone inondable (BDZI)') + chipSkel('c-stn', 'Station la plus proche') + '</div>' +
+        '<table class="qa-recap"><tbody>' + groupHtml('Cours d’eau au pont') + rowSkel('c-str', 'Ordre de Strahler') + rowSkel('c-bas', 'Bassin versant') + rowSkel('c-zi', 'Zone inondable (BDZI)') + '</tbody>' +
+          '<tbody>' + groupHtml('Station hydrométrique') + rowSkel('c-stn', 'Station la plus proche') + '</tbody>' +
+          '<tbody data-hy="t-ser"><tr>' + rowHtml('Historique', '…', '<span class="hy-ph">chargement…</span>') + '</tr></tbody></table>' +
         '<div data-hy="warn"></div><div data-hy="retry"></div>' +
         '<p class="ld-note" data-hy="zi"><span class="hy-ph">Zone inondable : chargement…</span></p>' +
         '<div class="ld-pf hy-pf" data-hy="chart"><h3 class="hy-pfh"><span data-hy="chtitle">Historique à la station</span> <small data-hy="chsub"></small></h3><div data-hy="keys"></div><div data-hy="svg"><span class="hy-ph">Chargement de l’historique…</span></div><div class="ld-read" data-hy="read">Survoler le graphique pour lire les valeurs.</div></div>' +
@@ -381,9 +397,9 @@
     cached(E, 'str', function(){ return qStrahler(o); }).then(function(j){
       if (!ctx.alive()) return;
       var r = nearestReach(j.features, o.lat, o.lon), L1 = 'Ordre de Strahler';
-      if (!r) setChip('c-str', L1, '<b>—</b>', 'aucun tronçon du réseau à moins de 800 m');
+      if (!r) setChip('c-str', L1, '—', 'aucun tronçon du réseau à moins de 800 m');
       else {
-        setChip('c-str', L1, '<b>' + (r.ord == null ? '—' : r.ord) + '</b> ' + esc(strahlerWord(r.ord)), esc(PER[r.per] || 'écoulement non précisé') + ' · tronçon à ' + fmt(r.d, 0) + ' m de l’ouvrage');
+        setChip('c-str', L1, r.ord == null ? '—' : String(r.ord), '<b>' + esc(strahlerWord(r.ord) || 'ordre non précisé') + '</b> · ' + esc(PER[r.per] || 'écoulement non précisé') + ' · tronçon à ' + fmt(r.d, 0) + ' m de l’ouvrage');
         L.polyline(r.paths.map(function(p){ return p.map(function(c){ return [c[1], c[0]]; }); }), { color: '#0072b2', weight: 6, opacity: .55, dashArray: r.per === 'I' ? '8 6' : null, interactive: false }).addTo(gOv);
       }
       settled(false);
@@ -393,10 +409,10 @@
     cached(E, 'bas', function(){ return qBassin(o); }).then(function(j){
       if (!ctx.alive()) return;
       var b = deepBasin(j.results), L1 = 'Bassin versant (à l’embouchure)';
-      if (!b) setChip('c-bas', L1, '<b>—</b>', 'aucun bassin nommé à cet endroit');
+      if (!b) setChip('c-bas', L1, '—', 'aucun bassin nommé à cet endroit');
       else {
         var same = subset(tokens(eau), tokens(b.nom));
-        setChip('c-bas', L1, '<b>' + fmt(b.km2, 0) + '</b> km²', esc(b.nom) + ' · borne supérieure de la superficie en amont du pont' + (same || !tokens(eau).length ? '' : ' (bassin du cours d’eau parent)'));
+        setChip('c-bas', L1, fmt(b.km2, 0) + '&nbsp;km²', '<b>' + esc(b.nom) + '</b> · borne supérieure de la superficie en amont du pont' + (same || !tokens(eau).length ? '' : ' (bassin du cours d’eau parent)'));
       }
       settled(false);
     }, function(){ if (!ctx.alive()) return; ko('c-bas', 'Bassin versant'); settled(true); });
@@ -406,11 +422,11 @@
       if (!ctx.alive()) return;
       var z = zoneAt(j.features, o.lat, o.lon), L1 = 'Zone inondable (BDZI)', note = q('zi');
       if (!z) {
-        setChip('c-zi', L1, '<b>non</b>', 'aucune zone cartographiée à moins de 1,2 km');
-        note.innerHTML = 'Aucune zone inondable cartographiée (BDZI) à moins de 1,2 km. La BDZI ne couvre pas tout le territoire : cela n’exclut pas un risque d’inondation.';
+        setChip('c-zi', L1, 'non', 'aucune zone cartographiée à moins de 1,2 km · la BDZI ne couvre pas tout le territoire : cela n’exclut pas un risque d’inondation');
+        note.hidden = true;
       } else {
         var rec = recurrence(z.desc), within = z.d === 0;
-        setChip('c-zi', L1, '<b>' + (within ? 'oui' : 'à ' + fmt(z.d, 0) + ' m') + '</b>', esc(z.desc) + (rec ? ' · récurrence ' + rec : ''), within || z.d < 200 ? 'hy-hit' : '');
+        setChip('c-zi', L1, within ? 'oui' : 'à ' + fmt(z.d, 0) + '&nbsp;m', '<b>' + esc(z.desc) + '</b>' + (rec ? ' · récurrence ' + rec : '') + (within ? ' · l’ouvrage est dans la zone' : ''), within || z.d < 200 ? 'hy-hit' : '');
         note.innerHTML = '<b>Zone inondable officielle :</b> ' + (within ? 'l’ouvrage est dans une' : 'l’ouvrage est à ' + fmt(z.d, 0) + ' m d’une') + ' « ' + esc(z.desc.toLowerCase()) + ' »' + (rec ? ' (récurrence ' + rec + ')' : '') +
           (z.rapport ? '. Rapport source : ' + esc(z.rapport) + (z.titre ? ', ' + esc(z.titre) : '') : '') + '.';
         (j.features || []).forEach(function(f){
@@ -428,13 +444,13 @@
       if (!ctx.alive()) return;
       var s = res.best, L1 = 'Station la plus proche';
       if (!s) {
-        setChip('c-stn', L1, '<b>aucune</b> station à moins de ' + KM_MAX + ' km', '');
+        setChip('c-stn', L1, 'aucune', 'pas de station à moins de ' + KM_MAX + ' km');
         q('warn').innerHTML = '';
         settled(false);
         return;
       }
       var same = s.match === 'oui' ? ' · même cours d’eau' : s.match === 'non' ? ' · autre cours d’eau' : '';
-      setChip('c-stn', L1, '<b>' + esc(titleCase(s.nom)) + '</b>', esc(s.id) + ' · à ' + fmt(s.d, 1) + ' km · ' + (s.act ? 'en service' : 'fermée (historique seulement)') + same);
+      setChip('c-stn', L1, fmt(s.d, 1) + '&nbsp;km', '<b>' + esc(titleCase(s.nom)) + '</b> (' + esc(s.id) + ') · ' + (s.act ? 'en service' : 'fermée, historique seulement') + same);
       // Avertissement en une ligne ; complété par le rapport des bassins dès que le bassin du pont est connu
       function warn(bas){
         var msg = [], ratio = bas && s.area ? s.area / bas.km2 : null;
@@ -456,12 +472,14 @@
     cached(E, 'ser', function(){ return pStn.then(function(res){ return res.best ? qSeries(res.best.id).then(function(s){ s.stn = res.best; return s; }) : { none: true }; }); }).then(function(S){
       if (!ctx.alive()) return;
       if (S.none) {
+        q('t-ser').innerHTML = '';
         q('svg').innerHTML = '<span class="hy-ko">Aucune station à moins de ' + KM_MAX + ' km : pas d’historique de niveaux ni de débits pour cet ouvrage.</span>';
         q('chart').querySelector('h3').style.display = 'none'; q('read').hidden = true;
         settled(false); return;
       }
       var ps = pickSeries(S.lvl, S.dis);
       if (!ps) {
+        q('t-ser').innerHTML = '<tr>' + rowHtml('Historique', '—', 'aucune série annuelle publiée pour la station ' + esc(S.stn.id)) + '</tr>';
         q('svg').innerHTML = '<span class="hy-ko">Aucune série annuelle publiée pour la station ' + esc(S.stn.id) + '.</span>';
         q('read').hidden = true; settled(false); return;
       }
@@ -470,7 +488,11 @@
       cur.onResize = function(){ clearTimeout(rtmr); rtmr = setTimeout(function(){ if (ctx.alive()) drawSeries(); }, 150); };
       window.addEventListener('resize', cur.onResize);
       settled(false);
-    }, function(){ if (!ctx.alive()) return; q('svg').innerHTML = '<span class="hy-ko">Historique de la station : indisponible.</span>'; q('read').hidden = true; settled(true); });
+    }, function(){
+      if (!ctx.alive()) return;
+      q('t-ser').innerHTML = '<tr>' + rowHtml('Historique', '<span class="hy-ko">indisponible</span>', '<span class="hy-ko">service sans réponse</span>') + '</tr>';
+      q('svg').innerHTML = '<span class="hy-ko">Historique de la station : indisponible.</span>'; q('read').hidden = true; settled(true);
+    });
 
     /* ----- Graphique annuel (SVG fait main) et repères ----- */
     function drawSeries(){
@@ -527,35 +549,35 @@
       drawRefs(ps, S, sm);
     }
     function drawRefs(ps, S, sm){
-      var lvl = ps.kind === 'niveau', s = S.stn, el = q('ref'), parts = [], dk = datumKind(s.datum);
-      function v(x, u, isLvl){ return '<b>' + (isLvl ? fmt(x, 2) : fmtQ(x)) + ' ' + u + '</b>'; }
-      function block(rows, isLvl){
-        var m = summary(rows), t = (isLvl ? 'Niveau d’eau' : 'Débit');
-        if (!m.maxRec) return '';
-        var s1 = t + ' : maximum enregistré ' + v(m.maxRec.v, isLvl ? 'm' : 'm³/s', isLvl) + ' (' + fmtDate(m.maxRec.d) + ')';
-        if (m.nMin >= 5) s1 += ' · étiage : médiane des minimums annuels ' + v(m.medMin, isLvl ? 'm' : 'm³/s', isLvl) + ', plus bas ' + v(m.minRec.v, isLvl ? 'm' : 'm³/s', isLvl) + ' (' + fmtDate(m.minRec.d) + ')';
-        return s1 + '.';
-      }
-      if (S.lvl.length >= 5 || ps.kind === 'niveau') parts.push(block(S.lvl, true));
-      if (S.dis.length >= 5) parts.push(block(S.dis, false));
-      parts = parts.filter(Boolean);
-      if (!parts.length) parts.push(block(ps.rows, lvl));
+      var lvl = ps.kind === 'niveau', s = S.stn, el = q('ref'), dk = datumKind(s.datum), rows = '';
+      rows += serieRows(S.lvl.length >= 5 || ps.kind === 'niveau' ? S.lvl : [], true) + serieRows(S.dis.length >= 5 ? S.dis : [], false);
+      if (!rows) rows = serieRows(ps.rows, lvl);
+      rows += '<tr>' + rowHtml('Années publiées', String(sm.n), sm.y0 + '–' + sm.y1 + ' · ' + (lvl ? 'niveaux d’eau' : 'débits') + ' (HYDAT)') + '</tr>';
+      if (s.area) rows += '<tr>' + rowHtml('Bassin drainé à la station', fmt(s.area, 0) + '&nbsp;km²', 'superficie brute publiée par ECCC') + '</tr>';
+      q('t-ser').innerHTML = rows;
       var datum = '';
       if (lvl) {
         datum = dk === 'arbitraire' ? 'Niveaux comptés à partir du zéro d’échelle de la station (référentiel arbitraire) : ils ne se comparent pas aux élévations du pont ou du LiDAR sans levé topographique.' :
           dk === 'geodesique' ? 'Niveaux rapportés à un référentiel géodésique (« ' + esc(s.datum) + ' ») : ce sont des altitudes, comparables à celles du pont à condition de confirmer le référentiel et son ajustement par un levé.' :
           'Référentiel vertical de la station non précisé : ne pas comparer ces niveaux aux élévations du pont ou du LiDAR sans levé topographique.';
       }
-      var bass = s.area ? ' Bassin drainé à la station : ' + fmt(s.area, 0) + ' km².' : '';
-      el.innerHTML = parts.join('<br>') + (datum ? '<br>' + datum : '') + bass + '<br><span class="hy-ph">Régime d’écoulement non vérifié : un barrage en amont peut influencer les niveaux (voir « régime influencé » au lexique). Historique publié jusqu’en ' + sm.y1 + '.</span>';
+      el.innerHTML = (datum ? datum + '<br>' : '') + '<span class="hy-ph">Régime d’écoulement non vérifié : un barrage en amont peut influencer les niveaux (voir « régime influencé » au lexique). Historique publié jusqu’en ' + sm.y1 + '.</span>';
       el.hidden = false;
+    }
+    // Lignes « maximum enregistré » et « étiage » d'une série annuelle (niveaux en m, débits en m³/s)
+    function serieRows(rows, isLvl){
+      if (!rows.length) return '';
+      var m = summary(rows), u = isLvl ? 'm' : 'm³/s', t = isLvl ? 'niveau' : 'débit', f = function(v){ return (isLvl ? fmt(v, 2) : fmtQ(v)) + '&nbsp;' + u; }, h = '';
+      if (m.maxRec) h += '<tr>' + rowHtml('Maximum enregistré (' + t + ')', f(m.maxRec.v), esc(fmtDate(m.maxRec.d))) + '</tr>';
+      if (m.nMin >= 5) h += '<tr>' + rowHtml('Étiage (' + t + ')', f(m.medMin), 'médiane des ' + m.nMin + ' minimums annuels · plus bas ' + f(m.minRec.v) + ' (' + esc(fmtDate(m.minRec.d)) + ')') + '</tr>';
+      return h;
     }
   }
 
   window.QA_MOD.hydro = {
     render: render,
     // Fonctions pures exposées pour les tests (tests/js/hydro_smoke.mjs)
-    _t: { hedged: hedged, fmt: fmt, tokens: tokens, subset: subset, titleCase: titleCase, parseCsv: parseCsv, pickStation: pickStation, datumKind: datumKind, buildSeries: buildSeries, pickSeries: pickSeries,
+    _t: { hedged: hedged, fmt: fmt, rowHtml: rowHtml, tokens: tokens, subset: subset, titleCase: titleCase, parseCsv: parseCsv, pickStation: pickStation, datumKind: datumKind, buildSeries: buildSeries, pickSeries: pickSeries,
       summary: summary, median: median, nearestReach: nearestReach, zoneAt: zoneAt, inRings: inRings, deepBasin: deepBasin, strahlerWord: strahlerWord, recurrence: recurrence, niceStep: niceStep }
   };
 })();

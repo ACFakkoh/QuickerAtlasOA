@@ -116,6 +116,11 @@ ok('nearestReach / deepBasin / strahlerWord', function(){
   assert.match(T.strahlerWord(0), /non classé/);
   assert.equal(T.strahlerWord(6), 'grande rivière');
 });
+ok('rowHtml : ligne du tableau récapitulatif (v0.6.0), libellé échappé', function(){
+  var h = T.rowHtml('Bassin <versant>', '2 599&nbsp;km²', 'note');
+  assert.match(h, /^<th scope="row">Bassin &lt;versant&gt;<\/th><td class="qa-v">2 599&nbsp;km²<\/td><td class="qa-n">note<\/td>$/);
+  assert.match(T.rowHtml('X', '—'), /<td class="qa-n"><\/td>$/);
+});
 ok('fmt : décimales fixes (fr-CA)', function(){
   assert.equal(T.fmt(5829, 0).replace(/\s/g, ' '), '5 829');
   assert.equal(T.fmt(20.6, 2), '20,60');

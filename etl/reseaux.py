@@ -71,19 +71,18 @@ _WFS_GEOJSON = (f"{WFS_BASE}?service=wfs&version=2.0.0&request=getfeature"
 
 
 # --- Définition des couches -----------------------------------------------------------------------
-# Palette routière inspirée des cartes du MTMD (autoroutes rouge foncé, nationales orange, régionales
-# jaune-orangé, collectrices brun-vert, accès aux ressources gris) ; teintes saturées pour rester lisibles
-# sur fond topographique comme sur fond satellite.
+# Palette routière sobre (v0.6.0, à la demande : les teintes vives se mêlaient aux couleurs des ouvrages) : une seule
+# famille gris-bleu, de l'ardoise foncée (autoroutes) au gris clair (réseau local) ; la couleur reste aux ouvrages.
 CLASSES_RTSS = [
     # La hiérarchie se lit d'abord par l'épaisseur, la clarté et les tirets (lisible par les personnes daltoniennes),
     # la teinte n'est qu'un complément. Traits affinés en v0.5.5 (l'autoroute à 4,5 px masquait la carte).
-    {"label": "Autoroute", "color": "#8f1d16", "weight": 2.8},
-    {"label": "Nationale", "color": "#e8590c", "weight": 2.2},
-    {"label": "Régionale", "color": "#f2a900", "weight": 1.7},
-    {"label": "Collectrice", "color": "#8a5a2b", "weight": 1.3, "dash": "7 3"},
-    {"label": "Accès aux ressources", "color": "#6b7280", "weight": 1.2, "dash": "2 3"},
-    {"label": "Local (1 à 3)", "color": "#7e57c2", "weight": 1},
-    {"label": "Sans classe", "color": "#c26a73", "weight": 1, "dash": "1 2"},        # bretelles, virages en U, etc.
+    {"label": "Autoroute", "color": "#34495a", "weight": 2.8},
+    {"label": "Nationale", "color": "#52687a", "weight": 2.2},
+    {"label": "Régionale", "color": "#71848f", "weight": 1.7},
+    {"label": "Collectrice", "color": "#86969f", "weight": 1.3, "dash": "7 3"},
+    {"label": "Accès aux ressources", "color": "#97a4ab", "weight": 1.2, "dash": "2 3"},
+    {"label": "Local (1 à 3)", "color": "#a5b1b8", "weight": 1},
+    {"label": "Sans classe", "color": "#a5b1b8", "weight": 1, "dash": "1 2"},        # bretelles, virages en U, etc.
 ]
 # des_clasf_ du WFS → libellé de classe ci-dessus (regroupements pour une légende lisible)
 CLASSE_RTSS_DE = {

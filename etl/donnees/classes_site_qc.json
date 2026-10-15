@@ -1,0 +1,194 @@
+{
+ "north": 62.7,
+ "west": -79.8,
+ "dlat": 0.002,
+ "dlon": 0.003,
+ "nx": 7600,
+ "ny": 8900,
+ "generated": "2026-10-15",
+ "codes": [
+  "R",
+  "T",
+  "O",
+  "L",
+  "Gx",
+  "Tf",
+  "Go",
+  "MGb",
+  "LGb",
+  "MGa",
+  "A",
+  "Qf",
+  "Qa",
+  "LGa",
+  "MGd",
+  "C",
+  "Ed",
+  "LGd",
+  "GxT",
+  "Ce",
+  "Gs",
+  "Ap",
+  "Gxi",
+  "Cg",
+  "H",
+  "Ac"
+ ],
+ "valeurs": "indice de pixel du PNG : 0 = aucun polygone (hors Québec, mer) ; k = codes[k-1]",
+ "regle": "rendu WMS sans lissage : le pixel prend le code du polygone qui contient son centre",
+ "intrant": "SIGEOM (MRNF), Géologie du Quaternaire, couche SGM:Zones_morpho_sedimentologiques_qc (zones morpho-sédimentologiques générales), service https://servicesvectoriels.atlas.gouv.qc.ca/IDS_SGM_WMS/service.svc/get, CC BY 4.0",
+ "source": "Rosset P., Elrawy A., Nadarajah S., Chouinard L. (2025), Vs30 Derived from Geology: An Attempt in the Province of Quebec, Canada, Geotechnics 5(2):24, doi:10.3390/geotechnics5020024, CC BY 4.0 — tableau 3 appliqué à la carte des dépôts de surface du SIGEOM (MRNF, CC BY 4.0)",
+ "url": "https://www.mdpi.com/2673-7094/5/2/24",
+ "doi": "10.3390/geotechnics5020024",
+ "tableau3": {
+  "Ed": {
+   "depot": "Sédiments éoliens",
+   "vs30": 604,
+   "classe": "C"
+  },
+  "O": {
+   "depot": "Sédiments organiques indifférenciés",
+   "vs30": 659,
+   "classe": "C"
+  },
+  "C": {
+   "depot": "Dépôts de pente indifférenciés",
+   "vs30": 525,
+   "classe": "C"
+  },
+  "Cg": {
+   "depot": "Dépôts de glissement de terrain",
+   "vs30": 260,
+   "classe": "D"
+  },
+  "A": {
+   "depot": "Alluvions indifférenciées",
+   "vs30": 537,
+   "classe": "C"
+  },
+  "Ap": {
+   "depot": "Alluvions actuelles",
+   "vs30": 813,
+   "classe": "B"
+  },
+  "L": {
+   "depot": "Sédiments lacustres",
+   "vs30": 1212,
+   "classe": "B"
+  },
+  "MGa": {
+   "depot": "Sédiments glaciomarins d'eau profonde, fins",
+   "vs30": 615,
+   "classe": "C"
+  },
+  "MGb": {
+   "depot": "Sédiments glaciomarins littoraux et prélittoraux",
+   "vs30": 826,
+   "classe": "B"
+  },
+  "MGd": {
+   "depot": "Sédiments glaciomarins deltaïques et prodeltaïques",
+   "vs30": 531,
+   "classe": "C"
+  },
+  "LGa": {
+   "depot": "Sédiments glaciolacustres d'eau profonde, fins",
+   "vs30": 1026,
+   "classe": "B"
+  },
+  "LGb": {
+   "depot": "Sédiments glaciolacustres littoraux et prélittoraux",
+   "vs30": 556,
+   "classe": "C"
+  },
+  "LGd": {
+   "depot": "Sédiments glaciolacustres deltaïques et prodeltaïques",
+   "vs30": 535,
+   "classe": "C"
+  },
+  "Go": {
+   "depot": "Sédiments proglaciaires d'épandage subaérien",
+   "vs30": 1063,
+   "classe": "B"
+  },
+  "Gs": {
+   "depot": "Sédiments proglaciaires d'épandage subaquatique",
+   "vs30": 1017,
+   "classe": "B"
+  },
+  "Gx": {
+   "depot": "Sédiments juxtaglaciaires",
+   "vs30": 942,
+   "classe": "B"
+  },
+  "GxT": {
+   "depot": "Sédiments de moraine frontale",
+   "vs30": 832,
+   "classe": "B"
+  },
+  "T": {
+   "depot": "Till indifférencié",
+   "vs30": 1185,
+   "classe": "B"
+  },
+  "Tf": {
+   "depot": "Till de fusion ou d'ablation",
+   "vs30": 1097,
+   "classe": "B"
+  },
+  "Q": {
+   "depot": "Formation quaternaire ancienne altérée",
+   "vs30": 1416,
+   "classe": "B"
+  },
+  "R": {
+   "depot": "Substratum rocheux indifférencié",
+   "vs30": 1657,
+   "classe": "A"
+  }
+ },
+ "alias": {
+  "Qa": "Q"
+ },
+ "eau": {
+  "L": "plan d'eau dans la carte générale : sans classe, transparent (comme la figure 10)"
+ },
+ "comptes_codes": {
+  "R": 8167064,
+  "T": 15523876,
+  "O": 1517813,
+  "L": 2529141,
+  "Gx": 826982,
+  "Tf": 1023335,
+  "Go": 422781,
+  "MGb": 1073366,
+  "LGb": 323135,
+  "MGa": 968229,
+  "A": 220736,
+  "Qf": 297144,
+  "Qa": 363486,
+  "LGa": 689796,
+  "MGd": 110695,
+  "C": 169434,
+  "Ed": 26366,
+  "LGd": 21977,
+  "GxT": 28651,
+  "Ce": 14112,
+  "Gs": 11464,
+  "Ap": 287154,
+  "Gxi": 11183,
+  "Cg": 2085,
+  "H": 2614,
+  "Ac": 912
+ },
+ "comptes_classes": {
+  "aucun": 33006469,
+  "A": 8167064,
+  "B": 20250891,
+  "C": 3358385,
+  "D": 2085,
+  "E": 0,
+  "non classé": 325965,
+  "eau": 2529141
+ }
+}
