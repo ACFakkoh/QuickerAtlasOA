@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>QuickerAtlasOA v0.6.0 · Atlas des ouvrages d’art du Québec</title>
+<title>QuickerAtlasOA v0.6.1 · Atlas des ouvrages d’art du Québec</title>
 <meta name="description" content="Proposition de visualisation de l'inventaire des structures (ponts, ponceaux, murs, tunnels) du ministère des Transports et de la Mobilité durable du Québec.">
 <meta name="theme-color" content="#102d41">
 <link rel="preconnect" href="https://server.arcgisonline.com">
@@ -764,7 +764,7 @@ table.list tbody tr:hover{background:#eef5f7}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="data/structures.js"></script>
 <script src="data/details.js"></script>
-<script>window.PQ_META={"version": "0.6.0", "date": "2026-10-15", "author": "Anthony Chéruel"};</script>
+<script>window.PQ_META={"version": "0.6.1", "date": "2026-10-15", "author": "Anthony Chéruel"};</script>
 <script>
 (function(){
   'use strict';
@@ -1290,8 +1290,9 @@ table.list tbody tr:hover{background:#eef5f7}
   }
 
   // ---------- Marqueurs ----------
-  // Rayon continu selon le zoom (plus de paliers visibles) ; v0.6.0 : plafonné plus bas, les ronds restent fins aux grands zooms
-  function radiusFor(z){ return Math.min(5, Math.max(2.3, 2.3 + (z - 6) * 0.45)); }
+  // Rayon continu selon le zoom (plus de paliers visibles). v0.6.1 : retour aux tailles de la v0.5.6 (demande : les ronds
+  // et pictogrammes de la v0.6.0, plafonnés à 5 px, étaient trop petits à tous les zooms)
+  function radiusFor(z){ return Math.min(7, Math.max(2.5, 2.5 + (z - 6) * 0.7)); }
   var radius = map ? radiusFor(map.getZoom()) : 3;
   // Formes des points : la forme double toujours la couleur (lisible par les personnes daltoniennes).
   // cercle, anneau (creux), triangle, carré, croix (« Restrictions »), losange (Ville de Montréal), hexagone (Ville de Sherbrooke)
@@ -1318,8 +1319,7 @@ table.list tbody tr:hover{background:#eef5f7}
     if (sh === 'x') {
       var s = Math.max(2.6, r * 0.95);
       ctx.beginPath(); ctx.moveTo(x - s, y - s); ctx.lineTo(x + s, y + s); ctx.moveTo(x + s, y - s); ctx.lineTo(x - s, y + s);
-      ctx.lineCap = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = '#ffffff'; ctx.stroke();
-      ctx.lineWidth = 2.3; ctx.strokeStyle = fill; ctx.stroke();
+      ctx.lineCap = 'round'; ctx.lineWidth = 2.6; ctx.strokeStyle = fill; ctx.stroke();      // v0.6.1 : plus de liseré blanc (demande)
       return;
     }
     if (sh === 'ring') {
@@ -1562,7 +1562,8 @@ table.list tbody tr:hover{background:#eef5f7}
   // ---------- Aléa sismique (v0.5.6) : PGA du CNBC (classe C, 2 % en 50 ans) + classes de site de Montréal ----------
   // Images rééchantillonnées en Web Mercator par etl/sismique.py, sous les réseaux (volet « raster »).
   // v0.6.0 : PGA (toute la province) et classes de site (Québec) en deux couches séparées, superposables ;
-  // les classes se dessinent au-dessus du PGA (volets raster 338 / 340)
+  // les classes se dessinent au-dessus du PGA (volets raster 338 / 340). v0.6.1 : microzonage de Montréal (2023) remis,
+  // au-dessus de la carte du Québec (même palette, + E) ; les trois images sont transparentes sur l'eau (GRHQ)
   function rasterPane(name, z){ if (!map.getPane(name)) map.createPane(name).style.zIndex = z; return name; }
   function buildPga(){
     var C = couche('sismique'), g = L.layerGroup();
@@ -1572,7 +1573,7 @@ table.list tbody tr:hover{background:#eef5f7}
   function buildClasses(){
     var C = couche('sismique'), g = L.layerGroup(), K = C && (C.classes || C.mtl);
     if (K) g.addLayer(L.imageOverlay(K.img, K.bounds, { pane: rasterPane('raster-classes', 340), opacity: 0.7, interactive: false, className: 'img-px', attribution: 'Classes de site : ' + esc(K.source || '') }));
-    if (C && C.classes && C.mtl && C.mtl.img !== C.classes.img && C.mtlKeep) g.addLayer(L.imageOverlay(C.mtl.img, C.mtl.bounds, { pane: 'raster-classes', opacity: 0.85, interactive: false, className: 'img-px' }));
+    if (C && C.classes && C.mtl && C.mtl.img !== C.classes.img) g.addLayer(L.imageOverlay(C.mtl.img, C.mtl.bounds, { pane: rasterPane('raster-classes', 340), opacity: 0.7, interactive: false, className: 'img-px', attribution: 'Classes de site, Montréal : ' + esc(C.mtl.source || '') }));
     return g;
   }
   function sismiqueLegend(C, part){
@@ -1580,8 +1581,9 @@ table.list tbody tr:hover{background:#eef5f7}
     if (part === 'classes') {
       var K = C.classes || C.mtl;
       if (!K) return '';
+      var srcA = function(X){ return X.url ? '<a href="' + esc(X.url) + '" target="_blank" rel="noopener">' + esc(X.source || 'article') + '</a>' : esc(X.source || ''); };
       return '<div class="lg-ramp lg-col">' + K.classes.map(function(c){ return '<span><i style="background:' + c.color + '"></i>' + esc(c.label) + '</span>'; }).join('') + '</div>' +
-        '<div class="lg-src">Source : ' + (K.url ? '<a href="' + esc(K.url) + '" target="_blank" rel="noopener">' + esc(K.source || 'article') + '</a>' : esc(K.source || '')) + '</div>';
+        '<div class="lg-src">Source : ' + srcA(K) + (C.classes && C.mtl ? ' ; région de Montréal (prioritaire, plus fine) : ' + srcA(C.mtl) : '') + '. Transparent sur l’eau.</div>';
     }
     if (C.pga) {
       var b = C.pga.breaks, lab = function(i){ return i === 0 ? '< ' + nf2.format(b[0]) : i >= b.length ? '≥ ' + nf2.format(b[b.length - 1]) : nf2.format(b[i - 1]) + ' – ' + nf2.format(b[i]); };
@@ -2567,7 +2569,8 @@ table.list tbody tr:hover{background:#eef5f7}
       var CSM = KC && KC.url ? KC : (CSD._ || {});        // citation courte de la couche (lien), pas la référence complète
       h += '<p class="sub">Classe de site estimée au point de chaque ouvrage (Vs30 sur 30 m, CNBC) : ' + nf.format(csN) + ' ouvrages classés sur ' + nf.format(n) +
         ' (' + pct(csN, n) + '). Estimation régionale, pas une étude de site. Source : ' +
-        (CSM.url ? '<a href="' + esc(CSM.url) + '" target="_blank" rel="noopener">' + esc(CSM.source || 'article') + '</a>' : esc(CSM.source || '—')) + '.</p>';
+        (CSM.url ? '<a href="' + esc(CSM.url) + '" target="_blank" rel="noopener">' + esc(CSM.source || 'article') + '</a>' : esc(CSM.source || '—')) +
+        (CSD._ && CSD._.mtl ? ' ; région de Montréal (' + nf.format(CSD._.mtl.n.length) + ' ouvrages, prioritaire) : <a href="' + esc(CSD._.mtl.url) + '" target="_blank" rel="noopener">' + esc(CSD._.mtl.source) + '</a>' : '') + '.</p>';
       h += '<div class="sbar" role="img" aria-label="Répartition par classe de site">' + CS_ORDER.map(function(k){
         var e = cs[k]; return e ? '<span style="flex:' + e.n + ' 1 0;background:' + (csCol[k] || NA) + '" data-tip="' + esc('Classe ' + k + ' : ' + nf.format(e.n) + ' (' + pct(e.n, csN) + ')') + '"></span>' : '';
       }).join('') + '</div>' + KEY + '<div class="rlist" style="margin-top:6px">' + CS_ORDER.filter(function(k){ return cs[k]; }).map(function(k){

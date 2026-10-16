@@ -5,7 +5,9 @@
    - ECCC, API OGC : stations, statistiques annuelles et moyennes mensuelles (HYDAT) ;
    - MRNF : GRHQ simple (tuiles WMS, image seulement).
    v0.6.0 : les repères (Strahler, bassin, zone inondable, station, maximum et étiage) sont réunis dans un tableau
-   récapitulatif (classe qa-recap, styles injectés par le module) au lieu de cartes côte à côte. */
+   récapitulatif (classe qa-recap, styles injectés par le module) au lieu de cartes côte à côte.
+   v0.6.1 : la station retenue par défaut est celle dont les données publiées sont les plus récentes, parmi les stations
+   proches (KM_RECENT) ; un bouton permet de revenir à la station la plus proche. */
 (function(){
   'use strict';
   window.QA_MOD = window.QA_MOD || {};
@@ -16,6 +18,7 @@
   var GRHQ_LAYERS = '1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,18,19,20,21';
   var KM_MAX = 40;       // rayon de recherche de la station (km)
   var KM_FAR = 25;       // au-delà : avertissement « station éloignée »
+  var KM_RECENT = 15;    // v0.6.1 : rayon où l'on préfère la station aux données les plus récentes (élargi à la plus proche si elle est plus loin)
   var CACHE = {};        // par n° de structure : promesses des blocs (reprise instantanée à la réouverture)
   var cur = { map: null, onResize: null };
 
@@ -83,20 +86,41 @@
     });
   }
 
-  /* ---------- Station la plus proche ---------- */
-  // rows = lignes CSV des stations ; renvoie { best, n } ; best.match = 'oui' | 'non' | 'inconnu' (même cours d'eau que l'ouvrage ?)
+  /* ---------- Choix de la station ---------- */
+  // Dernière année publiée par station, d'après les identifiants des statistiques annuelles (« 02OJ031.1991.level-niveaux »)
+  function lastYears(ann){
+    var out = {};
+    (ann || []).forEach(function(r){
+      var m = /^([^.]+)\.(\d{4})\./.exec(r.IDENTIFIER || '');
+      if (m && !(out[m[1]] >= +m[2])) out[m[1]] = +m[2];
+    });
+    return out;
+  }
+  // rows = lignes CSV des stations ; years = { n° : dernière année publiée } (facultatif) ; mode = 'recente' (défaut) | 'proche'.
+  // Renvoie { best, nearest, recent, n } ; match = 'oui' | 'non' | 'inconnu' (même cours d'eau que l'ouvrage ?).
   // « Plus proche » avec un léger avantage (3 km) à une station du même nom : évite un affluent à 100 m au lieu de la rivière à 1 km.
-  function pickStation(rows, lat, lon, obst, maxKm){
-    var ot = tokens(obst), out = [];
+  // « Plus récente » (v0.6.1) : parmi les stations à moins de KM_RECENT (ou pas plus loin que la plus proche), sans moins bien
+  // correspondre au cours d'eau que la plus proche, celle dont la dernière année publiée est la plus récente ; un an d'écart ne
+  // compte pas (HYDAT publie avec retard), et à égalité c'est la plus proche qui l'emporte.
+  function pickStation(rows, lat, lon, obst, maxKm, years, mode){
+    var ot = tokens(obst), out = [], Y = years || {};
     rows.forEach(function(r){
       if (r.x == null || r.y == null) return;
       var d = distM(lat, lon, r.y, r.x) / 1000;
       if (d > maxKm) return;
       var m = ot.length ? (subset(ot, tokens(r.STATION_NAME)) ? 'oui' : 'non') : 'inconnu';
-      out.push({ id: r.STATION_NUMBER, nom: r.STATION_NAME, act: r.STATUS_EN === 'Active', area: r.DRAINAGE_AREA_GROSS, datum: r.VERTICAL_DATUM, lat: r.y, lon: r.x, d: d, match: m, score: d + (m === 'non' ? 3 : 0) });
+      out.push({ id: r.STATION_NUMBER, nom: r.STATION_NAME, act: r.STATUS_EN === 'Active', area: r.DRAINAGE_AREA_GROSS, datum: r.VERTICAL_DATUM, lat: r.y, lon: r.x, d: d, match: m,
+        score: d + (m === 'non' ? 3 : 0), y1: Y[r.STATION_NUMBER] != null ? Y[r.STATION_NUMBER] : null });
     });
     out.sort(function(a, b){ return a.score - b.score; });
-    return { best: out[0] || null, n: out.length };
+    var nearest = out[0] || null, recent = nearest;
+    if (nearest && years) {
+      var lim = Math.max(KM_RECENT, nearest.d), rank = function(s){ return s.match === 'non' ? 1 : 0; };
+      var pool = out.filter(function(s){ return s.d <= lim && s.y1 != null && rank(s) <= rank(nearest); });
+      var ymax = pool.reduce(function(a, s){ return Math.max(a, s.y1); }, -1);
+      if (pool.length && !(nearest.y1 != null && nearest.y1 >= ymax - 1)) recent = pool.filter(function(s){ return s.y1 >= ymax - 1; })[0];
+    }
+    return { best: mode === 'proche' ? nearest : recent, nearest: nearest, recent: recent, n: out.length };
   }
   // Référentiel vertical de la station : 'arbitraire' (zéro d'échelle), 'geodesique' (altitudes) ou 'inconnu'
   function datumKind(s){
@@ -258,10 +282,14 @@
     return esri(MELCC + '/22/query?' + qs({ f: 'json', geometry: o.lon + ',' + o.lat, geometryType: 'esriGeometryPoint', inSR: 4326, outSR: 4326, distance: 1200, units: 'esriSRUnit_Meter',
       spatialRel: 'esriSpatialRelIntersects', outFields: 'Description,No_rapport,Nm_rapport', returnGeometry: 'true', maxAllowableOffset: 0.0001 }));
   }
+  // Stations dans le carré de KM_MAX, et dernière année publiée de chacune (statistiques annuelles du même carré : ~0,2 Mo au
+  // plus dense, autour de Montréal ; facultatif : sans elles, on garde la plus proche). Renvoie { rows, years }.
   function qStations(o){
     var dlat = KM_MAX / 110.5, dlon = KM_MAX / (111.3 * Math.cos(o.lat * Math.PI / 180));
-    return ogc('hydrometric-stations', { f: 'csv', limit: 300, bbox: [o.lon - dlon, o.lat - dlat, o.lon + dlon, o.lat + dlat].map(function(v){ return v.toFixed(4); }).join(','),
-      properties: 'STATION_NUMBER,STATION_NAME,STATUS_EN,DRAINAGE_AREA_GROSS,VERTICAL_DATUM' }).then(function(rows){ return pickStation(rows, o.lat, o.lon, o.obstacle, KM_MAX); });
+    var bbox = [o.lon - dlon, o.lat - dlat, o.lon + dlon, o.lat + dlat].map(function(v){ return v.toFixed(4); }).join(',');
+    var pr = ogc('hydrometric-stations', { f: 'csv', limit: 300, bbox: bbox, properties: 'STATION_NUMBER,STATION_NAME,STATUS_EN,DRAINAGE_AREA_GROSS,VERTICAL_DATUM' });
+    var py = ogc('hydrometric-annual-statistics', { f: 'csv', limit: 10000, bbox: bbox, properties: 'IDENTIFIER' }).then(lastYears, function(){ return null; });
+    return Promise.all([pr, py]).then(function(r){ return { rows: r[0], years: r[1] }; });
   }
   function qSeries(id){
     var pa = ogc('hydrometric-annual-statistics', { f: 'csv', limit: 1000, STATION_NUMBER: id, properties: 'IDENTIFIER,DATA_TYPE_EN,MAX_VALUE,MAX_DATE,MIN_VALUE,MIN_DATE' });
@@ -292,6 +320,8 @@
       '.ld-legend.hy-leg{align-items:center}.ld-legend.hy-leg i{display:inline-block;margin-right:5px;vertical-align:middle;border-radius:0}' +
       '.ld-keys.hy-keys{margin:2px 0 0;align-items:center}.ld-pf .hy-keys svg{display:inline-block;width:30px;height:12px;overflow:visible;vertical-align:middle;margin-right:5px}' +
       '.hy-pf .hy-pfh{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:0}' +
+      '.hy-sw{font:inherit;font-size:.75rem;margin:3px 0 0;padding:2px 8px;border:1px solid #cbd8e1;border-radius:6px;background:#fff;color:var(--teal);font-weight:600;cursor:pointer;white-space:normal;text-align:left}' +
+      '.hy-sw:hover,.hy-sw:focus-visible{border-color:var(--teal);background:#f1fbf7;outline:none}' +
       '.hy-lex{margin-top:12px;border:1px solid var(--line);border-radius:8px;background:#fff}' +
       '.hy-lex summary{cursor:pointer;padding:8px 12px;font-weight:700;font-size:.85rem;color:var(--navy)}' +
       '.hy-lex dl{margin:0;padding:0 12px 10px;display:grid;grid-template-columns:max-content minmax(0,1fr);gap:5px 14px;font-size:.78rem;line-height:1.45}' +
@@ -363,10 +393,10 @@
         '<span><i style="width:11px;height:11px;transform:rotate(45deg);background:#e69f00;border:2px solid #102d41"></i>Station (losange)</span>' +
         '<span><i style="width:22px;height:0;border-top:4px solid #0072b2;opacity:.65"></i>Tronçon retenu (Strahler)</span>' +
         '<span><i style="width:22px;height:0;border-top:1.5px solid #8a3c73"></i>Contour de zone inondable</span></div>' +
-      '<p class="ld-meta">Fond Esri ; cours d’eau : GRHQ simple (MRNF), cochable dans le menu de la carte. Station la plus proche seulement.</p></div>' +
+      '<p class="ld-meta">Fond Esri ; cours d’eau : GRHQ simple (MRNF), cochable dans le menu de la carte. Station retenue seulement.</p></div>' +
       '<div class="ld-right">' +
         '<table class="qa-recap"><tbody>' + groupHtml('Cours d’eau au pont') + rowSkel('c-str', 'Ordre de Strahler') + rowSkel('c-bas', 'Bassin versant') + rowSkel('c-zi', 'Zone inondable (BDZI)') + '</tbody>' +
-          '<tbody>' + groupHtml('Station hydrométrique') + rowSkel('c-stn', 'Station la plus proche') + '</tbody>' +
+          '<tbody>' + groupHtml('Station hydrométrique') + rowSkel('c-stn', 'Station hydrométrique') + '</tbody>' +
           '<tbody data-hy="t-ser"><tr>' + rowHtml('Historique', '…', '<span class="hy-ph">chargement…</span>') + '</tr></tbody></table>' +
         '<div data-hy="warn"></div><div data-hy="retry"></div>' +
         '<p class="ld-note" data-hy="zi"><span class="hy-ph">Zone inondable : chargement…</span></p>' +
@@ -438,19 +468,41 @@
       settled(false);
     }, function(){ if (!ctx.alive()) return; ko('c-zi', 'Zone inondable (BDZI)'); q('zi').innerHTML = '<span class="hy-ko">Zones inondables : service indisponible.</span>'; settled(true); });
 
-    /* ----- Station la plus proche, puis séries ----- */
-    var pStn = cached(E, 'stn', function(){ return qStations(o); });
-    pStn.then(function(res){
+    /* ----- Station (la plus récente des proches, ou la plus proche au choix), puis séries ----- */
+    var pStn = cached(E, 'stn', function(){ return qStations(o); }), stMk = null, first = true, curId = '';
+    pStn.then(function(raw){
       if (!ctx.alive()) return;
-      var s = res.best, L1 = 'Station la plus proche';
+      useStation(E.mode || 'recente');
+    }, function(){ if (!ctx.alive()) return; ko('c-stn', 'Station hydrométrique'); settled(true); ko2(); });
+    function ko2(){
+      q('t-ser').innerHTML = '<tr>' + rowHtml('Historique', '<span class="hy-ko">indisponible</span>', '<span class="hy-ko">service sans réponse</span>') + '</tr>';
+      q('svg').innerHTML = '<span class="hy-ko">Historique de la station : indisponible.</span>'; q('read').hidden = true; settled(true);
+    }
+    function useStation(mode){
+      pStn.then(function(raw){ showStation(pickStation(raw.rows, o.lat, o.lon, o.obstacle, KM_MAX, raw.years, mode), mode); });
+    }
+    function showStation(res, mode){
+      if (!ctx.alive()) return;
+      E.mode = mode;
+      var s = res.best, alt = mode === 'proche' ? res.recent : res.nearest, L1 = 'Station hydrométrique', once = first;
+      first = false; curId = s ? s.id : '';
+      if (stMk) { map.removeLayer(stMk); stMk = null; }
       if (!s) {
         setChip('c-stn', L1, 'aucune', 'pas de station à moins de ' + KM_MAX + ' km');
         q('warn').innerHTML = '';
-        settled(false);
+        if (once) settled(false);
+        series(null, once);
         return;
       }
       var same = s.match === 'oui' ? ' · même cours d’eau' : s.match === 'non' ? ' · autre cours d’eau' : '';
-      setChip('c-stn', L1, fmt(s.d, 1) + '&nbsp;km', '<b>' + esc(titleCase(s.nom)) + '</b> (' + esc(s.id) + ') · ' + (s.act ? 'en service' : 'fermée, historique seulement') + same);
+      var why = res.nearest === res.recent ? (s.y1 != null ? 'la plus proche, données jusqu’en ' + s.y1 : 'la plus proche')
+        : mode === 'proche' ? 'la plus proche' + (s.y1 != null ? ', données jusqu’en ' + s.y1 : '')
+        : 'données les plus récentes à moins de ' + Math.round(Math.max(KM_RECENT, res.nearest.d)) + ' km (jusqu’en ' + s.y1 + ')';
+      var sw = alt && alt !== s ? ' <button type="button" class="hy-sw" data-hy="sw">' + (mode === 'proche'
+        ? 'Prendre la plus récente (' + esc(alt.id) + ', ' + fmt(alt.d, 1) + ' km' + (alt.y1 != null ? ', jusqu’en ' + alt.y1 : '') + ')'
+        : 'Prendre la plus proche (' + esc(alt.id) + ', ' + fmt(alt.d, 1) + ' km' + (alt.y1 != null ? ', jusqu’en ' + alt.y1 : '') + ')') + '</button>' : '';
+      setChip('c-stn', L1, fmt(s.d, 1) + '&nbsp;km', '<b>' + esc(titleCase(s.nom)) + '</b> (' + esc(s.id) + ') · ' + (s.act ? 'en service' : 'fermée, historique seulement') + same + ' · <i>' + why + '</i>' + sw);
+      var b = q('sw'); if (b) b.addEventListener('click', function(){ useStation(mode === 'proche' ? 'recente' : 'proche'); });
       // Avertissement en une ligne ; complété par le rapport des bassins dès que le bassin du pont est connu
       function warn(bas){
         var msg = [], ratio = bas && s.area ? s.area / bas.km2 : null;
@@ -462,37 +514,45 @@
       }
       warn(null);
       if (s.match === 'non' && s.area && E.bas) E.bas.then(function(j){ warn(deepBasin(j.results)); }, function(){});
-      var st = L.marker([s.lat, s.lon], { icon: L.divIcon({ className: '', html: '<div class="hy-mk-s"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }), keyboard: false })
+      stMk = L.marker([s.lat, s.lon], { icon: L.divIcon({ className: '', html: '<div class="hy-mk-s"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }), keyboard: false })
         .bindTooltip(esc(titleCase(s.nom)) + '<br>' + esc(s.id) + ' · ' + fmt(s.d, 1) + ' km').addTo(map);
       if (s.d < 6 && !moved) map.fitBounds(L.latLngBounds([[o.lat, o.lon], [s.lat, s.lon]]).pad(0.4), { maxZoom: 16, animate: false });
-      st.setZIndexOffset(500);
-      settled(false);
-    }, function(){ if (!ctx.alive()) return; ko('c-stn', 'Station la plus proche'); settled(true); });
+      stMk.setZIndexOffset(500);
+      if (once) settled(false);
+      series(s, once);
+    }
 
-    cached(E, 'ser', function(){ return pStn.then(function(res){ return res.best ? qSeries(res.best.id).then(function(s){ s.stn = res.best; return s; }) : { none: true }; }); }).then(function(S){
-      if (!ctx.alive()) return;
-      if (S.none) {
-        q('t-ser').innerHTML = '';
-        q('svg').innerHTML = '<span class="hy-ko">Aucune station à moins de ' + KM_MAX + ' km : pas d’historique de niveaux ni de débits pour cet ouvrage.</span>';
-        q('chart').querySelector('h3').style.display = 'none'; q('read').hidden = true;
-        settled(false); return;
-      }
-      var ps = pickSeries(S.lvl, S.dis);
-      if (!ps) {
-        q('t-ser').innerHTML = '<tr>' + rowHtml('Historique', '—', 'aucune série annuelle publiée pour la station ' + esc(S.stn.id)) + '</tr>';
-        q('svg').innerHTML = '<span class="hy-ko">Aucune série annuelle publiée pour la station ' + esc(S.stn.id) + '.</span>';
-        q('read').hidden = true; settled(false); return;
-      }
-      lastSeries = { ps: ps, S: S };
-      drawSeries();
-      cur.onResize = function(){ clearTimeout(rtmr); rtmr = setTimeout(function(){ if (ctx.alive()) drawSeries(); }, 150); };
-      window.addEventListener('resize', cur.onResize);
-      settled(false);
-    }, function(){
-      if (!ctx.alive()) return;
-      q('t-ser').innerHTML = '<tr>' + rowHtml('Historique', '<span class="hy-ko">indisponible</span>', '<span class="hy-ko">service sans réponse</span>') + '</tr>';
-      q('svg').innerHTML = '<span class="hy-ko">Historique de la station : indisponible.</span>'; q('read').hidden = true; settled(true);
-    });
+    // Séries de la station retenue (mises en cache par station : le va-et-vient entre les deux choix est instantané)
+    function series(stn, once){
+      var sid = stn ? stn.id : '';
+      q('chart').querySelector('h3').style.display = '';
+      if (stn) { q('svg').innerHTML = '<span class="hy-ph">Chargement de l’historique…</span>'; q('t-ser').innerHTML = '<tr>' + rowHtml('Historique', '…', '<span class="hy-ph">chargement…</span>') + '</tr>'; }
+      var p = stn ? cached(E, 'ser:' + sid, function(){ return qSeries(sid); }) : Promise.resolve({ none: true });
+      p.then(function(S0){
+        if (!ctx.alive() || curId !== sid) return;     // une autre station a été choisie entre-temps
+        var S = { lvl: S0.lvl, dis: S0.dis, none: S0.none, stn: stn };
+        if (S.none) {
+          q('t-ser').innerHTML = '';
+          q('svg').innerHTML = '<span class="hy-ko">Aucune station à moins de ' + KM_MAX + ' km : pas d’historique de niveaux ni de débits pour cet ouvrage.</span>';
+          q('chart').querySelector('h3').style.display = 'none'; q('read').hidden = true; q('ref').hidden = true;
+          if (once) settled(false); return;
+        }
+        var ps = pickSeries(S.lvl, S.dis);
+        if (!ps) {
+          q('t-ser').innerHTML = '<tr>' + rowHtml('Historique', '—', 'aucune série annuelle publiée pour la station ' + esc(S.stn.id)) + '</tr>';
+          q('svg').innerHTML = '<span class="hy-ko">Aucune série annuelle publiée pour la station ' + esc(S.stn.id) + '.</span>';
+          q('keys').innerHTML = ''; q('chsub').textContent = ''; q('ref').hidden = true;
+          q('read').hidden = true; if (once) settled(false); return;
+        }
+        lastSeries = { ps: ps, S: S };
+        drawSeries();
+        if (!cur.onResize) {
+          cur.onResize = function(){ clearTimeout(rtmr); rtmr = setTimeout(function(){ if (ctx.alive() && lastSeries) drawSeries(); }, 150); };
+          window.addEventListener('resize', cur.onResize);
+        }
+        if (once) settled(false);
+      }, function(){ if (!ctx.alive()) return; if (once) ko2(); else { q('svg').innerHTML = '<span class="hy-ko">Historique de la station : indisponible.</span>'; q('read').hidden = true; } });
+    }
 
     /* ----- Graphique annuel (SVG fait main) et repères ----- */
     function drawSeries(){
@@ -577,7 +637,7 @@
   window.QA_MOD.hydro = {
     render: render,
     // Fonctions pures exposées pour les tests (tests/js/hydro_smoke.mjs)
-    _t: { hedged: hedged, fmt: fmt, rowHtml: rowHtml, tokens: tokens, subset: subset, titleCase: titleCase, parseCsv: parseCsv, pickStation: pickStation, datumKind: datumKind, buildSeries: buildSeries, pickSeries: pickSeries,
+    _t: { hedged: hedged, fmt: fmt, rowHtml: rowHtml, tokens: tokens, subset: subset, titleCase: titleCase, parseCsv: parseCsv, pickStation: pickStation, lastYears: lastYears, datumKind: datumKind, buildSeries: buildSeries, pickSeries: pickSeries,
       summary: summary, median: median, nearestReach: nearestReach, zoneAt: zoneAt, inRings: inRings, deepBasin: deepBasin, strahlerWord: strahlerWord, recurrence: recurrence, niceStep: niceStep }
   };
 })();

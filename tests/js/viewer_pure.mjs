@@ -97,6 +97,31 @@ const ldRuns = fn('ldRuns', extract('ldMed'));
   assert.equal(r0.length, 1); assert.equal(r0[0].len, 16);
 }
 
+// v0.6.1 : profil en long de la route : droite, parabole ou double pente, robuste aux pics ; alerte au-delà de 5 %
+const ldGrade = fn('ldGrade');
+{
+  const S = [], bruit = i => ((i * 7919) % 11 - 5) * 0.004;               // bruit déterministe de ± 2 cm
+  for (let s = -60; s <= 60; s += 1) S.push(s);
+  // pente constante de 2 %, avec un camion (pic de 2,5 m sur 4 m) : la droite reste à 2 %
+  let g = ldGrade(S, S.map((s, i) => 30 + 0.02 * s + bruit(i) + (s >= 10 && s < 14 ? 2.5 : 0)), -60, 60);
+  assert.equal(g.type, 'droite'); assert.ok(Math.abs(g.g(0) - 0.02) < 0.001); assert.equal(g.warn, false);
+  // courbe verticale en sommet : z = 31 − (s − 8)² / (2 × 2000) → parabole, rayon et sommet retrouvés
+  g = ldGrade(S, S.map((s, i) => 31 - (s - 8) ** 2 / 4000 + bruit(i)), -60, 60);
+  assert.equal(g.type, 'parabole'); assert.ok(g.sommet);
+  assert.ok(Math.abs(g.R - 2000) / 2000 < 0.08, 'rayon ' + g.R);
+  assert.ok(Math.abs(g.apex.s - 8) < 1.5 && Math.abs(g.apex.z - 31) < 0.03);
+  assert.ok(Math.abs(g.g(-60) - 0.034) < 0.002 && Math.abs(g.g(60) + 0.026) < 0.002);
+  // double pente : +1,5 % puis −2 % avec cassure à s = 10
+  g = ldGrade(S, S.map((s, i) => 30 + (s < 10 ? 0.015 * (s - 10) : -0.02 * (s - 10)) + bruit(i)), -60, 60);
+  assert.equal(g.type, 'double'); assert.ok(Math.abs(g.sb - 10) <= 3, 'cassure ' + g.sb);
+  assert.ok(Math.abs(g.g(-30) - 0.015) < 0.002 && Math.abs(g.g(40) + 0.02) < 0.002);
+  // pente de 8 % : signalée
+  g = ldGrade(S, S.map((s, i) => 30 + 0.08 * s + bruit(i)), -60, 60);
+  assert.equal(g.warn, true);
+  // trop peu de points
+  assert.equal(ldGrade([0, 1, 2], [1, 1, 1], 0, 2), null);
+}
+
 // csvCell : formules neutralisées, nombres et texte ordinaire inchangés
 const csvCell = fn('csvCell');
 assert.equal(csvCell('=1+1'), "'=1+1");

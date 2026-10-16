@@ -67,18 +67,38 @@ ok('classeEstimee : classes-site.js prioritaire, sinon k du lot, sinon null', ()
   assert.equal(T.classeEstimee('x', null, undefined), null);
 });
 
-ok('axe des périodes linéaire : graduations 0 à 10 s, abscisses proportionnelles à T', () => {
-  assert.deepEqual(T.periodTicks(false), [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-  assert.deepEqual(T.periodTicks(true), [0, 2, 4, 6, 8, 10]);
+ok('axe des périodes linéaire coupé à 5 s (v0.6.1) : abscisses proportionnelles à T, Sa(10 s) hors de l’axe', () => {
+  assert.equal(T.T_MAX, 5);
+  assert.deepEqual(T.periodTicks(false), [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]);
+  assert.deepEqual(T.periodTicks(true), [0, 1, 2, 3, 4, 5]);
   const v = [0.5, 0.4]; for (let i = 0; i < 9; i++) v.push(0.3);
   for (const narrow of [false, true]) {
-    const ch = T.chart([{ id: 'C', label: 'Classe C', tag: 'C', est: false, st: { c: '#009E73', dash: '', m: 'tri' }, v }], narrow);
-    const xs = ch.xs.slice(1), P = [0.05, 0.1, 0.2, 0.3, 0.5, 1, 2, 5, 10];
-    const pente = (xs[8] - xs[7]) / (10 - 5);
+    const ch = T.chart([{ id: 'C', label: 'Classe C', tag: 'C', est: false, st: { c: '#009E73', dash: '', m: 'tri' }, v }], narrow, false);
+    const xs = ch.xs.slice(1), P = [0.05, 0.1, 0.2, 0.3, 0.5, 1, 2, 5];
+    assert.equal(xs[8], null, 'Sa(10 s) hors de l’axe linéaire');
+    const pente = (xs[7] - xs[6]) / (5 - 2);
     for (let k = 1; k < P.length; k++) assert.ok(Math.abs((xs[k] - xs[0]) - pente * (P[k] - P[0])) < 1e-6, 'abscisse non linéaire');
     assert.ok(ch.xs[0] < xs[0], 'PGA à gauche des périodes');
-    assert.ok(!/logarithm/i.test(ch.svg) && /Période T \(s\)/.test(ch.svg));
+    assert.ok(!/échelle log/.test(ch.svg) && /Période T \(s\)/.test(ch.svg));
   }
+});
+
+ok('échelle log (v0.6.1) : abscisses proportionnelles à log T, 0,05 à 10 s', () => {
+  assert.deepEqual(T.periodTicks(false, true), [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10]);
+  const v = [0.5, 0.4]; for (let i = 0; i < 9; i++) v.push(0.3);
+  const ch = T.chart([{ id: 'C', label: 'Classe C', tag: 'C', est: false, st: { c: '#009E73', dash: '', m: 'tri' }, v }], false, true);
+  const xs = ch.xs.slice(1), P = [0.05, 0.1, 0.2, 0.3, 0.5, 1, 2, 5, 10];
+  const pente = (xs[8] - xs[0]) / Math.log(10 / 0.05);
+  for (let k = 1; k < P.length; k++) assert.ok(Math.abs((xs[k] - xs[0]) - pente * Math.log(P[k] / P[0])) < 1e-6, 'abscisse non logarithmique');
+  assert.ok(/échelle log/.test(ch.svg));
+});
+
+ok('étiquettes des courbes : écart minimal respecté et bornes tenues', () => {
+  const y = T.spread([100, 101, 102, 300, 299], 15, 20, 305);
+  const s = y.slice().sort((a, b) => a - b);
+  for (let k = 1; k < s.length; k++) assert.ok(s[k] - s[k - 1] >= 15 - 1e-9);
+  assert.ok(s[0] >= 20 - 1e-9 && s[s.length - 1] <= 305 + 1e-9);
+  assert.equal(y[3] > y[0], true);                     // l'ordre vertical est conservé
 });
 
 console.log(n + ' tests réussis');

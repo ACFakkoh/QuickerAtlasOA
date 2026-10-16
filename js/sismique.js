@@ -36,7 +36,8 @@
   var SRC = 'CanSHM6 (CNBC 2020), RNCan, Dossier public 8950, doi:10.4095/331497, Licence du gouvernement ouvert – Canada';
   var SRC_CLS = 'Rosset P., Elrawy A., Nadarajah S., Chouinard L. (2025), « Vs30 Derived from Geology: An Attempt in the Province of Quebec, Canada », <i>Geotechnics</i> 5(2):24, doi:10.3390/geotechnics5020024 (CC BY 4.0), appliqué à la carte des dépôts de surface du SIGEOM (MRNF)';
   var URL_CLS = 'https://www.mdpi.com/2673-7094/5/2/24';
-  var T_MAX = 10;                                   // axe des périodes : linéaire de 0 à 10 s
+  // v0.6.1 : axe linéaire coupé à 5 s (au-delà, les courbes sont confondues près de zéro) ; case « échelle log » : 0,05 à 10 s
+  var T_MAX = 5, T_LOG = [0.05, 10], T_LBL = 1;      // T_LBL : période où l'on pose l'étiquette de chaque courbe
 
   // ------------------------------------------------------------------ fonctions pures (testées : tests/js/sismique_smoke.mjs)
   var imul = Math.imul || function(a, b){
@@ -69,10 +70,29 @@
     if (typeof t === 'string' && CLS.indexOf(t) >= 0) return t;
     return row && row[0] >= 1 && row[0] <= 5 ? CLS[row[0] - 1] : null;
   }
-  /* Graduations de l'axe des périodes (linéaire, en s) */
-  function periodTicks(narrow){
-    var out = [], pas = narrow ? 2 : 1;
-    for (var T = 0; T <= T_MAX + 1e-9; T += pas) out.push(T);
+  /* v0.6.1 : la classe vient-elle du microzonage de Montréal (data/classes-site.js, _.mtl.n) ? */
+  function sourceMtl(num, table){
+    var m = table && table._ && table._.mtl;
+    if (!m || !m.n) return null;
+    if (!m.set) { m.set = {}; m.n.forEach(function(x){ m.set[x] = 1; }); }
+    return m.set[num] ? m : null;
+  }
+  /* Graduations de l'axe des périodes (en s) : linéaire 0 à T_MAX, ou logarithmique 0,05 à 10 s */
+  function periodTicks(narrow, log){
+    if (log) return narrow ? [0.05, 0.1, 0.5, 1, 5, 10] : [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10];
+    var out = [], pas = narrow ? 1 : 0.5;
+    for (var T = 0; T <= T_MAX + 1e-9; T += pas) out.push(Math.round(T * 10) / 10);
+    return out;
+  }
+  /* Étiquettes des courbes empilées sans chevauchement : y triés, écart minimal gap, bornés à [lo, hi] */
+  function spread(ys, gap, lo, hi){
+    var o = ys.map(function(y, i){ return { y: Math.min(hi, Math.max(lo, y)), i: i }; }).sort(function(a, b){ return a.y - b.y; }), k;
+    for (k = 1; k < o.length; k++) if (o[k].y - o[k - 1].y < gap) o[k].y = o[k - 1].y + gap;
+    if (o.length && o[o.length - 1].y > hi) {                 // débordement en bas : on repousse vers le haut
+      o[o.length - 1].y = hi;
+      for (k = o.length - 2; k >= 0; k--) if (o[k + 1].y - o[k].y < gap) o[k].y = o[k + 1].y - gap;
+    }
+    var out = []; o.forEach(function(e){ out[e.i] = e.y; });
     return out;
   }
 
@@ -134,50 +154,55 @@
   }
   function dashAttr(d){ return d ? ' stroke-dasharray="' + d + '"' : ''; }
 
-  /* Graphique Sa(T) (axe des périodes linéaire, 0 à 10 s) + PGA ; renvoie { svg, xs, W } (xs : abscisses PGA puis périodes, pour la lecture au curseur) */
-  function chart(ss, narrow){
+  /* Graphique Sa(T) + PGA, axe des périodes linéaire (0 à T_MAX) ou logarithmique ; renvoie { svg, xs, W }
+     (xs : abscisses PGA puis périodes, pour la lecture au curseur ; null pour une période hors de l'axe) */
+  function chart(ss, narrow, log){
     var W = narrow ? 360 : 700, H = narrow ? 330 : 380, ml = narrow ? 42 : 58, mr = 14, mt = 14, mb = 48;
     var pw = W - ml - mr, ph = H - mt - mb, slot = narrow ? 40 : 56, ymax = 0, i;
-    ss.forEach(function(s){ s.v.forEach(function(v, k){ if (k !== 1 && v > ymax) ymax = v; }); });
+    var inAxe = function(T){ return log || T <= T_MAX + 1e-9; };
+    ss.forEach(function(s){ s.v.forEach(function(v, k){ if (k !== 1 && (k === 0 || inAxe(PERIODS[k - 2])) && v > ymax) ymax = v; }); });
     var steps = [0.05, 0.1, 0.2, 0.25, 0.5, 1, 2], step = 0.05;
     for (i = 0; i < steps.length; i++) { step = steps[i]; if (ymax * 1.06 / step <= 7) break; }
     var top = Math.ceil(ymax * 1.06 / step) * step || 0.1;
-    var x0 = ml + slot + 4;
-    var xT = function(T){ return x0 + T / T_MAX * (W - mr - x0); };
+    var x0 = ml + slot + 4, lw = narrow ? 0 : 30;                // lw : marge droite pour les étiquettes A…E
+    var l0 = Math.log(T_LOG[0]), l1 = Math.log(T_LOG[1]), xe = W - mr - lw;
+    var xT = log ? function(T){ return x0 + 6 + (Math.log(T) - l0) / (l1 - l0) * (xe - x0 - 6); }
+                 : function(T){ return x0 + T / T_MAX * (xe - x0); };
     var xP = ml + slot * 0.3;
     var yV = function(v){ return mt + ph - v / top * ph; };
     var g = '', v;
     for (v = 0; v <= top + 1e-9; v += step) {
       g += '<line x1="' + ml + '" x2="' + (W - mr) + '" y1="' + yV(v) + '" y2="' + yV(v) + '" stroke="#e3ebf0"/><text x="' + (ml - 6) + '" y="' + (yV(v) + 4) + '" text-anchor="end" font-size="11" fill="#566e7c">' + v.toFixed(step < 0.1 ? 2 : (step < 1 ? 1 : 0)).replace('.', ',') + '</text>';
     }
-    periodTicks(narrow).forEach(function(T){
+    periodTicks(narrow, log).forEach(function(T){
       var x = xT(T).toFixed(1);
-      g += '<line x1="' + x + '" x2="' + x + '" y1="' + mt + '" y2="' + (mt + ph) + '" stroke="#eef3f6"/><line x1="' + x + '" x2="' + x + '" y1="' + (mt + ph) + '" y2="' + (mt + ph + 4) + '" stroke="#7d93a1"/><text x="' + x + '" y="' + (mt + ph + 16) + '" text-anchor="middle" font-size="11" fill="#566e7c">' + T + '</text>';
+      g += '<line x1="' + x + '" x2="' + x + '" y1="' + mt + '" y2="' + (mt + ph) + '" stroke="#eef3f6"/><line x1="' + x + '" x2="' + x + '" y1="' + (mt + ph) + '" y2="' + (mt + ph + 4) + '" stroke="#7d93a1"/><text x="' + x + '" y="' + (mt + ph + 16) + '" text-anchor="middle" font-size="11" fill="#566e7c">' + periodTxt(T) + '</text>';
     });
     g += '<line x1="' + (ml + slot - 6) + '" x2="' + (ml + slot - 6) + '" y1="' + mt + '" y2="' + (mt + ph) + '" stroke="#b9c8d2" stroke-dasharray="3 3"/>';
     g += '<text x="' + xP + '" y="' + (mt + ph + 16) + '" text-anchor="middle" font-size="11" fill="#17374b" font-weight="700">PGA</text>';
-    g += '<text x="' + ((x0 + W - mr) / 2) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="12" fill="#17374b">Période T (s)</text>';
+    g += '<text x="' + ((x0 + xe) / 2) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="12" fill="#17374b">Période T (s)' + (log ? ', échelle log' : '') + '</text>';
     g += '<text transform="translate(12 ' + (mt + ph / 2) + ') rotate(-90)" text-anchor="middle" font-size="12" fill="#17374b">Sa(T) et PGA (g)</text>';
     g += '<line x1="' + ml + '" x2="' + (W - mr) + '" y1="' + (mt + ph) + '" y2="' + (mt + ph) + '" stroke="#7d93a1"/><line x1="' + ml + '" x2="' + ml + '" y1="' + mt + '" y2="' + (mt + ph) + '" stroke="#7d93a1"/>';
-    var tags = [];
+    // v0.6.1 : étiquettes A…E posées à droite de la courbe à T = 1 s (là où les courbes sont bien séparées), au lieu du
+    // pic où elles s'empilaient ; écart vertical minimal 15 px, trait de rappel vers le point
+    var tags = [], kL = PERIODS.indexOf(T_LBL);
     ss.forEach(function(s){
-      var r = s.v, pts = PERIODS.map(function(T, k){ return [xT(T), yV(r[2 + k])]; });
+      var r = s.v, pts = [];
+      PERIODS.forEach(function(T, k){ if (inAxe(T)) pts.push([xT(T), yV(r[2 + k])]); });
       g += '<polyline points="' + pts.map(function(p){ return p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ') + '" fill="none" stroke="' + s.st.c + '" stroke-width="2.4" stroke-linejoin="round"' + dashAttr(s.st.dash) + '/>';
       pts.forEach(function(p){ g += marker(s.st.m, +p[0].toFixed(1), +p[1].toFixed(1), s.st.c, 2.8); });
       g += marker(s.st.m, +xP.toFixed(1), +yV(r[0]).toFixed(1), s.st.c, 4.4);
-      var k = 0, j;
-      for (j = 1; j < PERIODS.length; j++) if (r[2 + j] > r[2 + k]) k = j;
-      tags.push({ t: s.tag, x: pts[k][0], y: pts[k][1] - 11, c: s.st.c });
+      tags.push({ t: s.tag, px: xT(T_LBL), py: yV(r[2 + kL]), c: s.st.c });
     });
-    tags.sort(function(a, b){ return a.y - b.y; });
-    for (i = 1; i < tags.length; i++) if (Math.abs(tags[i].x - tags[i - 1].x) < 34 && tags[i].y - tags[i - 1].y < 14) tags[i].y = tags[i - 1].y + 14;
-    tags.forEach(function(t){
-      var w = 8 + (t.t.length - 1) * 6.4;
-      g += '<g><rect x="' + (t.x - w / 2) + '" y="' + (t.y - 10) + '" width="' + w + '" height="14" rx="3" fill="#fff" stroke="' + t.c + '"/><text x="' + t.x + '" y="' + (t.y + 1) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#102d41">' + esc(t.t) + '</text></g>';
+    var ty = spread(tags.map(function(t){ return t.py - 12; }), 15, mt + 8, mt + ph - 6);
+    tags.forEach(function(t, n){
+      var w = 8 + (t.t.length - 1) * 6.4, x = t.px + 16 + w / 2, y = ty[n];
+      g += '<g class="sm-tag"><line x1="' + (t.px + 3).toFixed(1) + '" y1="' + t.py.toFixed(1) + '" x2="' + (x - w / 2).toFixed(1) + '" y2="' + (y - 3).toFixed(1) + '" stroke="' + t.c + '" stroke-width="1"/>' +
+        '<rect x="' + (x - w / 2).toFixed(1) + '" y="' + (y - 10).toFixed(1) + '" width="' + w + '" height="14" rx="3" fill="#fff" stroke="' + t.c + '" stroke-width="1.4"/><text x="' + x.toFixed(1) + '" y="' + (y + 1).toFixed(1) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#102d41">' + esc(t.t) + '</text></g>';
     });
     g += '<line class="sm-cx" x1="0" x2="0" y1="' + mt + '" y2="' + (mt + ph) + '" stroke="#102d41" stroke-opacity=".5" visibility="hidden"/>';
     g += '<rect class="sm-hit" x="' + ml + '" y="' + mt + '" width="' + pw + '" height="' + ph + '" fill="transparent"/>';
-    return { svg: '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Spectres d’aléa uniforme Sa(T) et PGA par classe de site">' + g + '</svg>', xs: [xP].concat(PERIODS.map(xT)), W: W };
+    return { svg: '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Spectres d’aléa uniforme Sa(T) et PGA par classe de site">' + g + '</svg>', xs: [xP].concat(PERIODS.map(function(T){ return inAxe(T) ? xT(T) : null; })), W: W };
   }
 
   function legend(ss){
@@ -230,6 +255,10 @@
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
   }
 
+  // choix d'échelle mémorisé (commodité, sans conséquence si le stockage est indisponible)
+  function lireLog(){ try { return localStorage.getItem('qa.sm.log') === '1'; } catch (e) { return false; } }
+  function ecrireLog(v){ try { localStorage.setItem('qa.sm.log', v ? '1' : '0'); } catch (e) {} }
+
   function render(o, body, ctx){
     css();
     var key = shardOf(o.num == null ? '' : o.num);
@@ -254,8 +283,8 @@
     });
 
     function start(row){
-      var est = classeEstimee(o.num, row, window.PQ_CLASSE_SITE);
-      var S = { o: o, row: row, pi: 0, est: est, show: { A: true, B: true, C: true, D: true, E: true }, ch: null, narrow: false };
+      var est = classeEstimee(o.num, row, window.PQ_CLASSE_SITE), mtl = est ? sourceMtl(o.num, window.PQ_CLASSE_SITE) : null;
+      var S = { o: o, row: row, pi: 0, est: est, show: { A: true, B: true, C: true, D: true, E: true }, ch: null, narrow: false, log: lireLog() };
       var base = [o.route, o.obstacle].filter(Boolean).join(' → ') || o.nom || '';
       if (ctx.setSub) ctx.setSub(base + (est ? ' · classe de site estimée ' + est : ''));
       body.innerHTML = ''; body.appendChild(root);
@@ -275,7 +304,7 @@
         var ref = est || 'C', vr = vec(S.row, CLS.indexOf(ref), S.pi);
         var sum = '<table class="sm-sum"><tbody>' +
           '<tr><th scope="row">Classe de site estimée</th><td>' + (est
-            ? '<b class="sm-est">' + est + ' ★</b> ' + CLS_NOM[est] + ' <span class="sm-mu">· Vs30 ' + CLS_VS[est] + ' m/s · géologie de surface (<a href="' + URL_CLS + '" target="_blank" rel="noopener">Rosset et al. 2025</a>)</span>'
+            ? '<b class="sm-est">' + est + ' ★</b> ' + CLS_NOM[est] + ' <span class="sm-mu">· Vs30 ' + CLS_VS[est] + ' m/s · ' + (mtl ? 'microzonage de Montréal (<a href="' + esc(mtl.url) + '" target="_blank" rel="noopener">' + esc(mtl.source) + '</a>)' : 'géologie de surface (<a href="' + URL_CLS + '" target="_blank" rel="noopener">Rosset et al. 2025</a>)') + '</span>'
             : '<span class="sm-mu">inconnue à cet endroit (eau, dépôt non classé ou hors carte) : les cinq classes sont montrées</span>') + '</td></tr>' +
           '<tr><th scope="row">Probabilité de dépassement</th><td><b>' + p + ' % en 50 ans</b> <span class="sm-mu">· période de retour ≈ ' + retour(p).toLocaleString('fr-CA') + ' ans</span></td></tr>' +
           '<tr><th scope="row">Valeurs, classe ' + ref + (est ? '' : ' (référence)') + '</th><td class="sm-num">PGA <b>' + fr(vr[0], 3) + ' g</b> · Sa(0,2 s) <b>' + fr(vr[4], 3) + ' g</b> · Sa(1 s) <b>' + fr(vr[7], 3) + ' g</b> · PGV <b>' + fr(vr[1], 3) + ' m/s</b></td></tr>' +
@@ -286,12 +315,13 @@
         var clsBox = CLS.map(function(c){
           return '<label class="sm-chk" title="' + esc('Classe ' + c + ' : ' + CLS_NOM[c] + ', Vs30 ' + CLS_VS[c] + ' m/s') + '"><input type="checkbox" data-cls="' + c + '"' + (S.show[c] ? ' checked' : '') + '><svg width="30" height="12" aria-hidden="true"><line x1="1" x2="29" y1="6" y2="6" stroke="' + CRV[c].c + '" stroke-width="2.4"' + dashAttr(CRV[c].dash) + '/>' + marker(CRV[c].m, 15, 6, CRV[c].c, 3) + '</svg><b>' + c + (est === c ? ' ★' : '') + '</b></label>';
         }).join('');
-        var ch = ss.length ? chart(ss, S.narrow) : null;
+        var ch = ss.length ? chart(ss, S.narrow, S.log) : null;
         S.ch = ch;
         root.innerHTML =
           sum +
           '<div class="sm-ctl"><fieldset><legend>Probabilité en 50 ans</legend>' + poeBox + '</fieldset>' +
           '<fieldset><legend>Classes de site</legend>' + clsBox + '</fieldset>' +
+          '<fieldset><legend>Axe des périodes</legend><label class="sm-chk" title="Linéaire : 0 à 5 s. Logarithmique : 0,05 à 10 s, détaille les courtes périodes."><input type="checkbox" data-log' + (S.log ? ' checked' : '') + '>Échelle log</label></fieldset>' +
           '<button type="button" class="sm-btn" data-csv title="Les 5 classes et les 3 probabilités">Exporter en CSV</button></div>' +
           (ss.length
             ? '<div class="sm-grid"><div class="sm-chart"><h4 class="sm-h">Spectre d’aléa uniforme<small>moyenne, amortissement 5 %, en g</small></h4>' + ch.svg +
@@ -299,7 +329,8 @@
               '<div><h4 class="sm-h">Valeurs<small>PGV en m/s · le plus élevé de chaque ligne en gras</small></h4><div class="sm-scroll">' + table(ss) + '</div></div></div>'
             : '<div class="sm-warn">Cocher au moins une classe de site.</div>') +
           '<p class="sm-note"><b>Valeurs interpolées à partir de la grille officielle CanSHM6</b> de Ressources naturelles Canada (CNBC 2020 ; l’outil du CNBC 2025 donne le même aléa), pour les probabilités de 2, 5 et 10 % en 50 ans. <b>Ce ne sont pas des valeurs de calcul pour un pont</b> : la conception sismique relève de la norme CSA S6. Pour une classe, la valeur est la plus forte de sa plage de Vs30 (prudente). ' +
-          (est ? 'La classe ★ est une estimation régionale : Vs30 moyen du type de dépôt de surface de la carte générale du SIGEOM ; elle ne remplace pas une étude de site ni une mesure de Vs30. ' : '') + '</p>' +
+          (est ? (mtl ? 'La classe ★ vient du microzonage de la région de Montréal (Vs30 de forages, de levés géophysiques et de la géologie, grille de 0,004°) ; elle ne remplace pas une étude de site ni une mesure de Vs30. '
+            : 'La classe ★ est une estimation régionale : Vs30 moyen du type de dépôt de surface de la carte générale du SIGEOM ; elle ne remplace pas une étude de site ni une mesure de Vs30. ') : '') + '</p>' +
           '<details class="sm-gl"><summary>Lexique</summary><dl>' + LEXIQUE.map(function(e){ return '<dt>' + esc(e[0]) + '</dt><dd>' + esc(e[1]) + '</dd>'; }).join('') + '</dl></details>' +
           '<p class="sm-src">Source : ' + esc(SRC) + (gen ? ' · données précalculées le ' + esc(gen) : '') + ' · classe de site estimée : ' + SRC_CLS + '.</p>';
         if (focusSel) { var f = root.querySelector(focusSel); if (f) f.focus(); }
@@ -315,7 +346,7 @@
       function onPointer(e){
         if (!e.target.closest || !e.target.closest('.sm-hit')) return;
         var svg = root.querySelector('.sm-chart svg'), r = svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * S.ch.W, best = 0;
-        S.ch.xs.forEach(function(v, i){ if (Math.abs(v - x) < Math.abs(S.ch.xs[best] - x)) best = i; });
+        S.ch.xs.forEach(function(v, i){ if (v != null && Math.abs(v - x) < Math.abs(S.ch.xs[best] - x)) best = i; });
         cursor(best);
       }
       root.addEventListener('pointermove', onPointer);
@@ -323,6 +354,7 @@
       root.addEventListener('change', function(e){
         var t = e.target;
         if (t.name === 'sm-poe') { S.pi = +t.value; draw('input[name="sm-poe"][value="' + S.pi + '"]'); }
+        else if (t.hasAttribute && t.hasAttribute('data-log')) { S.log = t.checked; ecrireLog(S.log); draw('input[data-log]'); }
         else if (t.getAttribute && t.getAttribute('data-cls')) { var c = t.getAttribute('data-cls'); S.show[c] = t.checked; draw('input[data-cls="' + c + '"]'); }
       });
       root.addEventListener('click', function(e){ if (e.target.closest && e.target.closest('[data-csv]')) csv(S); });
@@ -337,6 +369,6 @@
   window.QA_MOD.sismique = {
     render: render,
     _t: { shardOf: shardOf, decode: decode, index: index, vec: vec, retour: retour, N_SHARDS: N_SHARDS, NB_VAL: NB_VAL, fr: fr,
-          classeEstimee: classeEstimee, periodTicks: periodTicks, chart: chart }
+          classeEstimee: classeEstimee, sourceMtl: sourceMtl, periodTicks: periodTicks, chart: chart, spread: spread, T_MAX: T_MAX }
   };
 })();

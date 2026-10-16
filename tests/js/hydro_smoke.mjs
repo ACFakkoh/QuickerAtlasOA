@@ -54,6 +54,29 @@ ok('pickStation : plus proche, avantage au même nom, rayon', function(){
   assert.equal(r2.best.match, 'inconnu');
   assert.equal(T.pickStation(rows, 40, -60, 'X', 40).best, null);
 });
+ok('lastYears : dernière année publiée par station', function(){
+  var y = T.lastYears([{ IDENTIFIER: 'A.1991.level-niveaux' }, { IDENTIFIER: 'A.2019.discharge-debit' }, { IDENTIFIER: 'A.2004.level-niveaux' }, { IDENTIFIER: 'B.1975.level-niveaux' }, { IDENTIFIER: 'mauvais' }]);
+  assert.deepEqual(y, { A: 2019, B: 1975 });
+});
+ok('pickStation (v0.6.1) : par défaut la plus récente parmi les proches, option la plus proche', function(){
+  var lat = 46.58629, lon = -71.21481, dx = function(km){ return lon + km / (111.32 * Math.cos(lat * Math.PI / 180)); };
+  var rows = [
+    { x: dx(1), y: lat, STATION_NUMBER: 'VIEILLE', STATION_NAME: 'CHAUDIERE (RIVIERE) AU PONT', STATUS_EN: 'Discontinued' },
+    { x: dx(8), y: lat, STATION_NUMBER: 'RECENTE', STATION_NAME: 'CHAUDIERE (RIVIERE) EN AVAL', STATUS_EN: 'Active' },
+    { x: dx(30), y: lat, STATION_NUMBER: 'LOIN', STATION_NAME: 'CHAUDIERE (RIVIERE) A ST-X', STATUS_EN: 'Active' },
+    { x: dx(2), y: lat, STATION_NUMBER: 'AUTRE', STATION_NAME: 'AUTRE (RIVIERE)', STATUS_EN: 'Active' }
+  ];
+  var years = { VIEILLE: 1985, RECENTE: 2023, LOIN: 2024, AUTRE: 2024 };
+  var r = T.pickStation(rows, lat, lon, 'Rivière Chaudière', 40, years);
+  assert.equal(r.nearest.id, 'VIEILLE');
+  assert.equal(r.best.id, 'RECENTE');           // LOIN (30 km) est trop loin, AUTRE est sur un autre cours d’eau
+  assert.equal(r.recent.y1, 2023);
+  assert.equal(T.pickStation(rows, lat, lon, 'Rivière Chaudière', 40, years, 'proche').best.id, 'VIEILLE');
+  // un an d’écart ne compte pas : la plus proche reste retenue
+  assert.equal(T.pickStation(rows, lat, lon, 'Rivière Chaudière', 40, { VIEILLE: 2022, RECENTE: 2023 }).best.id, 'VIEILLE');
+  // sans les années (service indisponible) : la plus proche
+  assert.equal(T.pickStation(rows, lat, lon, 'Rivière Chaudière', 40, null).best.id, 'VIEILLE');
+});
 ok('datumKind', function(){
   assert.equal(T.datumKind('ARBITRAIRE'), 'arbitraire');
   assert.equal(T.datumKind('ASSUMED DATUM'), 'arbitraire');

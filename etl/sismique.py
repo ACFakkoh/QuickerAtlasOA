@@ -36,7 +36,15 @@ Sorties (chargées à la demande par `js/sismique.js` et par la carte, via `<scr
     situées dans une cellule classée) ;
   - `data/sismique/pga-c-2pc.png` (tout le Québec) et `data/sismique/classes-qc.png` : rasters rééchantillonnés en lignes
     Web Mercator (EPSG:3857), comme `L.imageOverlay` les étire.
-(v0.6.0 : la grille des classes de Montréal, Rosset et al. 2023, est retirée : la carte du Québec la couvre.)
+  - `data/sismique/classes-mtl.png` (v0.6.1) : classes de la région de Montréal (Rosset, Takahashi et Chouinard 2023,
+    `etl/donnees/classes_site_mtl.json`, grille de 0,004° reconstituée de leur figure 10), plus fines : dessinées
+    au-dessus de la carte du Québec, et prioritaires pour la classe estimée des structures qu'elles couvrent.
+Plans d'eau (v0.6.1) : la carte générale du SIGEOM couvre le Saint-Laurent et les grandes rivières de dépôts (Ap, MGa…),
+si bien que la couche des classes les recouvrait. Masque des eaux : surfaces hydrographiques de la GRHQ (MRNF, WMS
+« GRHQ simple », couches surfaciques à l'échelle du 1/350 000 – 1/750 000) lues à 0,001° × 0,0015°, une cellule de la
+grille du Québec étant de l'eau si la moitié de ses 4 sous-pixels l'est ; versionné dans `etl/donnees/eau_qc.png`.
+Les trois rasters (PGA, classes du Québec, classes de Montréal) sont transparents sur l'eau ; les classes des structures
+(ponts au-dessus d'une rivière) ne sont pas masquées.
 
 Découpage : `shard_of(num)` = FNV-1a 32 bits du n° de structure (ASCII) modulo `N_SHARDS`, écrit en hexadécimal sur 2 caractères.
 La même fonction existe dans `js/sismique.js` (`shardOf`) ; `tests/js/sismique_smoke.mjs` vérifie la parité.
@@ -77,6 +85,12 @@ COUCHE_WMS_SIGEOM = "SGM:Zones_morpho_sedimentologiques_qc"
 RAW_SIGEOM = RAW_SISMIQUE / "sigeom"
 TUILE = 2048                                # pixels par côté de tuile WMS
 # Couleur de remplissage officielle (attribut COUL_REMPL_HEXA du WFS, relevé le 2026-10-15) : toutes distinctes.
+# Masque des eaux (v0.6.1) : GRHQ simple du MRNF, couches « Hydrographie surfacique » (une seule s'affiche à une échelle donnée)
+URL_WMS_GRHQ = "https://servicescarto.mrnf.gouv.qc.ca/pes/services/Territoire/GRHQ_simple_WMS/MapServer/WMSServer"
+COUCHES_GRHQ = "1,2,3,4,5"
+RAW_GRHQ = RAW_SISMIQUE / "grhq"
+SUR_EAU = 2                                 # sous-pixels par côté de cellule de la grille du Québec
+EAU_PNG = "eau_qc.png"
 COULEURS_SIGEOM = {
     "R": "#ff0000", "T": "#26ff26", "O": "#cccccc", "L": "#e680cc", "Gx": "#ff8026", "Tf": "#26b266",
     "Go": "#ffcc26", "MGb": "#b2e6ff", "LGb": "#ccb2ff", "MGa": "#66e6ff", "A": "#ffff00", "Qf": "#b24c00",
@@ -131,6 +145,17 @@ CLASSES_QC = [
     ("C", "C — sol très dense et roc mou (Vs30 360 à 760 m/s)", "#e4ff04"),
     ("D", "D — sol raide (Vs30 180 à 360 m/s)", "#cf15d8"),
 ]
+# v0.6.1 : E (sol meuble) n'existe que dans la grille de Montréal ; teinte très sombre, séparée de D par la clarté
+CLASSE_E = ("E", "E — sol meuble (Vs30 < 180 m/s), Montréal seulement", "#3d0a14")
+CLASSES_CARTE = CLASSES_QC + [CLASSE_E]
+# Grille de la région de Montréal (Rosset, Takahashi et Chouinard 2023), reconstituée de leur figure 10 (v0.5.6)
+GRILLE_MTL = "classes_site_mtl.json"
+PNG_MTL = "classes-mtl.png"
+SOURCE_MTL = ("Rosset P., Takahashi A., Chouinard L. (2023), Vs30 Mapping of the Greater Montreal Region Using Multiple "
+              "Data Sources, Geosciences 13(9):256, doi:10.3390/geosciences13090256, CC BY 4.0 — grille reconstituée "
+              "à partir de la figure 10")
+SOURCE_MTL_COURTE = "Rosset et al. (2023), Geosciences 13(9):256"
+URL_MTL = "https://doi.org/10.3390/geosciences13090256"
 # Grille versionnée (lat/lon, maille ≈ 330 m) : etl/donnees/classes_site_qc.{json,png}
 GRILLE_QC_JSON = "classes_site_qc.json"
 GRILLE_QC_PNG = "classes_site_qc.png"
@@ -170,7 +195,7 @@ LCC_FN = 1137169.78
 # Palette séquentielle (magma) à clarté L* strictement décroissante du plus faible au plus fort : sûre en daltonisme.
 PGA_BREAKS = [0.05, 0.10, 0.20, 0.30, 0.45, 0.70, 1.00]
 PGA_COULEURS = ["#fcfdbf", "#fed395", "#fd9f6c", "#f4685c", "#d3436e", "#a3307e", "#6f1f81", "#3b0f70"]
-LARGEUR_PGA = 1400
+LARGEUR_PGA = 2400                          # v0.6.1 : 1400 → 2400 px, pour que le masque des eaux suive les rivières
 
 
 # --- Projection ----------------------------------------------------------------------------------
@@ -571,31 +596,192 @@ def classe_qc(g: dict, lat: float, lon: float) -> int:
     return k if 1 <= k <= 5 else 0
 
 
-def classes_structures(structures, g: dict) -> dict[str, int]:
-    """{n°: classe 1..5} des structures situées dans une cellule classée de la grille du Québec."""
-    out = {}
+def classes_structures(structures, g: dict, gm: dict | None = None) -> tuple[dict[str, int], set[str]]:
+    """({n°: classe 1..5}, {n° classés par la grille de Montréal}) : la grille de Montréal `gm` (plus fine) prime là
+    où elle a une valeur ; ailleurs, la cellule classée de la grille du Québec."""
+    out, mtl = {}, set()
     for num, lat, lon in structures:
-        k = classe_qc(g, lat, lon)
+        k = classe_mtl(gm, lat, lon) if gm else 0
+        if k:
+            mtl.add(num)
+        else:
+            k = classe_qc(g, lat, lon)
         if k:
             out[num] = k
-    return out
+    return out, mtl
 
 
-def ecrire_classes_site(classes: dict[str, int], chemin: Path = OUT_CLASSES, today: str | None = None) -> int:
-    """`data/classes-site.js` : window.PQ_CLASSE_SITE = {"_": {source, url, generated}, "<n°>": "B", …}."""
+def ecrire_classes_site(classes: dict[str, int], chemin: Path = OUT_CLASSES, today: str | None = None,
+                        mtl: set[str] | None = None) -> int:
+    """`data/classes-site.js` : window.PQ_CLASSE_SITE = {"_": {source, url, generated, mtl}, "<n°>": "B", …} ;
+    `_.mtl` (v0.6.1) = {source, url, n : [n° classés par la grille de Montréal]}."""
     corps = {"_": {"source": SOURCE_QC, "url": URL_ARTICLE, "generated": today or date.today().isoformat()}}
+    if mtl:
+        corps["_"]["mtl"] = {"source": SOURCE_MTL_COURTE, "url": URL_MTL, "n": sorted(mtl)}
     corps.update({n: CLASSES[k - 1] for n, k in sorted(classes.items())})
     return ecrire_js(chemin, "window.PQ_CLASSE_SITE", corps)
 
 
-def png_classes_qc(g: dict, chemin: Path, largeur: int = LARGEUR_QC) -> dict:
+# --- Classes de site de Montréal (Rosset et al. 2023) --------------------------------------------
+def charger_grille_mtl(dossier: Path = DONNEES) -> dict:
+    return json.loads((dossier / GRILLE_MTL).read_text(encoding="utf-8"))
+
+
+def classe_mtl(gm: dict, lat: float, lon: float) -> int:
+    """Classe (1..5 = A..E) de la grille de Montréal ; 0 hors grille ou sans valeur (dont l'eau)."""
+    j = math.floor((gm["north"] - lat) / gm["step"])
+    i = math.floor((lon - gm["west"]) / gm["step"])
+    if 0 <= j < gm["ny"] and 0 <= i < gm["nx"]:
+        return "0ABCDE".index(gm["rows"][j][i])
+    return 0
+
+
+def png_classes_mtl(gm: dict, chemin: Path, eau: dict | None = None, px_par_maille: int = 4) -> dict:
+    """Raster Web Mercator des classes de Montréal (plus proche voisin), palette de la carte du Québec (+ E) ;
+    transparent : sans valeur et, avec `eau`, plans d'eau du masque (à la résolution des sous-pixels)."""
+    sud, ouest = gm["north"] - gm["ny"] * gm["step"], gm["west"]
+    nord, est = gm["north"], gm["west"] + gm["nx"] * gm["step"]
+    lats, lons = grille_mercator(sud, ouest, nord, est, gm["nx"] * px_par_maille)
+    j = np.floor((gm["north"] - lats) / gm["step"]).astype(int).clip(0, gm["ny"] - 1)
+    i = np.floor((lons - gm["west"]) / gm["step"]).astype(int).clip(0, gm["nx"] - 1)
+    cles = np.array([["0ABCDE".index(ch) for ch in row] for row in gm["rows"]], dtype=np.uint8)
+    idx = cles[j[:, None], i[None, :]]
+    if eau is not None:
+        idx[eau_aux_pixels(eau, lats, lons)] = 0
+    taille = ecrire_png_indexe(chemin, idx, [c[2] for c in CLASSES_CARTE])
+    return {"bounds": [[round(sud, 6), round(ouest, 6)], [round(nord, 6), round(est, 6)]], "bytes": taille,
+            "w": len(lons), "h": len(lats), "classes": [int((idx == k).sum()) for k in range(1, 6)]}
+
+
+# --- Masque des eaux (GRHQ, v0.6.1) --------------------------------------------------------------
+def grille_eau(g: dict | None = None) -> dict:
+    """Géométrie des sous-pixels du masque : la grille du Québec divisée par SUR_EAU sur chaque axe."""
+    g = g or grille_qc_vide()
+    return {"north": g["north"], "west": g["west"], "dlat": g["dlat"] / SUR_EAU, "dlon": g["dlon"] / SUR_EAU,
+            "nx": g["nx"] * SUR_EAU, "ny": g["ny"] * SUR_EAU}
+
+
+def url_tuile_eau(bbox, w: int, h: int) -> str:
+    """GetMap WMS 1.3.0 (CRS:84, axes lon/lat) des surfaces hydrographiques de la GRHQ."""
+    from urllib.parse import urlencode
+    return URL_WMS_GRHQ + "?" + urlencode({
+        "SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetMap", "LAYERS": COUCHES_GRHQ, "STYLES": "",
+        "CRS": "CRS:84", "BBOX": ",".join(f"{v:.9f}" for v in bbox), "WIDTH": str(w), "HEIGHT": str(h),
+        "FORMAT": "image/png", "TRANSPARENT": "TRUE"})
+
+
+def telecharger_eau(g: dict | None = None, raw_dir: Path = RAW_GRHQ, essais: int = 4) -> list[str]:
+    """Tuiles PNG des surfaces de la GRHQ (reprise : les tuiles présentes ne sont pas redemandées)."""
+    import time
+    ge = grille_eau(g)
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    import urllib.request
+    faites = []
+    for ti, tj, bbox, w, h in tuiles(ge):
+        f = raw_dir / f"e-{ti:02d}-{tj:02d}.png"
+        if f.exists():
+            continue
+        for k in range(essais):
+            try:
+                # urllib plutôt que requests : ce serveur du MRNF coupe les connexions TLS de requests (oct. 2026)
+                url = url_tuile_eau(bbox, w, h)
+                net.wait(url)
+                with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": net.USER_AGENT}), timeout=600) as rep:
+                    contenu, typ = rep.read(), rep.headers.get("Content-Type", "")
+                if not typ.startswith("image/png"):
+                    raise RuntimeError(f"réponse inattendue : {contenu[:200]!r}")
+                break
+            except Exception as e:
+                if k == essais - 1:
+                    raise
+                log.warning("sismique : tuile GRHQ %s, nouvel essai (%s)", f.name, e)
+                time.sleep(10 * (k + 1))
+        f.with_name(f.name + ".part").write_bytes(contenu)
+        f.with_name(f.name + ".part").replace(f)
+        faites.append(f.name)
+        log.info("sismique : tuile GRHQ %s (%d × %d px, %.0f Ko)", f.name, w, h, len(contenu) / 1e3)
+    return faites
+
+
+def eau_de_tuile(rgba: np.ndarray) -> np.ndarray:
+    """Sous-pixels d'eau d'une tuile : opaques et bleutés (les surfaces de la GRHQ sont bleu clair, bords lissés)."""
+    r, gr, b, a = (rgba[..., k].astype(np.int16) for k in range(4))
+    return (a >= 128) & (b >= r + 20) & (b >= gr)
+
+
+def assembler_eau(g: dict | None = None, raw_dir: Path = RAW_GRHQ) -> dict:
+    """Masque des eaux sur la grille du Québec : cellule d'eau si au moins la moitié de ses sous-pixels l'est."""
+    from PIL import Image
+    g = g or grille_qc_vide()
+    ge = grille_eau(g)
+    sub = np.zeros((ge["ny"], ge["nx"]), bool)
+    for ti, tj, _, w, h in tuiles(ge):
+        f = raw_dir / f"e-{ti:02d}-{tj:02d}.png"
+        if not f.exists():
+            raise FileNotFoundError(f"{f} absent : lancer `python -m etl.sismique` sans --no-fetch")
+        rgba = np.asarray(Image.open(f).convert("RGBA"))
+        sub[ti * TUILE:ti * TUILE + h, tj * TUILE:tj * TUILE + w] = eau_de_tuile(rgba)[:h, :w]
+    k = SUR_EAU
+    frac = sub.reshape(g["ny"], k, g["nx"], k).mean(axis=(1, 3))
+    return {k2: g[k2] for k2 in ("north", "west", "dlat", "dlon", "nx", "ny")} | {"m": frac >= 0.5}
+
+
+def ecrire_eau(e: dict, dossier: Path = DONNEES) -> int:
+    """Masque versionné : PNG 1 bit (blanc = eau) aux dimensions de la grille du Québec."""
+    from PIL import Image
+    Image.fromarray(e["m"]).save(dossier / EAU_PNG, optimize=True)
+    return (dossier / EAU_PNG).stat().st_size
+
+
+def charger_eau(g: dict, dossier: Path = DONNEES) -> dict | None:
+    """Masque des eaux versionné (None s'il n'existe pas encore : les rasters ne sont alors pas masqués)."""
+    from PIL import Image
+    f = dossier / EAU_PNG
+    if not f.exists():
+        return None
+    m = np.asarray(Image.open(f).convert("1"), dtype=bool)
+    if m.shape != (g["ny"], g["nx"]):
+        raise ValueError("masque des eaux : dimensions incohérentes avec la grille du Québec")
+    return {k: g[k] for k in ("north", "west", "dlat", "dlon", "nx", "ny")} | {"m": m}
+
+
+def eau_aux_pixels(e: dict, lats, lons) -> np.ndarray:
+    """Masque (h, w) des pixels dont le centre tombe dans une cellule d'eau (hors grille : pas d'eau)."""
+    lats, lons = np.asarray(lats), np.asarray(lons)
+    j = np.floor((e["north"] - lats) / e["dlat"]).astype(int)
+    i = np.floor((lons - e["west"]) / e["dlon"]).astype(int)
+    jok, iok = (j >= 0) & (j < e["ny"]), (i >= 0) & (i < e["nx"])
+    out = np.zeros((len(lats), len(lons)), bool)
+    out[np.ix_(jok, iok)] = e["m"][np.ix_(j[jok], i[iok])]
+    return out
+
+
+def couvert_mtl(g: dict, gm: dict) -> np.ndarray:
+    """Cellules (ny, nx) de la grille du Québec dont le centre tombe dans une maille classée de la grille de Montréal."""
+    out = np.zeros((g["ny"], g["nx"]), bool)
+    lats = g["north"] - (np.arange(g["ny"]) + 0.5) * g["dlat"]
+    lons = g["west"] + (np.arange(g["nx"]) + 0.5) * g["dlon"]
+    j = np.floor((gm["north"] - lats) / gm["step"]).astype(int)
+    i = np.floor((lons - gm["west"]) / gm["step"]).astype(int)
+    jok, iok = (j >= 0) & (j < gm["ny"]), (i >= 0) & (i < gm["nx"])
+    cles = np.array([[ch != "0" for ch in row] for row in gm["rows"]], bool)
+    out[np.ix_(jok, iok)] = cles[np.ix_(j[jok], i[iok])]
+    return out
+
+
+def png_classes_qc(g: dict, chemin: Path, largeur: int = LARGEUR_QC, eau: dict | None = None,
+                   gm: dict | None = None) -> dict:
     """Raster Web Mercator des classes du Québec (classe MAJORITAIRE des cellules de la grille sous chaque pixel ;
-    transparent : aucun polygone, dépôt non classé, lac)."""
+    transparent : aucun polygone, dépôt non classé, lac et, avec `eau` (v0.6.1), plans d'eau de la GRHQ)."""
     sud, ouest = g["north"] - g["ny"] * g["dlat"], g["west"]
     nord, est = g["north"], g["west"] + g["nx"] * g["dlon"]
     lats, lons = grille_mercator(sud, ouest, nord, est, largeur)
     cl = classes_de_grille(g)
     cl[cl > len(CLASSES_QC)] = 0                        # E (absente de l'article), non classé et eau : transparents
+    if eau is not None:
+        cl[eau["m"]] = 0                                # v0.6.1 : Saint-Laurent, grandes rivières et lacs
+    if gm is not None:
+        cl[couvert_mtl(g, gm)] = 0                      # v0.6.1 : la grille de Montréal, dessinée au-dessus, y prime
     # bornes des pixels en indices de cellules (le pixel Mercator couvre 1 à 3 cellules par axe)
     ytop, ybot = float(merc_y(nord)), float(merc_y(sud))
     h = len(lats)
@@ -682,7 +868,7 @@ def meta(today: str | None = None) -> dict:
         "echelle": {"q": "round(1000 × log10(v / 1e-4))", "v": "1e-4 × 10^(q/1000)", "pas_relatif": 0.0023,
                     "zero": "q = 0 : valeur ≤ 0,0001"},
         "shard": f"FNV-1a 32 bits des octets ASCII du n°, modulo {N_SHARDS}, en hexadécimal sur 2 caractères",
-        "classeSite": {"0": None, "1..5": "A..E", "source": SOURCE_QC, "url": URL_ARTICLE},
+        "classeSite": {"0": None, "1..5": "A..E", "source": SOURCE_QC, "url": URL_ARTICLE, "montreal": SOURCE_MTL},
     }
 
 
@@ -805,7 +991,8 @@ def luminance(h: str) -> float:
     return 116 * (y ** (1 / 3) if y > 0.008856 else 7.787 * y + 16 / 116) - 16
 
 
-def png_pga(mail: Maillage, structures, chemin: Path, largeur: int = LARGEUR_PGA, grille_qc: dict | None = None) -> dict:
+def png_pga(mail: Maillage, structures, chemin: Path, largeur: int = LARGEUR_PGA, grille_qc: dict | None = None,
+            eau: dict | None = None) -> dict:
     """Raster du PGA, classe de site C, 2 % en 50 ans, par classes discrètes.
     Avec `grille_qc` : tout le territoire québécois (couverture de la carte du SIGEOM, lacs compris) ; sinon, ancien
     comportement : voisinage de 50 km des structures."""
@@ -827,6 +1014,8 @@ def png_pga(mail: Maillage, structures, chemin: Path, largeur: int = LARGEUR_PGA
     else:
         zone = masque_proximite([(s[1], s[2]) for s in structures], bornes, len(lons), len(lats))
     ok = ~np.isnan(champ) & zone
+    if eau is not None:
+        ok &= ~eau_aux_pixels(eau, lats, lons)         # v0.6.1 : transparent sur l'eau
     idx = np.where(ok, 1 + np.digitize(np.nan_to_num(champ), PGA_BREAKS), 0)
     taille = ecrire_png_indexe(chemin, idx, PGA_COULEURS)
     return {"bounds": [[sud, ouest], [nord, est]], "bytes": taille, "w": len(lons), "h": len(lats),
@@ -834,9 +1023,12 @@ def png_pga(mail: Maillage, structures, chemin: Path, largeur: int = LARGEUR_PGA
             "province": grille_qc is not None}
 
 
-def couche(pga: dict, qc: dict | None, today: str | None = None) -> dict:
-    """Contenu de `window.PQ_COUCHES.sismique` : `pga` (toute la province) et `classes` (Québec, Rosset et al. 2025)."""
-    zone = ("Couche étendue à tout le territoire québécois couvert par la carte des dépôts du SIGEOM (lacs compris)."
+def couche(pga: dict, qc: dict | None, today: str | None = None, mtl: dict | None = None) -> dict:
+    """Contenu de `window.PQ_COUCHES.sismique` : `pga` (toute la province), `classes` (Québec, Rosset et al. 2025) et
+    `mtl` (v0.6.1 : région de Montréal, Rosset et al. 2023, dessinée au-dessus de `classes`)."""
+    zone = (("Couche étendue à tout le territoire québécois couvert par la carte des dépôts du SIGEOM" +
+             (", transparente sur les plans d'eau de la GRHQ (Saint-Laurent, grandes rivières, lacs)." if pga.get("eau") else
+              " (lacs compris)."))
             if pga.get("province", True) else "Couche limitée à 50 km des structures du MTMD.")
     out = {
         "generated": today or date.today().isoformat(),
@@ -853,13 +1045,22 @@ def couche(pga: dict, qc: dict | None, today: str | None = None) -> dict:
     if qc is not None:
         out["classes"] = {
             "img": f"data/sismique/{PNG_QC}", "bounds": qc["bounds"],
-            "classes": [{"k": k, "label": lab, "color": col} for k, lab, col in CLASSES_QC],
+            "classes": [{"k": k, "label": lab, "color": col} for k, lab, col in (CLASSES_CARTE if mtl else CLASSES_QC)],
             "titre": "Classes de site sismique estimées (Vs30) d'après la géologie de surface, Québec",
             "source": SOURCE_QC_COURTE, "url": URL_ARTICLE, "doi": DOI_ARTICLE, "licence": "CC BY 4.0",
             "avertissement": "Estimation à l'échelle régionale : chaque type de dépôt de surface de la carte générale du "
                              "SIGEOM reçoit la classe de son Vs30 moyen (tableau 3 de l'article, écart type de 130 à "
                              "970 m/s, soit souvent ± 1 classe). Ce n'est pas une étude de site : une mesure de Vs30 ou un "
                              "forage fait foi. Transparent : eau, dépôts non classés par l'article, hors carte.",
+        }
+    if mtl is not None:
+        out["mtl"] = {
+            "img": f"data/sismique/{PNG_MTL}", "bounds": mtl["bounds"],
+            "titre": "Classes de site estimées, région de Montréal (prioritaires sur la carte du Québec)",
+            "source": SOURCE_MTL_COURTE, "url": URL_MTL, "doi": "10.3390/geosciences13090256", "licence": "CC BY 4.0",
+            "avertissement": "Microzonage de la région de Montréal (Vs30 de forages, de levés géophysiques et de la "
+                             "géologie), plus fin que la carte du Québec : il la remplace là où il a une valeur. Grille de "
+                             "0,004° reconstituée à partir de la figure 10 de l'article.",
         }
     return out
 
@@ -1023,10 +1224,13 @@ def exporter_fixture_validation(mail: Maillage, points: list[dict], chemin: Path
 
 
 # --- Exécution -----------------------------------------------------------------------------------
-def run(fetch: bool = True, raw_dir: Path = RAW_SISMIQUE) -> list[dict]:
+def run(fetch: bool = True, raw_dir: Path = RAW_SISMIQUE, eau_seulement: bool = False) -> list[dict]:
+    """`eau_seulement` : avec fetch=False, télécharge quand même les tuiles du masque des eaux (GRHQ)."""
     if fetch:
         telecharger(raw_dir)
         telecharger_tuiles()
+    if fetch or eau_seulement:
+        telecharger_eau()
     mail = charger_maillage(raw_dir)
     log.info("sismique : %d nœuds, %d triangles (Québec + marge)", len(mail.xy), len(mail.tri))
     structures = charger_structures()
@@ -1040,25 +1244,33 @@ def run(fetch: bool = True, raw_dir: Path = RAW_SISMIQUE) -> list[dict]:
     except FileNotFoundError as e:
         log.info("sismique : %s ; grille versionnée relue", e)
         g = charger_grille_qc()
-    classes = classes_structures(structures, g)
-    t_classes = ecrire_classes_site(classes)
+    # masque des eaux : reconstruit des tuiles GRHQ si elles sont là, sinon relu (versionné)
+    try:
+        eau = assembler_eau(g)
+        log.info("sismique : masque des eaux écrit (%.0f Ko, %d cellules d'eau)", ecrire_eau(eau) / 1e3, int(eau["m"].sum()))
+    except FileNotFoundError as e:
+        log.info("sismique : %s ; masque des eaux versionné relu", e)
+        eau = charger_eau(g)
+    gm = charger_grille_mtl()
+    classes, par_mtl = classes_structures(structures, g, gm)
+    t_classes = ecrire_classes_site(classes, mtl=par_mtl)
     donnees, manquants = calculer(mail, structures, classes)
     if manquants:
         log.warning("sismique : %d structures hors du réseau de l'aléa : %s", len(manquants), ", ".join(manquants[:10]))
     sh = ecrire_shards(donnees)
-    pga = png_pga(mail, structures, OUT_DIR / PNG_PGA, grille_qc=g)
-    qc = png_classes_qc(g, OUT_DIR / PNG_QC)
-    vieux = OUT_DIR / "classes-mtl.png"                 # ancienne couche de Montréal (v0.5.6), remplacée
-    if vieux.exists():
-        vieux.unlink()
-    size = ecrire_js(OUT_COUCHE, "(window.PQ_COUCHES=window.PQ_COUCHES||{}).sismique", couche(pga, qc))
+    pga = png_pga(mail, structures, OUT_DIR / PNG_PGA, grille_qc=g, eau=eau)
+    pga["eau"] = eau is not None
+    qc = png_classes_qc(g, OUT_DIR / PNG_QC, eau=eau, gm=gm)
+    mtl = png_classes_mtl(gm, OUT_DIR / PNG_MTL, eau=eau)
+    size = ecrire_js(OUT_COUCHE, "(window.PQ_COUCHES=window.PQ_COUCHES||{}).sismique", couche(pga, qc, mtl=mtl))
     t = sh["tailles"]
     return [
         {"path": OUT_DIR, "rows": len(donnees), "bytes": sh["bytes"], "manquants": len(manquants),
          "max_shard": max(t.values()), "min_shard": min(t.values()), "shards": len(t)},
         {"path": OUT_DIR / PNG_PGA, "bytes": pga["bytes"], "w": pga["w"], "h": pga["h"]},
         {"path": OUT_DIR / PNG_QC, "bytes": qc["bytes"], "w": qc["w"], "h": qc["h"]},
-        {"path": OUT_CLASSES, "bytes": t_classes, "classees": len(classes),
+        {"path": OUT_DIR / PNG_MTL, "bytes": mtl["bytes"], "w": mtl["w"], "h": mtl["h"]},
+        {"path": OUT_CLASSES, "bytes": t_classes, "classees": len(classes), "mtl": len(par_mtl),
          "par_classe": {c: sum(1 for k in classes.values() if k == i + 1) for i, c in enumerate(CLASSES)}},
         {"path": OUT_COUCHE, "bytes": size},
     ]
@@ -1067,6 +1279,7 @@ def run(fetch: bool = True, raw_dir: Path = RAW_SISMIQUE) -> list[dict]:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--no-fetch", action="store_true", help="relit data/raw/sismique/ au lieu de télécharger")
+    ap.add_argument("--eau", action="store_true", help="avec --no-fetch : télécharge quand même le masque des eaux (GRHQ)")
     ap.add_argument("--valider", metavar="DOSSIER", nargs="?", const="prototypes/sismique/cache",
                     help="compare à l'API de RNCan (réponses gardées dans DOSSIER) au lieu d'écrire les fichiers")
     ap.add_argument("--fixture", metavar="FICHIER",
@@ -1106,7 +1319,7 @@ def main(argv=None) -> int:
         if args.fixture:
             print(exporter_fixture_validation(mail, pts, Path(args.fixture)), "points écrits dans", args.fixture)
         return 0
-    for res in run(fetch=not args.no_fetch):
+    for res in run(fetch=not args.no_fetch, eau_seulement=args.eau):
         print(f"{res['path']} : {res['bytes'] / 1e6:.2f} Mo" + (f", {res['rows']} structures, {res['shards']} fichiers "
               f"({res['min_shard'] / 1e3:.0f} à {res['max_shard'] / 1e3:.0f} Ko), {res['manquants']} hors réseau"
               if "rows" in res else "") + (f", {res['classees']} structures classées {res['par_classe']}"

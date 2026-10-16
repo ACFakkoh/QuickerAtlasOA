@@ -270,7 +270,45 @@ def test_classe_et_code_d_une_cellule():
     assert s.classe_qc(g, 47.0, -73.99) == 0 and s.classe_qc(g, 45.999, -72.0) == 0              # hors grille
     cl = s.classes_de_grille(g)
     assert cl.tolist() == [[0, 1, 2, 3], [4, s.NON_CLASSE, 2, 0]]
-    assert s.classes_structures([("a", 45.999, -73.9955), ("b", 45.997, -73.9955), ("c", 45.0, -73.0)], g) == {"a": 1}
+    assert s.classes_structures([("a", 45.999, -73.9955), ("b", 45.997, -73.9955), ("c", 45.0, -73.0)], g) == ({"a": 1}, set())
+
+
+def _grille_mtl_test():
+    # 2 × 3 mailles de 0,004° : « 0 » = sans valeur (eau, hors zone)
+    return {"north": 46.0, "west": -74.0, "step": 0.004, "nx": 3, "ny": 2, "rows": ["0ED", "C0B"]}
+
+
+def test_grille_de_montreal_prioritaire():
+    g, gm = _grille_test(), _grille_mtl_test()
+    assert s.classe_mtl(gm, 45.999, -73.995) == 5 and s.classe_mtl(gm, 45.999, -73.999) == 0
+    assert s.classe_mtl(gm, 47.0, -74.0) == 0
+    # « a » : Montréal (E) l'emporte sur le Québec (A) ; « b » : Montréal sans valeur → Québec ; « c » : hors des deux
+    cl, mtl = s.classes_structures([("a", 45.999, -73.9955), ("z", 45.999, -73.9985), ("c", 45.0, -73.0)], g, gm)
+    assert cl == {"a": 5} and mtl == {"a"}
+    cl, mtl = s.classes_structures([("b", 45.999, -73.9985)], g, {**gm, "rows": ["0ED", "C0B"]})
+    assert cl == {} and mtl == set()
+
+
+def test_eau_de_tuile_et_sous_echantillonnage(tmp_path):
+    from PIL import Image
+    rgba = np.zeros((4, 4, 4), np.uint8)
+    rgba[:2, :, :] = (151, 220, 243, 255)          # bleu de la GRHQ
+    rgba[2, 0] = (190, 232, 247, 255)              # bord lissé, encore bleuté
+    rgba[3, 3] = (120, 120, 120, 255)              # gris : pas de l'eau
+    e = s.eau_de_tuile(rgba)
+    assert e[:2].all() and e[2, 0] and not e[3, 3] and not e[3, 0]
+    # grille 2 × 2 de cellules, SUR_EAU = 2 sous-pixels par côté : cellule d'eau si ≥ 50 % de ses sous-pixels
+    g = {"north": 46.0, "west": -74.0, "dlat": 0.002, "dlon": 0.003, "nx": 2, "ny": 2}
+    raw = tmp_path / "grhq"; raw.mkdir()
+    Image.fromarray(rgba, "RGBA").save(raw / "e-00-00.png")
+    ee = s.assembler_eau(g, raw)
+    assert ee["m"].tolist() == [[True, True], [False, False]]
+    s.ecrire_eau(ee, tmp_path)
+    assert (s.charger_eau(g, tmp_path)["m"] == ee["m"]).all()
+    assert s.charger_eau(g, tmp_path / "absent") is None
+    lats = np.array([45.999, 45.997]); lons = np.array([-73.999, -73.996])
+    assert s.eau_aux_pixels(ee, lats, lons).tolist() == [[True, True], [False, False]]
+    assert not s.eau_aux_pixels(ee, np.array([47.0]), np.array([-73.999])).any()      # hors grille
 
 
 def test_ecrire_et_relire_la_grille(tmp_path):
@@ -312,6 +350,31 @@ def test_png_classes_qc_majorite_et_transparence(tmp_path):
     assert info["classes"][0] == 10 * info["h"] and info["classes"][2] == 10 * info["h"]
 
 
+def test_classes_qc_et_montreal_transparentes_sur_l_eau(tmp_path):
+    from PIL import Image
+    codes = list(s.CODES_SIGEOM)
+    v = np.full((40, 60), codes.index("MGa") + 1, np.uint8)            # C partout (le Saint-Laurent l'est au SIGEOM)
+    g = {"north": 46.0, "west": -74.0, "dlat": 0.002, "dlon": 0.003, "nx": 60, "ny": 40, "codes": codes, "v": v}
+    m = np.zeros((40, 60), bool); m[:, 30:] = True                     # moitié est : fleuve
+    eau = {k: g[k] for k in ("north", "west", "dlat", "dlon", "nx", "ny")} | {"m": m}
+    info = s.png_classes_qc(g, tmp_path / "c.png", largeur=30, eau=eau)
+    im = Image.open(tmp_path / "c.png").convert("RGBA"); y = info["h"] // 2
+    assert im.getpixel((5, y))[:3] == s.hex_rgb("#e4ff04") and im.getpixel((25, y))[3] == 0
+    gm = {"north": 46.0, "west": -74.0, "step": 0.04, "nx": 4, "ny": 2, "rows": ["EEEE", "AAAA"]}
+    mi = s.png_classes_mtl(gm, tmp_path / "m.png", eau=eau, px_par_maille=10)
+    im = Image.open(tmp_path / "m.png").convert("RGBA")
+    assert im.getpixel((2, 2))[:3] == s.hex_rgb(s.CLASSE_E[2])          # E à l'ouest, sur terre
+    x_fleuve = int(((-74.0 + 0.135) - gm["west"]) / (gm["nx"] * gm["step"]) * mi["w"])
+    assert im.getpixel((x_fleuve, 2))[3] == 0                           # eau : transparent
+    assert mi["bounds"] == [[45.92, -74.0], [46.0, -73.84]]
+    # sous une maille classée de Montréal, la carte du Québec est vide (pas de double couche)
+    cov = s.couvert_mtl(g, {"north": 46.0, "west": -74.0, "step": 0.04, "nx": 1, "ny": 1, "rows": ["B"]})
+    assert cov[:20, :13].all() and not cov[25:, :].any() and not cov[:, 14:].any()
+    info = s.png_classes_qc(g, tmp_path / "c2.png", largeur=30, gm={"north": 46.0, "west": -74.0, "step": 0.04, "nx": 1, "ny": 1, "rows": ["B"]})
+    im = Image.open(tmp_path / "c2.png").convert("RGBA")
+    assert im.getpixel((2, 1))[3] == 0 and im.getpixel((25, 1))[3] == 255
+
+
 def test_masque_quebec_bouche_les_lacs():
     v = np.zeros((100, 100), np.uint8)
     v[10:90, 10:90] = 1
@@ -337,8 +400,20 @@ def test_grille_qc_embarquee():
     # roc du Bouclier (A ou B) à Chibougamau, argile de la mer de Champlain (C) à Saint-Hyacinthe
     assert s.classe_qc(g, 45.62, -72.95) == 3
     assert s.classe_qc(g, 49.91, -74.37) in (1, 2)
-    # Montréal est couverte (la couche de Montréal de 2023 est retirée)
+    # Montréal est couverte ; v0.6.1 : la grille de Montréal de 2023 y prime (voir test_grille_de_montreal_prioritaire)
     assert s.code_qc(g, 45.52, -73.62) is not None
+
+
+@pytest.mark.skipif(not (GRILLE_OK and (s.DONNEES / s.EAU_PNG).exists()), reason="masque des eaux absent")
+def test_masque_des_eaux_embarque():
+    g = s.charger_grille_qc()
+    e = s.charger_eau(g)
+    cel = lambda lat, lon: bool(e["m"][int((g["north"] - lat) / g["dlat"]), int((lon - g["west"]) / g["dlon"])])
+    assert cel(45.47, -73.52) and cel(45.40, -73.80) and cel(46.80, -71.20)      # Saint-Laurent, lac Saint-Louis, Québec
+    assert cel(48.60, -72.10)                                                       # lac Saint-Jean
+    assert not cel(45.50, -73.58) and not cel(45.62, -72.95)                        # Montréal, Saint-Hyacinthe
+    gm = s.charger_grille_mtl()
+    assert sum(r.count("E") for r in gm["rows"]) > 1000
 
 
 # --- Rasters Web Mercator ------------------------------------------------------------------------
@@ -409,6 +484,11 @@ def test_couche_contrat_avec_la_carte():
     assert [x["k"] for x in k["classes"]] == list("ABCD") and all(x["label"] and x["color"].startswith("#") for x in k["classes"])
     assert k["url"] == "https://www.mdpi.com/2673-7094/5/2/24" and k["source"] == "Rosset et al. (2025), Geotechnics 5(2):24"
     assert all(k.get(x) for x in ("titre", "avertissement")) and "mtl" not in c
+    # v0.6.1 : couche de Montréal au-dessus, légende A à E, PGA transparent sur l'eau
+    c2 = s.couche({"bounds": [[44, -80], [63, -57]], "province": True, "eau": True}, {"bounds": [[44.9, -79.8], [62.7, -57.0]]},
+                  today="2026-10-15", mtl={"bounds": [[45.2, -74.3], [46.1, -73.0]]})
+    assert c2["mtl"]["img"] == "data/sismique/classes-mtl.png" and c2["mtl"]["url"].endswith("geosciences13090256")
+    assert [x["k"] for x in c2["classes"]["classes"]] == list("ABCDE") and "plans d'eau" in c2["pga"]["avertissement"]
     # repli sans grille du Québec : ancien masque de 50 km
     assert "50 km" in s.couche({"bounds": [[44, -80], [59, -56]], "province": False}, None)["pga"]["avertissement"]
 

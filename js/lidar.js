@@ -3,7 +3,9 @@
    Outils partagés reçus par window.QA (esc, nf1, nf2, ESRI, LD_WCS, fetchT, det, byNum, wireDialog). ES5.
    v0.6.0 : MNS filtré (arbres, véhicules retirés ; le profil suit le MNT hors de l'ouvrage), imagerie satellite Esri
    (asphalte gris / végétation verte) pour le filtre et la lecture des voies du dessous, recalage du centre et de l'axe
-   du tablier sur les pixels de l'ouvrage, tableau récapitulatif ; la pente de l'obstacle n'est plus calculée. */
+   du tablier sur les pixels de l'ouvrage, tableau récapitulatif ; la pente de l'obstacle n'est plus calculée.
+   v0.6.1 : pentes de la route portée au meilleur de trois modèles (droite, parabole, double pente : ldGrade), équation de la
+   parabole, alerte au-delà de 5 %. */
 (function(){
   'use strict';
   window.QA_MOD = window.QA_MOD || {};
@@ -90,19 +92,91 @@
     return best;
   }
 
-  // ---- v0.5.5 : pentes et chaussée sous l'ouvrage ----
-  // Droite des moindres carrés z = a + b·s sur les points non nuls de [s0, s1] : { a, b (m/m), n, s0, s1 }
-  function ldFit(S, Z, s0, s1){
-    var n = 0, sx = 0, sz = 0, sxx = 0, sxz = 0, lo = Infinity, hi = -Infinity;
-    for (var i = 0; i < S.length; i++) {
-      var s = S[i], z = Z[i];
-      if (z == null || s < s0 || s > s1) continue;
-      n++; sx += s; sz += z; sxx += s * s; sxz += s * z; if (s < lo) lo = s; if (s > hi) hi = s;
+  // ---- v0.5.5 : chaussée sous l'ouvrage (v0.6.1 : la droite des moindres carrés ldFit est remplacée par ldGrade) ----
+  // ---- v0.6.1 : profil en long de la route portée, au meilleur de trois modèles ----
+  // Sur les points non nuls de [s0, s1] : droite (pente constante), parabole (courbe verticale) ou double pente (deux
+  // droites raccordées en un point de cassure). Chaque modèle est ajusté par moindres carrés robustes (pondération de
+  // Tukey, échelle = MAD) : parapets, véhicules oubliés ou joints n'entraînent pas la courbe. Choix : critère BIC à
+  // résidus tronqués à 3 σ (σ = bruit du meilleur modèle souple, 3 cm au moins) ; un modèle courbe ou cassé doit en plus
+  // s'écarter de la droite d'au moins 4 cm quelque part, sinon la pente est dite constante.
+  // Renvoie null (moins de 6 points ou moins de 8 m) ou { type: 'droite' | 'parabole' | 'double', s0, s1, n, sig, c (coefficients
+  // en x = s − xm), xm, sb (cassure), z(s), g(s) (pente en m/m), gMax (plus forte pente en valeur absolue), apex ({ s, z } de la
+  // parabole si le sommet ou le creux est dans la fenêtre), R (rayon de la parabole, m), warn (pente > 5 % : à vérifier) }.
+  function ldGrade(S, Z, s0, s1){
+    var xs = [], zs = [], i, j, k;
+    for (i = 0; i < S.length; i++) if (Z[i] != null && isFinite(Z[i]) && S[i] >= s0 && S[i] <= s1) { xs.push(S[i]); zs.push(Z[i]); }
+    var n = xs.length;
+    if (n < 6 || xs[n - 1] - xs[0] < 8) return null;
+    var lo = xs[0], hi = xs[n - 1], xm = (lo + hi) / 2;
+    function med(a){ var b = a.slice().sort(function(p, q){ return p - q; }), m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; }
+    // moindres carrés pondérés sur une base de fonctions (2 ou 3), élimination de Gauss
+    function wls(B, w){
+      var p = B.length, A = [], r, c, t;
+      for (r = 0; r < p; r++) { A.push([]); for (c = 0; c <= p; c++) A[r].push(0); }
+      for (t = 0; t < n; t++) {
+        if (!w[t]) continue;
+        var v = B.map(function(f){ return f(xs[t] - xm); });
+        for (r = 0; r < p; r++) { for (c = 0; c < p; c++) A[r][c] += w[t] * v[r] * v[c]; A[r][p] += w[t] * v[r] * zs[t]; }
+      }
+      for (c = 0; c < p; c++) {
+        var piv = c; for (r = c + 1; r < p; r++) if (Math.abs(A[r][c]) > Math.abs(A[piv][c])) piv = r;
+        if (Math.abs(A[piv][c]) < 1e-12) return null;
+        t = A[c]; A[c] = A[piv]; A[piv] = t;
+        for (r = 0; r < p; r++) if (r !== c) { var f = A[r][c] / A[c][c]; for (var q = c; q <= p; q++) A[r][q] -= f * A[c][q]; }
+      }
+      return A.map(function(row, r){ return row[p] / row[r]; });
     }
-    var den = n * sxx - sx * sx;
-    if (n < 4 || Math.abs(den) < 1e-9) return null;
-    var b = (n * sxz - sx * sz) / den;
-    return { a: (sz - b * sx) / n, b: b, n: n, s0: lo, s1: hi };
+    function robust(B){
+      var w = zs.map(function(){ return 1; }), co = null, res = null, sc = 0;
+      for (var it = 0; it < 8; it++) {
+        co = wls(B, w); if (!co) return null;
+        res = xs.map(function(x, t){ return zs[t] - B.reduce(function(a, f, q){ return a + co[q] * f(x - xm); }, 0); });
+        sc = Math.max(0.02, 1.4826 * med(res.map(Math.abs)));
+        w = res.map(function(r){ var u = r / (4.685 * sc); return Math.abs(u) < 1 ? (1 - u * u) * (1 - u * u) : 0; });
+      }
+      return { c: co, r: res, sc: sc, B: B };
+    }
+    var one = function(){ return 1; }, lin = function(x){ return x; };
+    var M = { droite: robust([one, lin]), parabole: robust([one, lin, function(x){ return x * x; }]), double: null };
+    // double pente : cassure cherchée sur une grille (au moins 4 m et 20 % de la fenêtre de chaque côté)
+    var marg = Math.max(4, 0.2 * (hi - lo)), stepB = Math.max(1, (hi - lo) / 40);
+    for (var sb = lo + marg; sb <= hi - marg + 1e-9; sb += stepB) {
+      var xb = sb - xm, m = robust([one, lin, function(x){ return Math.max(0, x - xb); }]);
+      if (!m) continue;
+      m.sb = sb;
+      var ss = m.r.reduce(function(a, r, t){ return a + Math.min(r * r, 9 * m.sc * m.sc); }, 0);
+      if (!M.double || ss < M.double.ss) { m.ss = ss; M.double = m; }
+    }
+    if (!M.droite) return null;
+    var sig = Math.max(0.03, Math.min(M.parabole ? M.parabole.sc : 1e9, M.double ? M.double.sc : 1e9, M.droite.sc));
+    var KP = { droite: 2, parabole: 3, double: 4 }, best = 'droite', bic = {};
+    Object.keys(M).forEach(function(t){
+      if (!M[t]) return;
+      bic[t] = M[t].r.reduce(function(a, r){ return a + Math.min(r * r, 9 * sig * sig) / (sig * sig); }, 0) + KP[t] * Math.log(n);
+      if (bic[t] < bic[best]) best = t;
+    });
+    function zOf(m){ return function(s){ return m.B.reduce(function(a, f, q){ return a + m.c[q] * f(s - xm); }, 0); }; }
+    if (best !== 'droite') {                                 // écart utile à la droite : 4 cm au moins
+      var zb = zOf(M[best]), zl = zOf(M.droite), dev = 0;
+      for (k = 0; k <= 40; k++) { var s = lo + (hi - lo) * k / 40; dev = Math.max(dev, Math.abs(zb(s) - zl(s))); }
+      if (dev < 0.04) best = 'droite';
+    }
+    var m0 = M[best], c = m0.c, out = { type: best, s0: lo, s1: hi, n: n, sig: m0.sc, c: c, xm: xm, z: zOf(m0), bic: bic };
+    if (best === 'droite') out.g = function(){ return c[1]; };
+    else if (best === 'parabole') {
+      out.g = function(s){ return c[1] + 2 * c[2] * (s - xm); };
+      out.R = Math.abs(c[2]) > 1e-9 ? 1 / (2 * Math.abs(c[2])) : null;
+      var sv = xm - c[1] / (2 * c[2]);
+      if (isFinite(sv) && sv >= lo && sv <= hi) out.apex = { s: sv, z: out.z(sv), sommet: c[2] < 0 };
+      out.sommet = c[2] < 0;
+    } else {
+      out.sb = m0.sb; out.zb = out.z(m0.sb);
+      out.g = function(s){ return s < m0.sb ? c[1] : c[1] + c[2]; };
+    }
+    j = [out.g(lo), out.g(hi)];
+    out.gMax = Math.max(Math.abs(j[0]), Math.abs(j[1]));
+    out.warn = out.gMax > 0.05;
+    return out;
   }
   // Orientation d'un vecteur (x vers l'est, y vers le nord, en Mercator) : N, NE, E, SE, S, SO, O, NO
   function ldCap(v){ var a = (Math.atan2(v[0], v[1]) * 180 / Math.PI + 360) % 360; return ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'][Math.round(a / 45) % 8]; }
@@ -653,12 +727,26 @@
     }
     // pentes longitudinales de la route portée (approches et tablier), d'après le MNT et le MNS filtré ; fenêtres
     // comptées à partir des extrémités du tablier (mesurées si le recalage a réussi)
-    var aw = M.ponceau ? [3, 40] : [5, 60], e0 = M.ponceau ? -hd : dk0, e1 = M.ponceau ? hd : dk1;
-    var fL = ldFit(PL.s, PL.mnt, e0 - aw[1], e0 - aw[0]), fR = ldFit(PL.s, PL.mnt, e1 + aw[0], e1 + aw[1]);
+    // v0.6.1 : chaque tronçon est ajusté au meilleur de trois modèles (ldGrade : droite, parabole, double pente) sur la
+    // surface de la route (MNS filtré : remblai, dalle de transition et tablier ; MNT pour un ponceau). La pente d'une
+    // approche est lue au bout côté ouvrage ; celle du tablier aux deux bouts. Fenêtres d'approche raccourcies (3 à 45 m) :
+    // au-delà, la route suit d'autres courbes verticales.
+    var aw = M.ponceau ? [3, 40] : [3, 45], e0 = M.ponceau ? -hd : dk0, e1 = M.ponceau ? hd : dk1, ZR = M.ponceau ? PL.mnt : PL.mns;
+    var fL = ldGrade(PL.s, ZR, e0 - aw[1], e0 - aw[0]), fR = ldGrade(PL.s, ZR, e1 + aw[0], e1 + aw[1]);
     M.capL = ldCap([-u[0], -u[1]]); M.capR = ldCap(u);
-    M.appL = fL && fL.s1 - fL.s0 >= 15 ? { pct: fL.b * 100, fit: fL } : null;
-    M.appR = fR && fR.s1 - fR.s0 >= 15 ? { pct: fR.b * 100, fit: fR } : null;
-    if (!ponceau && hd > 6) { var fD = ldFit(PL.s, PL.mns, dk0 + 2, dk1 - 2); M.deckSlope = fD ? { pct: fD.b * 100, fit: fD } : null; }
+    M.appL = fL && fL.s1 - fL.s0 >= 15 ? { pct: fL.g(fL.s1) * 100, fit: fL } : null;
+    M.appR = fR && fR.s1 - fR.s0 >= 15 ? { pct: fR.g(fR.s0) * 100, fit: fR } : null;
+    if (ponceau) { var fP = ldGrade(PL.s, PL.mnt, -hd - 15, hd + 15); M.deckSlope = fP ? { fit: fP } : null; }
+    else if (hd > 6) {
+      // tablier : points du tablier seulement (au moins 0,5 m au-dessus du sol), prolongés de 10 m sur les approches s'il est court
+      var ext = dk1 - dk0 >= 30 ? 0 : 10, ZD = PL.s.map(function(s, i){
+        var z = PL.mns[i]; if (z == null) return null;
+        if (s >= dk0 && s <= dk1) return PL.mnt[i] != null && z - PL.mnt[i] < 0.5 ? null : z;
+        return z;
+      });
+      var fD = ldGrade(PL.s, ZD, ext ? dk0 - ext : dk0 + 1, ext ? dk1 + ext : dk1 - 1);
+      M.deckSlope = fD ? { fit: fD } : null;
+    }
     var zl = PL.mnt.filter(function(z){ return z != null; });
     M.denivele = zl.length && M.under != null ? Math.min(Math.max.apply(null, zl.slice(0, zl.length >> 1)), Math.max.apply(null, zl.slice(zl.length >> 1))) - M.under : null;
     return { P: { long: PL, travers: PT }, M: M, c: c, x: x0, u: u, dir: dir, hl: hl, T: T, k: k, ptOrigin: ptOrigin, mask: FL.mask };
@@ -733,8 +821,11 @@
     if (o.guide) h += '<line x1="' + X(o.guide[0][0]) + '" y1="' + Y(o.guide[0][1]) + '" x2="' + X(o.guide[1][0]) + '" y2="' + Y(o.guide[1][1]) + '" stroke="#c93a2b" stroke-width="1.6" stroke-dasharray="5 3"/>' +
       o.guide.map(function(g){ return '<circle cx="' + X(g[0]) + '" cy="' + Y(g[1]) + '" r="3.2" fill="#c93a2b"/>'; }).join('');
     (o.fits || []).forEach(function(f){
-      h += '<line x1="' + X(f.s0) + '" y1="' + Y(f.z0) + '" x2="' + X(f.s1) + '" y2="' + Y(f.z1) + '" stroke="' + f.color + '" stroke-width="2.4" stroke-linecap="round" opacity=".85"/>' +
-        '<text x="' + ((X(f.s0) + X(f.s1)) / 2) + '" y="' + (Math.min(Y(f.z0), Y(f.z1)) - 7) + '" text-anchor="middle" font-size="12" font-weight="700" fill="' + f.color + '" paint-order="stroke" stroke="#fff" stroke-width="3">' + esc(f.label) + '</text>';
+      var pts = f.pts.filter(function(p){ return p[0] >= s0 && p[0] <= s1; });
+      if (pts.length < 2) return;
+      var ztop = Math.max.apply(null, pts.map(function(p){ return p[1]; })), xm = (X(pts[0][0]) + X(pts[pts.length - 1][0])) / 2;
+      h += '<path d="' + pts.map(function(p, i){ return (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1); }).join('') + '" fill="none" stroke="' + f.color + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>' +
+        '<text x="' + xm.toFixed(1) + '" y="' + (Y(ztop) - 7).toFixed(1) + '" text-anchor="middle" font-size="12" font-weight="700" fill="' + f.color + '" paint-order="stroke" stroke="#fff" stroke-width="3">' + esc(f.label) + '</text>';
     });
     (o.pts || []).forEach(function(q){ h += '<circle cx="' + X(q.s) + '" cy="' + Y(q.z) + '" r="3" fill="#fff" stroke="' + (q.color || '#c93a2b') + '" stroke-width="1.8"><title>' + esc(q.title || '') + '</title></circle>'; });
     (o.marks || []).forEach(function(m){
@@ -777,6 +868,8 @@
       '.qa-recap tr.qa-key th{font-weight:700;color:var(--navy)}.qa-recap tr.qa-key td.qa-v{font-size:.95rem}' +
       '.qa-recap tr.qa-key th,.qa-recap tr.qa-key td{background:#f1fbf7}.qa-recap tr.qa-key th{box-shadow:inset 3px 0 0 var(--teal)}' +
       '.ld-lanes .tbl td.n{color:var(--muted);font-size:.72rem}' +
+      '.qa-recap tr.qa-warn th,.qa-recap tr.qa-warn td{background:#fff6e5}.qa-recap tr.qa-warn td.qa-n b{color:#7a4b00}.qa-recap tr.qa-warn th{box-shadow:inset 3px 0 0 #e69f00}' +
+      '.qa-recap .ld-eq{font:600 .78rem/1.3 Consolas,"Cascadia Mono",monospace;white-space:nowrap}' +
       '@media(max-width:600px){.qa-recap tr{display:grid;grid-template-columns:minmax(0,1fr) auto}.qa-recap th{white-space:normal}' +
       '.qa-recap td.qa-n{grid-column:1/-1;padding-top:0;border-bottom:1px solid var(--line)}.qa-recap tr:not(.qa-g) th,.qa-recap tr:not(.qa-g) td.qa-v{border-bottom:0}.qa-recap tr.qa-g th{grid-column:1/-1}}';
     document.head.appendChild(st);
@@ -788,6 +881,7 @@
     return '<tr' + (cls ? ' class="' + cls + '"' : '') + '><th scope="row">' + esc(label) + '</th><td class="qa-v">' + val + '</td><td class="qa-n">' + (note || '') + '</td></tr>';
   }
   var LD_NF2 = new Intl.NumberFormat('fr-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });   // altitudes et hauteurs : 2 décimales fixes
+  var LD_NF4 = new Intl.NumberFormat('fr-CA', { minimumFractionDigits: 4, maximumFractionDigits: 4 }), LD_NF6 = new Intl.NumberFormat('fr-CA', { maximumSignificantDigits: 3 });   // coefficients de l'équation
   function ldGroup(t){ return '<tr class="qa-g"><th colspan="3" scope="rowgroup">' + esc(t) + '</th></tr>'; }
 
   function ldRender(o, R, secs, srcs){
@@ -822,10 +916,29 @@
     geo += ldRow('Biais', M.skew || 0, '°', 'inventaire' + (M.osmSkew != null ? ' · mesuré sur l’axe OSM : ' + nf1.format(M.osmSkew) + '°' : ''));
     rows += ldGroup('Géométrie') + geo;
     // pentes longitudinales de la route portée (signe : + = monte vers l'ouvrage pour les approches ; vers le point cardinal indiqué sinon)
-    var sl = '';
-    if (M.appL) sl += ldRow('Approche côté ' + M.capL, pctTxt(M.appL.pct), '', M.appL.pct > 0.3 ? 'monte vers l’ouvrage' : M.appL.pct < -0.3 ? 'descend vers l’ouvrage' : 'à plat');
-    if (M.deckSlope) sl += ldRow('Tablier', pctTxt(Math.abs(M.deckSlope.pct)), '', M.deckSlope.pct > 0.3 ? 'monte vers ' + M.capR : M.deckSlope.pct < -0.3 ? 'monte vers ' + M.capL : 'à plat');
-    if (M.appR) sl += ldRow('Approche côté ' + M.capR, pctTxt(-M.appR.pct), '', -M.appR.pct > 0.3 ? 'monte vers l’ouvrage' : -M.appR.pct < -0.3 ? 'descend vers l’ouvrage' : 'à plat');
+    // v0.6.1 : modèle retenu (droite, parabole, double pente) et alerte au-delà de 5 %
+    var sl = '', WARN5 = ' · <b>⚠ plus de 5 % : peu probable pour une route, à vérifier</b> (axe hors de la chaussée, végétation, ouvrage jumeau)';
+    var modTxt = function(f){ return f.type === 'droite' ? 'pente constante' : f.type === 'double' ? 'double pente' : 'courbe verticale (parabole)'; };
+    var appRow = function(cap, pct, f){
+      return ldRow('Approche côté ' + cap, pctTxt(pct), '', (pct > 0.3 ? 'monte vers l’ouvrage' : pct < -0.3 ? 'descend vers l’ouvrage' : 'à plat') + ' · ' + modTxt(f) + (f.type === 'droite' ? '' : ', pente lue près de l’ouvrage') + (f.warn ? WARN5 : ''), f.warn ? 'qa-warn' : '');
+    };
+    if (M.appL) sl += appRow(M.capL, M.appL.pct, M.appL.fit);
+    if (M.deckSlope) {
+      var fd = M.deckSlope.fit, gA = fd.g(fd.s0) * 100, gB = fd.g(fd.s1) * 100, lbl = M.ponceau ? 'Chaussée sur le ponceau' : 'Tablier', sens = 'sens ' + M.capL + ' → ' + M.capR;
+      if (fd.type === 'droite') sl += ldRow(lbl, pctTxt(Math.abs(gA)), '', (gA > 0.3 ? 'monte vers ' + M.capR : gA < -0.3 ? 'monte vers ' + M.capL : 'à plat') + ' · pente constante' + (fd.warn ? WARN5 : ''), fd.warn ? 'qa-warn' : '');
+      else if (fd.type === 'double') sl += ldRow(lbl, pctTxt(gA) + ' / ' + pctTxt(gB), '', 'double pente, ' + sens + ' · cassure à ' + nf1.format(Math.abs(fd.sb)) + ' m ' + (Math.abs(fd.sb) < 0.5 ? 'du centre' : 'vers ' + (fd.sb > 0 ? M.capR : M.capL)) + ' (' + LD_NF2.format(fd.zb) + ' m)' + (fd.warn ? WARN5 : ''), fd.warn ? 'qa-warn' : '');
+      else {
+        var ap = fd.apex, rayon = fd.R;
+        sl += ldRow(lbl, pctTxt(gA) + ' → ' + pctTxt(gB), '', 'courbe verticale ' + (fd.sommet ? 'en sommet' : 'en creux') + ' (parabole), ' + sens + (rayon ? ' · rayon ≈ ' + Math.round(rayon).toLocaleString('fr-CA') + ' m' : '') +
+          (ap ? ' · ' + (ap.sommet ? 'sommet' : 'point bas') + ' à ' + nf1.format(Math.abs(ap.s)) + ' m ' + (Math.abs(ap.s) < 0.5 ? 'du centre' : 'vers ' + (ap.s > 0 ? M.capR : M.capL)) + ' (' + LD_NF2.format(ap.z) + ' m)' : '') + (fd.warn ? WARN5 : ''), fd.warn ? 'qa-warn' : '');
+        // équation : forme au sommet (usuelle en tracé routier) si le sommet est connu, sinon polynôme ; x en m depuis le centre du tablier, vers capR
+        var c2 = fd.c[2], xv = fd.xm - fd.c[1] / (2 * c2), zv = fd.z(xv), sgn = function(v){ return v < 0 ? ' − ' : ' + '; };
+        var eq = rayon && Math.abs(xv) < 5000 ? 'z(x) = ' + LD_NF2.format(zv) + (c2 < 0 ? ' − ' : ' + ') + '(x' + sgn(-xv) + nf1.format(Math.abs(xv)) + ')² / (2 × ' + Math.round(rayon).toLocaleString('fr-CA') + ')'
+          : 'z(x) = ' + LD_NF2.format(fd.z(0)) + sgn(fd.g(0)) + LD_NF4.format(Math.abs(fd.g(0))) + '·x' + sgn(c2) + LD_NF6.format(Math.abs(c2)) + '·x²';
+        sl += ldRow('Équation du profil', 'parabole', '', '<span class="ld-eq">' + esc(eq) + '</span><br>z en m, x en m depuis le centre ' + (M.ponceau ? 'du ponceau' : 'du tablier') + ', positif vers ' + M.capR + ' · écart type ' + nf1.format(fd.sig * 100) + ' cm sur ' + fd.n + ' points');
+      }
+    }
+    if (M.appR) sl += appRow(M.capR, -M.appR.pct, M.appR.fit);
     if (sl) rows += ldGroup('Pentes de la route portée') + sl;
     var recap = '<table class="qa-recap"><tbody>' + rows + '</tbody></table>';
     var laneHtml = '';
@@ -904,11 +1017,21 @@
       };
     }
     var hd = M.ltb / 2;
-    var fitSeg = function(f, label){ return { s0: f.s0, s1: f.s1, z0: f.a + f.b * f.s0, z1: f.a + f.b * f.s1, label: label, color: '#6a3d9a' }; };
-    var fitsL = [];
-    if (M.appL) fitsL.push(fitSeg(M.appL.fit, nf1.format(Math.abs(M.appL.pct)) + ' %'));
-    if (M.appR) fitsL.push(fitSeg(M.appR.fit, nf1.format(Math.abs(M.appR.pct)) + ' %'));
-    if (M.deckSlope) fitsL.push(fitSeg(M.deckSlope.fit, nf1.format(Math.abs(M.deckSlope.pct)) + ' %'));
+    // v0.6.1 : courbe du modèle retenu (droite, parabole ou double pente), échantillonnée tous les mètres
+    var fitSeg = function(f, label){
+      var pts = [], s;
+      for (s = f.s0; s < f.s1; s += 1) pts.push([s, f.z(s)]);
+      if (f.sb != null) pts.push([f.sb, f.z(f.sb)]);
+      pts.push([f.s1, f.z(f.s1)]); pts.sort(function(a, b){ return a[0] - b[0]; });
+      return { pts: pts, label: label, color: f.warn ? '#b3261e' : '#6a3d9a' };
+    };
+    var pc = function(v){ return nf1.format(Math.abs(v)) + ' %'; }, fitsL = [];
+    if (M.appL) fitsL.push(fitSeg(M.appL.fit, pc(M.appL.pct)));
+    if (M.appR) fitsL.push(fitSeg(M.appR.fit, pc(M.appR.pct)));
+    if (M.deckSlope) {
+      var fd2 = M.deckSlope.fit, a2 = fd2.g(fd2.s0) * 100, b2 = fd2.g(fd2.s1) * 100;
+      fitsL.push(fitSeg(fd2, fd2.type === 'droite' ? pc(a2) : fd2.type === 'parabole' ? 'parabole ' + pc(a2) + ' → ' + pc(b2) : pc(a2) + ' / ' + pc(b2)));
+    }
     var topS = M.ponceau ? 0 : M.sx;
     ldProfile($('#ld-long'), R.P.long, { label: 'Profil en long', deck: M.ponceau ? [-3, 3] : [M.dk0, M.dk1], under: M.ponceau ? null : [M.dk0, M.dk1], fits: fitsL,
       pts: (M.lanes || []).map(function(l){ return { s: M.sx + l.t, z: l.z, title: l.name + ' : chaussée ' + LD_NF2.format(l.z) + ' m' }; }),
@@ -962,6 +1085,7 @@
       R.dtm = res.dtm; R.dsm = res.dsm; R.osmOk = res.osm.ok;
       ldRender(o, R, res.fresh ? (performance.now() - t0) / 1000 : null, 'WCS RNCan, ' + res.osm.src + (res.img ? ', imagerie Esri' : ', imagerie indisponible'));
     }).catch(function(e){
+      if (window.console) console.error(e);                // pile d'appel dans la console (diagnostic)
       if (run !== ldRun) return;
       dlg.querySelector('.ld-body').innerHTML = '<div class="ld-wait">Échec du chargement LiDAR (' + esc(e && e.name === 'AbortError' ? 'délai dépassé' : (e && e.message) || 'réseau') + '). Réessayer plus tard.</div>';
     });
