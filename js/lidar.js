@@ -5,7 +5,9 @@
    (asphalte gris / végétation verte) pour le filtre et la lecture des voies du dessous, recalage du centre et de l'axe
    du tablier sur les pixels de l'ouvrage, tableau récapitulatif ; la pente de l'obstacle n'est plus calculée.
    v0.6.1 : pentes de la route portée au meilleur de trois modèles (droite, parabole, double pente : ldGrade), équation de la
-   parabole, alerte au-delà de 5 %. */
+   parabole, alerte au-delà de 5 %.
+   v0.6.2 : axe de la route portée lu sur le relief quand OSM et le masque de l'ouvrage manquent (ldReliefAxis) ; alerte de
+   pente à ± 10 % sur la pente affichée (et non plus sur le bout éloigné de la fenêtre) ; équation z = a + b·x + x²/c. */
 (function(){
   'use strict';
   window.QA_MOD = window.QA_MOD || {};
@@ -101,7 +103,9 @@
   // s'écarter de la droite d'au moins 4 cm quelque part, sinon la pente est dite constante.
   // Renvoie null (moins de 6 points ou moins de 8 m) ou { type: 'droite' | 'parabole' | 'double', s0, s1, n, sig, c (coefficients
   // en x = s − xm), xm, sb (cassure), z(s), g(s) (pente en m/m), gMax (plus forte pente en valeur absolue), apex ({ s, z } de la
-  // parabole si le sommet ou le creux est dans la fenêtre), R (rayon de la parabole, m), warn (pente > 5 % : à vérifier) }.
+  // parabole si le sommet ou le creux est dans la fenêtre), R (rayon de la parabole, m), warn (pente > 10 % : à vérifier) }.
+  // v0.6.2 : pente au-delà de laquelle une route est peu probable (± 10 %, demande de l'utilisateur ; 5 % en v0.6.1)
+  var LD_GMAX = 0.10;
   function ldGrade(S, Z, s0, s1){
     var xs = [], zs = [], i, j, k;
     for (i = 0; i < S.length; i++) if (Z[i] != null && isFinite(Z[i]) && S[i] >= s0 && S[i] <= s1) { xs.push(S[i]); zs.push(Z[i]); }
@@ -175,7 +179,7 @@
     }
     j = [out.g(lo), out.g(hi)];
     out.gMax = Math.max(Math.abs(j[0]), Math.abs(j[1]));
-    out.warn = out.gMax > 0.05;
+    out.warn = out.gMax > LD_GMAX;
     return out;
   }
   // Orientation d'un vecteur (x vers l'est, y vers le nord, en Mercator) : N, NE, E, SE, S, SO, O, NO
@@ -336,6 +340,32 @@
       if (c.d <= L1[0].d + 12 * k && side(c) > side(best)) best = c;
     });
     return best;
+  }
+  // v0.6.2 : axe de la route portée lu sur le relief, quand OSM et le masque de l'ouvrage font défaut. Depuis le point
+  // de l'inventaire, la surface (MNS filtré) reste au niveau du tablier le long de la route portée et chute en travers
+  // (route, voie ferrée ou cours d'eau du dessous, talus d'un remblai). On essaie toutes les directions (pas de 2°) sur
+  // ± (demi-largeur + 10 m), sans dépasser la demi-longueur (ponceau : ± demi-longueur du ponceau, de 12 à 40 m, pour
+  // couvrir le remblai ; n° 17342) : la route portée est celle où la chute moyenne est la plus faible.
+  // Contraste exigé : chute moyenne de 0,4 m au moins dans la direction la plus pentue, et la plus faible sous 35 % de
+  // la plus forte (terrain plat ou ambigu : pas d'axe). Renvoie { u, drop (chute moyenne en travers, m) } ou null.
+  function ldReliefAxis(F, p0, ltb, lht, k, ponceau){
+    var z0s = [], a, s;
+    for (a = 0; a < 360; a += 45) for (s = 0; s <= 3; s += 1.5) { var zq = ldNear(F, p0[0] + Math.cos(a * Math.PI / 180) * s * k, p0[1] + Math.sin(a * Math.PI / 180) * s * k); if (zq != null) z0s.push(zq); }
+    if (z0s.length < 5) return null;
+    var z0 = ldMed(z0s), h = ponceau ? Math.max(12, Math.min(ltb / 2, 40)) : Math.max(12, Math.min(lht / 2 + 10, Math.max(ltb / 2, 12))), best = null, worst = null;
+    for (a = 0; a < 180; a += 2) {
+      var ux = Math.cos(a * Math.PI / 180), uy = Math.sin(a * Math.PI / 180), sum = 0, n = 0;
+      for (s = -h; s <= h + 1e-9; s += 1) {
+        var z = ldNear(F, p0[0] + ux * s * k, p0[1] + uy * s * k);
+        if (z != null) { sum += Math.max(0, z0 - z); n++; }
+      }
+      if (n < h) continue;
+      var d = sum / n;
+      if (!best || d < best.d) best = { d: d, u: [ux, uy] };
+      if (!worst || d > worst.d) worst = { d: d };
+    }
+    if (!best || worst.d < 0.4 || best.d > 0.35 * worst.d) return null;
+    return { u: best.u, drop: worst.d };
   }
   // Médiane glissante (± r échantillons, valeurs nulles ignorées) : pics isolés restants sur un profil
   function ldMed1(Z, r){
@@ -575,7 +605,12 @@
         // tablier plus large que long (viaduc d'échangeur) : l'axe principal des pixels est sa largeur
         if (lht > ltb * 1.1) u = [-u[1], u[0]];
         axisSrc = 'axe déduit du LiDAR (' + nn + ' pixels du tablier' + (lht > ltb * 1.1 ? ', tablier plus large que long' : '') + (hint ? ', ouvrage jumeau : tablier ' + { N: 'nord', S: 'sud', E: 'est', O: 'ouest' }[mJ[2]] : '') + ')';
-      } else { u = [1, 0]; axisSrc = 'axe inconnu (est-ouest par défaut)'; }
+      } else {
+        // v0.6.2 : ni OSM ni pixels de tablier (tablier classé « sol » dans le MNT, ex. n° 13741) : axe pris sur le relief
+        var ra = ldReliefAxis(dsf, p0, ltb, lht, k, ponceau);
+        if (ra) { u = ra.u; axisSrc = 'axe déduit du relief (la surface reste au niveau ' + (ponceau ? 'de la chaussée' : 'du tablier') + ' le long de la route, chute de ' + nf1.format(ra.drop) + ' m en travers)'; }
+        else { u = [1, 0]; axisSrc = 'axe inconnu (est-ouest par défaut)'; }
+      }
     }
     // 1 bis. v0.6.0 : recalage latéral. Le chemin OSM peut être décalé du tablier (tracé approximatif, ligne médiane
     // entre deux ouvrages jumeaux) : on décale l'axe parallèlement à lui-même, de −15 à +15 m, on mesure la plage de
@@ -736,6 +771,10 @@
     M.capL = ldCap([-u[0], -u[1]]); M.capR = ldCap(u);
     M.appL = fL && fL.s1 - fL.s0 >= 15 ? { pct: fL.g(fL.s1) * 100, fit: fL } : null;
     M.appR = fR && fR.s1 - fR.s0 >= 15 ? { pct: fR.g(fR.s0) * 100, fit: fR } : null;
+    // v0.6.2 : l'alerte porte sur la pente affichée (au bout côté ouvrage), en valeur absolue : une parabole d'approche
+    // pouvait être signalée pour la pente de son bout éloigné, non affichée (n° 18180 : −1,8 % signalé)
+    if (M.appL) M.appL.fit.warn = Math.abs(M.appL.pct) > LD_GMAX * 100;
+    if (M.appR) M.appR.fit.warn = Math.abs(M.appR.pct) > LD_GMAX * 100;
     if (ponceau) { var fP = ldGrade(PL.s, PL.mnt, -hd - 15, hd + 15); M.deckSlope = fP ? { fit: fP } : null; }
     else if (hd > 6) {
       // tablier : points du tablier seulement (au moins 0,5 m au-dessus du sol), prolongés de 10 m sur les approches s'il est court
@@ -744,6 +783,9 @@
         if (s >= dk0 && s <= dk1) return PL.mnt[i] != null && z - PL.mnt[i] < 0.5 ? null : z;
         return z;
       });
+      // v0.6.2 : tablier classé « sol » dans le MNT (aucun point gardé sur le tablier) : surface du MNS filtré telle quelle
+      var nDk = ZD.filter(function(z, i){ return z != null && PL.s[i] >= dk0 && PL.s[i] <= dk1; }).length;
+      if (nDk < 6) ZD = PL.mns;
       var fD = ldGrade(PL.s, ZD, ext ? dk0 - ext : dk0 + 1, ext ? dk1 + ext : dk1 - 1);
       M.deckSlope = fD ? { fit: fD } : null;
     }
@@ -916,8 +958,8 @@
     geo += ldRow('Biais', M.skew || 0, '°', 'inventaire' + (M.osmSkew != null ? ' · mesuré sur l’axe OSM : ' + nf1.format(M.osmSkew) + '°' : ''));
     rows += ldGroup('Géométrie') + geo;
     // pentes longitudinales de la route portée (signe : + = monte vers l'ouvrage pour les approches ; vers le point cardinal indiqué sinon)
-    // v0.6.1 : modèle retenu (droite, parabole, double pente) et alerte au-delà de 5 %
-    var sl = '', WARN5 = ' · <b>⚠ plus de 5 % : peu probable pour une route, à vérifier</b> (axe hors de la chaussée, végétation, ouvrage jumeau)';
+    // v0.6.1 : modèle retenu (droite, parabole, double pente) ; v0.6.2 : alerte au-delà de ± 10 %
+    var sl = '', WARN5 = ' · <b>⚠ plus de ' + Math.round(LD_GMAX * 100) + ' % (en montée ou en descente) : peu probable pour une route, à vérifier</b> (axe hors de la chaussée, végétation, ouvrage jumeau)';
     var modTxt = function(f){ return f.type === 'droite' ? 'pente constante' : f.type === 'double' ? 'double pente' : 'courbe verticale (parabole)'; };
     var appRow = function(cap, pct, f){
       return ldRow('Approche côté ' + cap, pctTxt(pct), '', (pct > 0.3 ? 'monte vers l’ouvrage' : pct < -0.3 ? 'descend vers l’ouvrage' : 'à plat') + ' · ' + modTxt(f) + (f.type === 'droite' ? '' : ', pente lue près de l’ouvrage') + (f.warn ? WARN5 : ''), f.warn ? 'qa-warn' : '');
@@ -931,11 +973,11 @@
         var ap = fd.apex, rayon = fd.R;
         sl += ldRow(lbl, pctTxt(gA) + ' → ' + pctTxt(gB), '', 'courbe verticale ' + (fd.sommet ? 'en sommet' : 'en creux') + ' (parabole), ' + sens + (rayon ? ' · rayon ≈ ' + Math.round(rayon).toLocaleString('fr-CA') + ' m' : '') +
           (ap ? ' · ' + (ap.sommet ? 'sommet' : 'point bas') + ' à ' + nf1.format(Math.abs(ap.s)) + ' m ' + (Math.abs(ap.s) < 0.5 ? 'du centre' : 'vers ' + (ap.s > 0 ? M.capR : M.capL)) + ' (' + LD_NF2.format(ap.z) + ' m)' : '') + (fd.warn ? WARN5 : ''), fd.warn ? 'qa-warn' : '');
-        // équation : forme au sommet (usuelle en tracé routier) si le sommet est connu, sinon polynôme ; x en m depuis le centre du tablier, vers capR
-        var c2 = fd.c[2], xv = fd.xm - fd.c[1] / (2 * c2), zv = fd.z(xv), sgn = function(v){ return v < 0 ? ' − ' : ' + '; };
-        var eq = rayon && Math.abs(xv) < 5000 ? 'z(x) = ' + LD_NF2.format(zv) + (c2 < 0 ? ' − ' : ' + ') + '(x' + sgn(-xv) + nf1.format(Math.abs(xv)) + ')² / (2 × ' + Math.round(rayon).toLocaleString('fr-CA') + ')'
-          : 'z(x) = ' + LD_NF2.format(fd.z(0)) + sgn(fd.g(0)) + LD_NF4.format(Math.abs(fd.g(0))) + '·x' + sgn(c2) + LD_NF6.format(Math.abs(c2)) + '·x²';
-        sl += ldRow('Équation du profil', 'parabole', '', '<span class="ld-eq">' + esc(eq) + '</span><br>z en m, x en m depuis le centre ' + (M.ponceau ? 'du ponceau' : 'du tablier') + ', positif vers ' + M.capR + ' · écart type ' + nf1.format(fd.sig * 100) + ' cm sur ' + fd.n + ' points');
+        // v0.6.2 : équation sous la forme z = a + b·x + x²/c (demande de l'utilisateur) ; x en m depuis le centre du tablier,
+        // vers capR ; c = 1 / (coefficient de x²), négatif en sommet ; |c| = 2 × rayon
+        var c2 = fd.c[2], cc = 1 / c2, sgn = function(v){ return v < 0 ? ' − ' : ' + '; };
+        var eq = 'z(x) = ' + LD_NF2.format(fd.z(0)) + sgn(fd.g(0)) + LD_NF4.format(Math.abs(fd.g(0))) + '·x' + sgn(cc) + 'x² / ' + Math.round(Math.abs(cc)).toLocaleString('fr-CA');
+        sl += ldRow('Équation du profil', 'parabole', '', '<span class="ld-eq">' + esc(eq) + '</span><br>forme a + b·x + x²/c : a = ' + LD_NF2.format(fd.z(0)) + ' m (altitude au centre), b = ' + LD_NF4.format(fd.g(0)).replace('-', '−') + ' (pente au centre, m/m), c = ' + Math.round(cc).toLocaleString('fr-CA').replace('-', '−') + ' m (= ' + (cc < 0 ? '−' : '') + '2 × rayon) · z en m, x en m depuis le centre ' + (M.ponceau ? 'du ponceau' : 'du tablier') + ', positif vers ' + M.capR + ' · écart type ' + nf1.format(fd.sig * 100) + ' cm sur ' + fd.n + ' points');
       }
     }
     if (M.appR) sl += appRow(M.capR, -M.appR.pct, M.appR.fit);

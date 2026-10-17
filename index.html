@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>QuickerAtlasOA v0.6.1 · Atlas des ouvrages d’art du Québec</title>
+<title>QuickerAtlasOA v0.6.2 · Atlas des ouvrages d’art du Québec</title>
 <meta name="description" content="Proposition de visualisation de l'inventaire des structures (ponts, ponceaux, murs, tunnels) du ministère des Transports et de la Mobilité durable du Québec.">
 <meta name="theme-color" content="#102d41">
 <link rel="preconnect" href="https://server.arcgisonline.com">
@@ -606,9 +606,9 @@ table.list tbody tr:hover{background:#eef5f7}
             <span class="info-i" tabindex="0" role="note" data-tip="≈ 1 800 structures du MTMD absentes de l’outil public : surtout des ponceaux de 3 à 4,5 m et des ouvrages d’autres responsables.">i</span></div>
           <div class="check-row"><label class="field check"><input type="checkbox" id="villes"><span>Inclure les ouvrages des villes (Montréal, Sherbrooke)</span></label>
             <span class="info-i" tabindex="0" role="note" data-tip="Inventaires ouverts des deux villes, ajoutés aux filtres, à la liste et aux statistiques ; un ouvrage déjà au MTMD n’est compté qu’une fois. Montréal donne le type et l’ICG de la Ville ; Sherbrooke, seulement le nom et la position.">i</span></div>
-          <div class="check-row"><label class="field check"><input type="checkbox" id="forestiers"><span>Afficher les ponts forestiers (MRNF)</span></label>
-            <span class="info-i" tabindex="0" role="note" data-tip="≈ 4 800 ponts du réseau forestier et autres hors MTMD (AQréseau+). Affichés sur la carte seulement : ils restent hors des filtres, de la liste et des statistiques (positions et informations sommaires, sans type ni état). Ponts ferroviaires : couche « Réseau ferroviaire », menu des couches.">i</span></div>
-          <p class="hint" style="margin-left:25px">Ponts forestiers : hors des filtres.</p>
+          <div class="check-row"><label class="field check"><input type="checkbox" id="forestiers"><span>Afficher les autres ponts hors MTMD (AQréseau+)</span></label>
+            <span class="info-i" tabindex="0" role="note" data-tip="≈ 4 800 ponts absents de l’inventaire du MTMD, tirés d’AQréseau+ (MRNF) : chemins forestiers et multiusages surtout, mais aussi ponts municipaux, de la Sépaq ou privés, en forêt ou non. Affichés sur la carte seulement : ils restent hors des filtres, de la liste et des statistiques (positions et informations sommaires, sans type ni état). Ponts ferroviaires : couche « Réseau ferroviaire », menu des couches.">i</span></div>
+          <p class="hint" style="margin-left:25px">Ponts forestiers, municipaux, etc. : hors des filtres.</p>
         </div>
       </details>
 
@@ -764,7 +764,7 @@ table.list tbody tr:hover{background:#eef5f7}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="data/structures.js"></script>
 <script src="data/details.js"></script>
-<script>window.PQ_META={"version": "0.6.1", "date": "2026-10-15", "author": "Anthony Chéruel"};</script>
+<script>window.PQ_META={"version": "0.6.2", "date": "2026-10-17", "author": "Anthony Chéruel"};</script>
 <script>
 (function(){
   'use strict';
@@ -1510,7 +1510,7 @@ table.list tbody tr:hover{background:#eef5f7}
     });
   }
 
-  // ---------- Ponts forestiers (v0.5.6) : AQréseau+ du MRNF hors inventaire du MTMD ----------
+  // ---------- Autres ponts hors MTMD (v0.5.6 « ponts forestiers », renommés en v0.6.2) : AQréseau+ du MRNF ----------
   // Forme = source (triangle : Routard, chemins multiusages ; carré : Forêt ouverte ; cercle : autres sources),
   // remplissage = statut (plein : ouvert, creux : inconnu, plein foncé barré : fermé). Aucun type ni état : inconnus.
   var FOR_SHAPE = { ROUTARD: 'triangle', AQ_FO: 'square' }, FOR_COL = '#8a5a2b';
@@ -1540,7 +1540,7 @@ table.list tbody tr:hover{background:#eef5f7}
     if (!C) return g;
     C.points.forEach(function(p){
       var src = C.srcs[p[2]], m = new ForPin([p[0] / 1e5, p[1] / 1e5], { renderer: canvas, radius: 3.6, shape: FOR_SHAPE[src] || 'circle', st: p[3] });
-      m.bindTooltip(function(){ return '<b>Pont forestier</b> · ' + esc(C.sts[p[3]]) + (p[4] ? ' · dossier ' + esc(p[4]) : '') + ' <small>(' + esc(src) + ')</small>'; }, { direction: 'top', className: 'geo-tip' });
+      m.bindTooltip(function(){ return '<b>Pont hors MTMD</b> · ' + esc(C.sts[p[3]]) + (p[4] ? ' · dossier ' + esc(p[4]) : '') + ' <small>(' + esc(src) + ')</small>'; }, { direction: 'top', className: 'geo-tip' });
       m.on('click', function(){ m.unbindPopup().bindPopup(forPopup(C, p), { maxWidth: 280, className: 'for-pop' }).openPopup(); });
       g.addLayer(m);
     });
@@ -1551,7 +1551,7 @@ table.list tbody tr:hover{background:#eef5f7}
     var lat = p[0] / 1e5, lon = p[1] / 1e5, src = C.srcs[p[2]], el = document.createElement('div');
     var row = function(k, v){ return '<dt>' + esc(k) + '</dt><dd>' + v + '</dd>'; };
     // v0.6.0 : fiche compacte (« Voisins OpenStreetMap » retiré, à la demande)
-    el.innerHTML = '<h3>Pont forestier <small>hors inventaire du MTMD · ' + esc(C.sts[p[3]]) + '</small></h3><dl>' +
+    el.innerHTML = '<h3>Pont hors MTMD <small>AQréseau+ (forestier, municipal…) · ' + esc(C.sts[p[3]]) + '</small></h3><dl>' +
       (p[4] ? row('Dossier', esc(p[4])) : '') +
       row('Capacité', p[5] ? esc(p[5]) + ' t' : '<span class="muted">inconnue</span>') +
       row('Source', esc(src) + (C.srcLabels && C.srcLabels[src] ? ' <small class="muted">· ' + esc(C.srcLabels[src]) + '</small>' : '')) + '</dl>' +
@@ -2972,7 +2972,7 @@ table.list tbody tr:hover{background:#eef5f7}
       return g;
     } },
     // filtre : case à cocher du panneau des filtres (v0.6.0), absente du panneau des couches
-    { key: 'forestiers', name: 'Ponts forestiers et autres hors MTMD (MRNF)', filtre: true, src: 'data/couche-forestiers.js', z: 1.5, build: buildForestiers },
+    { key: 'forestiers', name: 'Autres ponts hors MTMD (forestiers, municipaux… ; AQréseau+)', filtre: true, src: 'data/couche-forestiers.js', z: 1.5, build: buildForestiers },
     // Aléa sismique en deux couches superposables (v0.6.0) : PGA de la province et classes de site du Québec
     { key: 'pga', couche: 'sismique', name: 'Aléa sismique (PGA)', sub: 'CNBC 2020, classe C, 2 % en 50 ans', src: 'data/couche-sismique.js', z: -5, build: buildPga },
     { key: 'classes', couche: 'sismique', name: 'Classes de site sismique', sub: 'A à E (Vs30), échelle du Québec', src: 'data/couche-sismique.js', z: -4, build: buildClasses }
@@ -2994,7 +2994,7 @@ table.list tbody tr:hover{background:#eef5f7}
   function ovByKey(k){ return OVERLAYS.filter(function(x){ return x.key === k; })[0]; }
   function setOverlay(k, on){ var ov = ovByKey(k); if (ov && map) { if (on) map.addLayer(ov.layer); else map.removeLayer(ov.layer); } }
   var lcEl = null;
-  // État des cases (panneau des couches + case « ponts forestiers » des filtres) recopié depuis la carte
+  // État des cases (panneau des couches + case « autres ponts hors MTMD » des filtres) recopié depuis la carte
   function syncLayerUI(){
     if (!map) return;
     if (lcEl) {
@@ -3026,7 +3026,7 @@ table.list tbody tr:hover{background:#eef5f7}
           OVERLAYS.filter(function(ov){ return !ov.filtre; }).map(function(ov){
             return '<label class="lc-ov"><input type="checkbox" role="switch" data-ov="' + ov.key + '"><span class="lc-sw" aria-hidden="true"></span>' +
               '<span class="lc-n">' + esc(ov.name) + (ov.sub ? '<small>' + esc(ov.sub) + '</small>' : '') + '</span></label>';
-          }).join('') + '</div><p class="lc-foot">Ponts forestiers : case dans le panneau des filtres.</p></div>';
+          }).join('') + '</div><p class="lc-foot">Autres ponts hors MTMD (forestiers, municipaux…) : case dans le panneau des filtres.</p></div>';
         L.DomEvent.disableClickPropagation(d);
         L.DomEvent.disableScrollPropagation(d);
         var btn = d.querySelector('.lc-btn'), pan = d.querySelector('.lc-panel');

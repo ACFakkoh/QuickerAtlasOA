@@ -16,7 +16,7 @@ Sortie : `data/couche-forestiers.js` (chargé par `<script src>` → compatible 
     (window.PQ_COUCHES = window.PQ_COUCHES || {}).forestiers = {
       "generated": "2026-10-14",              # date de génération
       "version":   "AQ20260701",              # version d'AQréseau+ (champ `Version` de la source)
-      "titre":     "Ponts forestiers (MRNF)",
+      "titre":     "Autres ponts hors MTMD (AQréseau+, MRNF)",
       "attribution": "Adresses Québec / AQréseau+ — MRNF, CC-BY 4.0",
       "source":    "<URL du service>",
       "avertissement": "Aucune valeur légale : positions et capacités indicatives, non inspectées par le MTMD.",
@@ -71,7 +71,7 @@ OUT = DATA_DIR / "couche-forestiers.js"
 SEUIL_DOUBLON_M = 30                      # à moins de 30 m d'un ouvrage du MTMD : même pont, déjà dans l'atlas
 ECHELLE = 100_000                         # degrés → entiers (1e-5° ≈ 1,11 m)
 
-TITRE = "Ponts forestiers (MRNF)"
+TITRE = "Autres ponts hors MTMD (AQréseau+, MRNF)"
 ATTRIBUTION = "Adresses Québec / AQréseau+ — MRNF, CC-BY 4.0"
 AVERTISSEMENT = "Aucune valeur légale : positions et capacités indicatives, non inspectées par le MTMD."
 

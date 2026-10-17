@@ -54,7 +54,7 @@ n'est nécessaire.
 | Structures routières de la Ville de Montréal (édition 2021, avec ICG de la Ville) | `etl/villes.py` | `data/couche-mtl.js` (~0,3 Mo) + table `ouvrage_ville` | Données ouvertes de la Ville de Montréal, « Inventaire des actifs de voirie – Structures routières » (CC-BY 4.0) |
 | Ouvrages routiers de la Ville de Sherbrooke | `etl/villes.py` | `data/couche-sherbrooke.js` (~3 Ko) + table `ouvrage_ville` | Données ouvertes de la Ville de Sherbrooke, « Ouvrages routiers » (CC-BY 4.0) |
 | Ponts ferroviaires (v0.5.6) : 1 314 ponts (CN 628, CPKC 268, autres 418), longueur de la géométrie, nom OSM s'il existe | `etl/reseaux.py` | champ `ponts` de `data/couche-rail.js` (+58 Ko) | `ms:reseau_chfer_qc` (`typstruc`) ; noms : OpenStreetMap (ODbL) |
-| Ponts forestiers et autres hors MTMD (v0.5.6) : 4 812 points à plus de 30 m d'un ouvrage du MTMD | `etl/forestiers.py` | `data/couche-forestiers.js` (~0,2 Mo) | AQréseau+ (MRNF), couches « Pont ouvert / inconnu / fermé » (CC-BY 4.0) ; requêtes par `curl` (le serveur coupe `requests`) |
+| Autres ponts hors MTMD (v0.5.6 ; « ponts forestiers » jusqu’à la v0.6.1) : 4 812 points à plus de 30 m d'un ouvrage du MTMD | `etl/forestiers.py` | `data/couche-forestiers.js` (~0,2 Mo) | AQréseau+ (MRNF), couches « Pont ouvert / inconnu / fermé » (CC-BY 4.0) ; requêtes par `curl` (le serveur coupe `requests`) |
 | Aléa sismique (v0.6.1) : PGA classe C 2 %/50 ans (image, tout le Québec) + classes de site du Québec (image, couche séparée) + microzonage de Montréal 2023 au-dessus (prioritaire) ; les trois images sont transparentes sur l'eau (masque GRHQ `etl/donnees/eau_qc.png`) ; valeurs par ouvrage, 5 classes × 2/5/10 % × 11 mesures ; classe de site estimée par ouvrage | `etl/sismique.py` | `data/couche-sismique.js`, `data/sismique/*.png`, `data/sismique/s-XX.js` (120 lots, ~80 Ko chacun, 9,8 Mo en tout), `data/classes-site.js` (11 401 ouvrages, dont 1 512 classés par la grille de Montréal, 0,15 Mo) ; grilles versionnées `etl/donnees/classes_site_qc.{png,json}`, `classes_site_mtl.json`, `eau_qc.png` | Grille officielle CanSHM6, CGC Dossier public 8950 (Licence du gouvernement ouvert – Canada), lue par requêtes HTTP partielles (~58 Mo sur 232) ; classes : tableau 3 de Rosset et al. 2025 (Geotechnics 5(2):24, CC BY 4.0) appliqué aux dépôts de surface du SIGEOM (MRNF, CC BY 4.0, WMS, maille ≈ 220 m) ; Montréal : Rosset et al. 2023 (Geosciences 13(9):256, CC BY 4.0) ; eau : GRHQ simple (MRNF, WMS) |
 | Cours d'eau (v0.5.6, activée par défaut) | — | tuiles WMS, rien à héberger | GRHQ simple (MRNF) |
 
@@ -109,6 +109,9 @@ l'ouvrage, relief ombré local. Aucune donnée précalculée. Depuis la v0.5.5 :
 tablier et de la voie du dessous ; la chaussée du dessous est lue sur 8 sections de l'obstacle hors du pont (4 à 16 m
 au-delà de chaque bord), voie repérée par OSM (sinon plages planes du relief), fenêtre de 3 m la plus plane, droite
 ajustée → altitude sous l'axe ; hauteur = dessus du tablier (MNS) au droit de la voie − chaussée.
+v0.6.1 : pentes de la route portée au meilleur de trois modèles (droite, parabole, double pente). v0.6.2 : sans OSM
+ni pixels de tablier (tablier classé « sol » dans le MNT), l'axe de la route portée est lu sur le relief (direction où
+la surface reste au niveau du tablier) ; alerte de pente à ± 10 % sur la pente affichée ; équation z = a + b·x + x²/c.
 
 **Photos** : servies par le MTMD sans en-tête de cache ; `sw.js` (Service Worker, http(s) seulement) les garde en
 cache (600 au plus) pour ne pas les retélécharger à chaque survol.

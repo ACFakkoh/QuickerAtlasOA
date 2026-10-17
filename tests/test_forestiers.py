@@ -90,7 +90,7 @@ def test_forme_du_payload():
     assert list(p) == ["generated", "version", "titre", "attribution", "source", "avertissement", "srcs", "srcLabels",
                        "sts", "points"]
     assert p["generated"] == "2026-10-14" and p["version"] == "AQ20260701"
-    assert p["titre"] == "Ponts forestiers (MRNF)"
+    assert p["titre"] == "Autres ponts hors MTMD (AQréseau+, MRNF)"
     assert p["attribution"] == "Adresses Québec / AQréseau+ — MRNF, CC-BY 4.0"
     assert p["avertissement"].startswith("Aucune valeur légale") and p["source"].startswith("https://")
     assert p["sts"] == ["Ouvert", "Inconnu", "Fermé"]

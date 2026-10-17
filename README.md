@@ -1,37 +1,36 @@
-# QuickerAtlasOA — l’atlas des ponts du Québec
+# QuickerAtlasOA: an atlas of Québec's bridges
 
-**[▶ Ouvrir l’atlas](https://acfakkoh.github.io/QuickerAtlasOA/)** — gratuit, sans compte, dans le navigateur.
+**[▶ Open the atlas](https://acfakkoh.github.io/QuickerAtlasOA/)**. It's free, needs no account and runs in the browser. *[Version française](README.fr.md)*
 
-![Carte de QuickerAtlasOA](docs/capture.jpg)
+![QuickerAtlasOA: map, structure sheet and LiDAR profile](docs/capture.jpg)
 
-QuickerAtlasOA affiche sur une carte les **≈ 11 700 ouvrages d’art** du ministère des Transports et de la Mobilité
-durable du Québec (MTMD) : ponts, ponceaux, murs et tunnels. Il reprend l’inventaire public du Ministère et le rend
-plus rapide à explorer.
+QuickerAtlasOA puts the **≈ 11,700 structures** of Québec's Ministry of Transportation (MTMD) on one fast map:
+bridges, culverts, retaining walls and tunnels. The interface is in French, like the source inventory.
 
-## Ce que vous pouvez faire
+## What it does
 
-- **Chercher et filtrer** : par nom, route, cours d’eau, municipalité, région, type de pont, année, longueur,
-  état (ICG), restrictions (IAS), limitation de poids ou de hauteur.
-- **Lire la fiche d’un ouvrage** : photo, dimensions, état, dernière inspection, trafic, liens vers la fiche et le
-  rapport d’inspection officiels du MTMD.
-- **Changer de point de vue** : carte, liste exportable (CSV), statistiques cliquables, ou défilement photo par photo.
-- **Ajouter des couches** : réseau routier et ferroviaire, cours d’eau, sondages géotechniques, aléa sismique et
-  classes de site, ponts forestiers, ouvrages des villes de Montréal et Sherbrooke.
-- **Outils d’ingénierie** (dans la fiche) : profil LiDAR (hauteur sous l’ouvrage, pentes), cours d’eau et débits au
-  pont, aléa sismique du code national du bâtiment.
+- **Search and filter** by name, road, river, town, region, bridge type, year, length, condition index (ICG),
+  load or height restriction.
+- **Open a structure sheet** with its photo, dimensions, condition, last inspection, traffic, and links to the
+  official MTMD sheet and inspection report.
+- **Switch views**: map, CSV-exportable list, clickable statistics, or a photo-by-photo slideshow.
+- **Add layers**: road and rail networks, rivers, geotechnical boreholes, seismic hazard and site classes, other
+  bridges outside the MTMD inventory (forest, municipal…), and the Montréal and Sherbrooke city inventories.
+- **Run engineering tools** from a structure sheet. The LiDAR profile computes the clearance under the deck and the
+  road grades from 1 m elevation models, computed live in your browser (inset above). The river tool shows flows at
+  the bridge. The seismic tool shows the National Building Code hazard.
 
-Chaque vue garde ses filtres dans l’adresse : copiez le lien pour partager exactement ce que vous voyez.
+Filters live in the URL, so copying the link shares exactly what you see.
 
-## D’où viennent les données ?
+## Data
 
-Uniquement de **données ouvertes** : inventaire des structures du MTMD et Données Québec (CC-BY 4.0), LiDAR de
-Ressources naturelles Canada, OpenStreetMap, MRNF, CNBC 2020. Elles sont mises à jour périodiquement ; la date figure
-en haut à droite de l’atlas.
+Only **open data**: MTMD structure inventory and Données Québec (CC-BY 4.0), Natural Resources Canada LiDAR,
+OpenStreetMap, MRNF, NBC 2020. It is refreshed periodically, and the data date is shown in the atlas header.
 
-> Projet personnel et indépendant, **non affilié au MTMD**. Les valeurs affichées servent à l’exploration : pour toute
-> décision, la fiche officielle du Ministère et les normes en vigueur font foi.
+> Personal, independent project, **not affiliated with the MTMD**. Values are for exploration only. For any
+> decision, rely on the Ministry's official records and current standards.
 
 ---
 
-Développeurs : mise à jour des données, sources et architecture dans [docs/TECHNIQUE.md](docs/TECHNIQUE.md).
-Auteur : Anthony Chéruel.
+Developers: data pipeline, sources and architecture are in [docs/TECHNIQUE.md](docs/TECHNIQUE.md) (French).
+Author: Anthony Chéruel.

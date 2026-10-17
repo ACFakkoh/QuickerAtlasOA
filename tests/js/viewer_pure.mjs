@@ -97,8 +97,8 @@ const ldRuns = fn('ldRuns', extract('ldMed'));
   assert.equal(r0.length, 1); assert.equal(r0[0].len, 16);
 }
 
-// v0.6.1 : profil en long de la route : droite, parabole ou double pente, robuste aux pics ; alerte au-delà de 5 %
-const ldGrade = fn('ldGrade');
+// v0.6.1 : profil en long de la route : droite, parabole ou double pente, robuste aux pics ; alerte au-delà de 10 % (v0.6.2)
+const ldGrade = fn('ldGrade', 'var LD_GMAX = 0.10;');
 {
   const S = [], bruit = i => ((i * 7919) % 11 - 5) * 0.004;               // bruit déterministe de ± 2 cm
   for (let s = -60; s <= 60; s += 1) S.push(s);
@@ -115,8 +115,10 @@ const ldGrade = fn('ldGrade');
   g = ldGrade(S, S.map((s, i) => 30 + (s < 10 ? 0.015 * (s - 10) : -0.02 * (s - 10)) + bruit(i)), -60, 60);
   assert.equal(g.type, 'double'); assert.ok(Math.abs(g.sb - 10) <= 3, 'cassure ' + g.sb);
   assert.ok(Math.abs(g.g(-30) - 0.015) < 0.002 && Math.abs(g.g(40) + 0.02) < 0.002);
-  // pente de 8 % : signalée
+  // pente de 8 % : plus signalée en v0.6.2 (seuil 10 %) ; −12 % : signalée
   g = ldGrade(S, S.map((s, i) => 30 + 0.08 * s + bruit(i)), -60, 60);
+  assert.equal(g.warn, false);
+  g = ldGrade(S, S.map((s, i) => 30 - 0.12 * s + bruit(i)), -60, 60);
   assert.equal(g.warn, true);
   // trop peu de points
   assert.equal(ldGrade([0, 1, 2], [1, 1, 1], 0, 2), null);
