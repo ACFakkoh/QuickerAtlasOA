@@ -15,8 +15,9 @@ plus rapide à explorer.
 - **Chercher et filtrer** : par nom, route, cours d’eau, municipalité, région, type de pont, année, longueur,
   état (ICG), restrictions (IAS), limitation de poids ou de hauteur.
 - **Lire la fiche d’un ouvrage** : photo, dimensions, état, dernière inspection, trafic, liens vers la fiche et le
-  rapport d’inspection officiels du MTMD.
-- **Changer de point de vue** : carte, liste exportable (CSV), statistiques cliquables, ou défilement photo par photo.
+  rapport d’inspection officiels du MTMD, et vers Wikipédia et Structurae pour environ 160 ponts connus.
+- **Changer de point de vue** : carte, liste exportable (CSV), statistiques cliquables, défilement photo par photo, ou
+  liste des **ponts remarquables du Canada** (Wikipédia) : étoiles dorées sur la carte, hors filtres et statistiques.
 - **Ajouter des couches** : réseau routier et ferroviaire, cours d’eau, sondages géotechniques, aléa sismique et
   classes de site, autres ponts hors MTMD (forestiers, municipaux…), ouvrages des villes de Montréal et Sherbrooke.
 - **Outils d’ingénierie** (dans la fiche) : profil LiDAR (hauteur sous l’ouvrage, pentes), cours d’eau et débits au
@@ -27,7 +28,7 @@ Chaque vue garde ses filtres dans l’adresse : copiez le lien pour partager exa
 ## D’où viennent les données ?
 
 Uniquement de **données ouvertes** : inventaire des structures du MTMD et Données Québec (CC-BY 4.0), LiDAR de
-Ressources naturelles Canada, OpenStreetMap, MRNF, CNBC 2020. Elles sont mises à jour périodiquement ; la date figure
+Ressources naturelles Canada, OpenStreetMap, MRNF, CNBC 2020, Wikipédia (CC BY-SA) et Wikidata (CC0). Elles sont mises à jour périodiquement ; la date figure
 en haut à droite de l’atlas.
 
 > Projet personnel et indépendant, **non affilié au MTMD**. Les valeurs affichées servent à l’exploration : pour toute

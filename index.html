@@ -3,10 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>QuickerAtlasOA v0.6.2 · Atlas des ouvrages d’art du Québec</title>
+<title>QuickerAtlasOA v0.6.3 · Atlas des ouvrages d’art du Québec</title>
 <meta name="description" content="Proposition de visualisation de l'inventaire des structures (ponts, ponceaux, murs, tunnels) du ministère des Transports et de la Mobilité durable du Québec.">
 <meta name="theme-color" content="#102d41">
 <link rel="preconnect" href="https://server.arcgisonline.com">
+<link rel="preconnect" href="https://tile.openstreetmap.org">
+<link rel="preconnect" href="https://www.diffusion.transports.gouv.qc.ca">
+<link rel="dns-prefetch" href="https://servicescarto.mrnf.gouv.qc.ca">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%23102d41'/%3E%3Cpath%20d='M16%202.6c2.9%203.2%203.2%206.4%200%2010-3.2-3.6-2.9-6.8%200-10z'%20fill='%2373e4c2'/%3E%3Crect%20x='3'%20y='13.2'%20width='26'%20height='3.4'%20rx='1.3'%20fill='%2373e4c2'/%3E%3Cpath%20d='M5.2%2029c1.5-6.3%205.5-9.6%2010.8-9.6S25.3%2022.7%2026.8%2029'%20fill='none'%20stroke='%2373e4c2'%20stroke-width='3.4'%20stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -167,6 +170,34 @@ label{font-size:.875rem}
 .for-pop dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;margin:0 0 8px;font-size:.8rem}.for-pop dt{color:var(--muted)}.for-pop dd{margin:0}
 .for-pop .for-links{margin:0 0 6px;font-size:.8rem}
 .for-pop .for-warn{margin:0;font-size:.75rem;line-height:1.4;background:#fff6e5;border:1px solid #efcf8f;color:#7a4b00;border-radius:6px;padding:5px 8px}
+/* v0.6.3 : ponts remarquables (Wikipédia) — fenêtre, légende, vue de liste */
+.wp-pop .leaflet-popup-content{max-height:min(70vh,560px);overflow:hidden auto;scrollbar-width:thin;overflow-wrap:anywhere}
+.wp-pop .wp-img{display:block;margin:-2px -2px 3px;border-radius:6px;overflow:hidden;background:#e8eef2}
+.wp-pop .wp-img img{display:block;width:100%;height:170px;object-fit:cover}
+.wp-pop .wp-cred{font-size:.68rem;color:var(--muted);margin:0 0 6px;line-height:1.3}
+.wp-pop h3 .sym{vertical-align:-2px;margin-right:5px}
+.wp-pop .wp-dist{margin:0 0 6px;font-size:.78rem;font-style:italic;color:var(--ink)}
+.wp-pop .wp-res{margin:0 0 8px;font-size:.78rem;line-height:1.45}
+.wp-pop .wp-note{margin:0;font-size:.7rem;color:var(--muted);line-height:1.35}
+.dr-wiki{display:contents}
+.lg-rq{border:0;background:none;padding:0;font:inherit;color:#005a80;text-decoration:underline;cursor:pointer}
+.remarq{overflow:auto;flex:1;min-height:0;scrollbar-width:thin;display:flex;flex-direction:column;gap:14px}
+.remarq[hidden]{display:none}
+.rq-head{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px 16px;box-shadow:var(--shadow)}
+.rq-head h2{margin:0 0 6px;font-size:1.05rem;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.rq-head h2 small{font-weight:400;color:var(--muted);font-size:.8rem}
+.rq-head p{margin:0 0 8px;font-size:.82rem;line-height:1.5;color:var(--ink);max-width:80ch}
+.rq-nav{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.8rem}
+.rq-nav a{color:var(--teal);text-decoration:none;font-weight:600}.rq-nav a small{color:var(--muted);font-weight:400}
+.rq-sec h3{margin:4px 0 8px;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--navy)}
+.rq-sec h3 small{text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)}
+.rq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.rq-card{display:flex;flex-direction:column;padding:0;text-align:left;border:1px solid var(--line);border-radius:8px;background:var(--paper);overflow:hidden;cursor:pointer;box-shadow:var(--shadow);color:var(--ink)}
+.rq-card:hover{border-color:var(--teal)}
+.rq-card img,.rq-card .rq-noimg{display:flex;align-items:center;justify-content:center;width:100%;height:120px;object-fit:cover;background:#eef2f5}
+.rq-card .rq-t{display:flex;flex-direction:column;gap:2px;padding:7px 9px 9px;font-size:.82rem;line-height:1.3}
+.rq-card .rq-t small{color:var(--muted);font-size:.72rem}
+.rq-wait{padding:20px}
 .lg-sub{margin-top:6px;font-size:.75rem;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:650}
 .leaflet-tooltip{font-family:"Segoe UI",Arial,sans-serif;font-size:.78rem;color:var(--ink);border-color:var(--line)}
 
@@ -528,6 +559,10 @@ table.list tbody tr:hover{background:#eef5f7}
   .df-titles{flex-basis:calc(100% - 40px)}
   .news{right:16px;top:calc(var(--topbar-h) + 6px)}
   .news-btn .news-lbl{display:none}
+  /* v0.6.3 : onglets et indicateurs dans la largeur du téléphone (la barre des indicateurs débordait de 140 px) */
+  .view-tabs{flex:1 1 100%;min-width:0;gap:14px;overflow-x:auto;scrollbar-width:none}
+  .view-tabs button{flex:none}
+  .kpi-bar{margin-left:0;flex:1 1 100%;min-width:0;gap:2px 14px}
 }
 @media(max-width:500px){
   .metrics{grid-template-columns:repeat(2,1fr)}
@@ -704,6 +739,7 @@ table.list tbody tr:hover{background:#eef5f7}
       <button type="button" data-view="liste">Liste</button>
       <button type="button" data-view="stats">Statistiques</button>
       <button type="button" data-view="defile">Défilement</button>
+      <button type="button" data-view="remarq" title="Ponts remarquables du Canada (Wikipédia), hors inventaire du MTMD">Ponts remarquables</button>
     </nav>
     <section class="metrics kpi-bar" aria-label="Indicateurs">
       <div class="metric"><div class="metric-label">Structures</div><div class="metric-value" id="m-count">—</div></div>
@@ -724,6 +760,8 @@ table.list tbody tr:hover{background:#eef5f7}
     </div>
 
     <div class="stats view" id="view-stats" hidden></div>
+
+    <div class="remarq view" id="view-remarq" hidden></div>
 
     <div class="defile view" id="view-defile" hidden>
       <div class="df-scroll" id="df-scroll" tabindex="0" aria-label="Défilement des structures, une à la fois"></div>
@@ -764,7 +802,7 @@ table.list tbody tr:hover{background:#eef5f7}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="data/structures.js"></script>
 <script src="data/details.js"></script>
-<script>window.PQ_META={"version": "0.6.2", "date": "2026-10-17", "author": "Anthony Chéruel"};</script>
+<script>window.PQ_META={"version": "0.6.3", "date": "2026-10-19", "author": "Anthony Chéruel"};</script>
 <script>
 (function(){
   'use strict';
@@ -792,7 +830,7 @@ table.list tbody tr:hover{background:#eef5f7}
         var dy = e.deltaY * (e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1);
         if (!this._active) {
           map._stop();
-          this._active = true; this._moved = false;
+          this._active = true; this._moved = false; map._qaWheel = true;
           this._goal = map.getZoom();
           this._raf = L.Util.requestAnimFrame(this._step, this);
         }
@@ -811,17 +849,35 @@ table.list tbody tr:hover{background:#eef5f7}
           var off = this._mouse.subtract(map.getSize().divideBy(2));
           var c = map.unproject(map.project(this._anchor, nz).subtract(off), nz);
           if (!this._moved) { map._moveStart(true, false); this._moved = true; }
-          map._move(c, nz);
+          // v0.6.3 : « pinch » = geste en cours ; les fonds ne chargent pas les niveaux traversés (avant : ≈ 600 tuiles
+          // demandées pour un zoom de 6 à 14, dont la moitié au serveur lent des cours d'eau ; après : ≈ 160)
+          map._move(c, nz, { pinch: true });
         } else if (this._idle) {
-          // molette au repos et niveau atteint : un seul redessin complet
-          this._active = false;
-          if (this._moved) map._moveEnd(true);
+          // molette au repos et niveau atteint : tuiles du niveau final, puis un seul redessin complet
+          this._active = false; map._qaWheel = false;
+          if (this._moved) { map.fire('zoom'); map._moveEnd(true); }
           return;
         }
         this._raf = L.Util.requestAnimFrame(this._step, this);
       }
     });
     L.Map.addInitHook('addHandler', 'smoothWheel', L.Map.SmoothWheel);
+    // Pendant un zoom à la molette : ni chargement de tuiles toutes les 200 ms, ni test de survol des ≈ 12 000 points
+    L.GridLayer.mergeOptions({ updateWhenZooming: false });
+    var gridMoveEnd = L.GridLayer.prototype._onMoveEnd, canvasMouseMove = L.Canvas.prototype._onMouseMove;
+    L.GridLayer.include({ _onMoveEnd: function(){ if (!(this._map && this._map._qaWheel)) gridMoveEnd.call(this); } });
+    L.Canvas.include({ _onMouseMove: function(e){ if (!(this._map && this._map._qaWheel)) canvasMouseMove.call(this, e); } });
+    // Points : position « monde » (Mercator au zoom 0) gardée en cache ; à chaque zoom, × 2^zoom au lieu d'une
+    // reprojection complète (sinus, logarithme, objets intermédiaires) de chaque point
+    var cmSetLatLng = L.CircleMarker.prototype.setLatLng;
+    L.CircleMarker.include({
+      _project: function(){
+        var m = this._map, w = this._w || (this._w = worldXY(this._latlng.lat, this._latlng.lng)), k = m.getZoomScale(m.getZoom(), 0), o = m.getPixelOrigin();
+        this._point = new L.Point(Math.round(w[0] * k) - o.x, Math.round(w[1] * k) - o.y);
+        this._updateBounds();
+      },
+      setLatLng: function(ll){ this._w = null; return cmSetLatLng.call(this, ll); }
+    });
     map = L.map('map', {
       preferCanvas: true, center: [47.0, -71.5], zoom: 6, minZoom: 4, maxZoom: 18,
       zoomSnap: 0, zoomDelta: 0.5, scrollWheelZoom: false, smoothWheel: true
@@ -832,7 +888,7 @@ table.list tbody tr:hover{background:#eef5f7}
     };
     var SRC_DATA = ' · Données : MTMD / <a href="https://www.donneesquebec.ca/">Données Québec</a> (CC-BY 4.0)';
     var LIDAR_ATTR = 'Relief : MNEHR 1 m © Ressources naturelles Canada';
-    var lidarWms = function(layer, transparent){ return L.tileLayer.wms(LD_WCS, { layers: layer, version: '1.3.0', format: 'image/png', transparent: transparent, opacity: transparent ? 0.9 : 1, maxZoom: 18, attribution: LIDAR_ATTR + SRC_DATA }); };
+    var lidarWms = function(layer, transparent){ return L.tileLayer.wms(LD_WCS, { layers: layer, version: '1.3.0', format: 'image/png', transparent: transparent, opacity: transparent ? 0.9 : 1, maxZoom: 18, tileSize: 512, updateWhenIdle: true, attribution: LIDAR_ATTR + SRC_DATA }); };
     // v0.6.0 : « Plan » (Esri World_Topo_Map) retiré ; OpenStreetMap en tête de liste et par défaut (demande)
     var FONDS = {
       'Gris clair': L.layerGroup([
@@ -1160,7 +1216,7 @@ table.list tbody tr:hover{background:#eef5f7}
   OBST_ORDER.forEach(function(r){ var o = document.createElement('option'); o.value = r; o.textContent = r; $('#obst').appendChild(o); });
 
   var HASH_KEYS = { q: 'q', famille: 'f', types: 't', region: 'r', reseau: 'n', ob: 'o', icg: 'icg', ias: 'ias', amin: 'a0', amax: 'a1', lmin: 'l', h: 'h', lp: 'p', hp: 'hp', vi: 'vi', ch: 'ch' };
-  var VIEWS = ['carte', 'stats', 'liste', 'defile'];
+  var VIEWS = ['carte', 'stats', 'liste', 'defile', 'remarq'];
   function numOk(v){ return v != null && v !== '' && isFinite(parseFloat(v)); }
   function stateToHash(){
     var p = new URLSearchParams();
@@ -1458,34 +1514,133 @@ table.list tbody tr:hover{background:#eef5f7}
     return loading[src];
   }
   function couche(key){ return (window.PQ_COUCHES || {})[key] || null; }
-  // Lignes encodées [classe, libellé, drapeau, lat0, lon0, dlat1, dlon1, …] (entiers, degrés × 1e5)
-  function decodeLine(a){
-    var pts = [], lat = 0, lon = 0;
-    for (var i = 3; i + 1 < a.length; i += 2) { lat += a[i]; lon += a[i + 1]; pts.push([lat / 1e5, lon / 1e5]); }
-    return pts;
-  }
+  // Lignes encodées [classe, libellé, drapeau, lat0, lon0, dlat1, dlon1, …] (entiers, degrés × 1e5) : voir encLine
   // Un seul canevas pour tout ce qui est cliquable (réseaux, sondages, villes, structures) : avec plusieurs
   // canevas, le dernier ajouté capte tous les événements de souris et ceux du dessous deviennent inertes.
   // L'ordre de dessin est rétabli par restack() : réseaux, sondages, villes, puis structures du MTMD.
   // Rail : ligne + traverses (tirets épais et très courts, perpendiculaires au trait) pour ne pas le confondre avec une route.
   // RSSCE estimé (filtre sur le bit 1) : large bande violette translucide sous les routes, lue comme un corridor.
   var RAIL_TIES = { w: 6, dash: '1.4 6' }, RSSCE_STYLE = { color: '#6a3d9a', weight: 9, opacity: 0.32 };
+
+  // ---------- Réseaux : un seul tracé par couche (v0.6.3, performance) ----------
+  // Jusqu'en v0.6.2, une L.polyline par tronçon (≈ 7 700 routes, 8 000 traits de rail, 2 600 de ponts) : Leaflet
+  // reprojetait leurs ≈ 117 000 sommets à chaque zoom (≈ 250 ms mesurés, même hors de l'écran), les redécoupait à
+  // chaque déplacement et testait chaque tracé au survol. Ici : sommets projetés une fois (Mercator au zoom 0 ;
+  // ensuite × 2^zoom), lignes hors écran écartées par leur boîte, tracé par lots de même style, sommets à moins
+  // d'un pixel du précédent sautés ; survol : boîtes, puis distance aux segments.
+  function worldXY(lat, lon){
+    var s = Math.sin(Math.max(-85.0511, Math.min(85.0511, lat)) * Math.PI / 180);
+    return [256 * (0.5 + lon / 360), 256 * (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI))];
+  }
+  // [.., lat0, lon0, dlat1, dlon1, …] (degrés × 1e5) à partir de i0 → { w: x, y monde à plat, b: boîte }
+  function encLine(a, i0){
+    var n = (a.length - i0) >> 1, w = new Float64Array(n * 2), b = [Infinity, Infinity, -Infinity, -Infinity], lat = 0, lon = 0;
+    for (var j = 0; j < n; j++) {
+      lat += a[i0 + 2 * j]; lon += a[i0 + 2 * j + 1];
+      var p = worldXY(lat / 1e5, lon / 1e5);
+      w[2 * j] = p[0]; w[2 * j + 1] = p[1];
+      if (p[0] < b[0]) b[0] = p[0]; if (p[0] > b[2]) b[2] = p[0];
+      if (p[1] < b[1]) b[1] = p[1]; if (p[1] > b[3]) b[3] = p[1];
+    }
+    return { w: w, b: b };
+  }
+  function dashOf(s){ return s ? String(s).split(/[ ,]+/).map(Number) : null; }
+  function segDist2(w, x, y){
+    var best = Infinity;
+    for (var j = 0; j + 3 < w.length; j += 2) {
+      var ax = w[j], ay = w[j + 1], dx = w[j + 2] - ax, dy = w[j + 3] - ay, l = dx * dx + dy * dy;
+      var t = l ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l)) : 0, ex = ax + t * dx - x, ey = ay + t * dy - y;
+      if (ex * ex + ey * ey < best) best = ex * ex + ey * ey;
+    }
+    return best;
+  }
+  // lots : [{ color, weight, opacity, dash, cap, tip (survolable), lines: [{ w, b, tip }] }], dessinés dans l'ordre
+  // (le dernier au-dessus, prioritaire au survol). `_hit` = ligne sous la souris (infobulle).
+  var FastLines = window.L ? L.Path.extend({
+    initialize: function(lots){
+      this._lots = lots; this._hit = null; this._mw = 0;
+      L.setOptions(this, { renderer: canvas, interactive: lots.some(function(B){ return B.tip; }) });
+      lots.forEach(function(B){ this._mw = Math.max(this._mw, B.weight); B.dash = dashOf(B.dash); }, this);
+    },
+    _project: function(){
+      var m = this._map;
+      this._k = m.getZoomScale(m.getZoom(), 0); this._o = m.getPixelOrigin();
+      this._pxBounds = new L.Bounds([-1e9, -1e9], [1e9, 1e9]);
+    },
+    _update: function(){},
+    _empty: function(){ return false; },
+    _updatePath: function(){
+      var r = this._renderer;
+      if (!r._drawing) return;
+      var ctx = r._ctx, k = this._k, ox = this._o.x, oy = this._o.y, rb = r._bounds, pad = this._mw;
+      var x0 = (rb.min.x - pad + ox) / k, y0 = (rb.min.y - pad + oy) / k, x1 = (rb.max.x + pad + ox) / k, y1 = (rb.max.y + pad + oy) / k;
+      ctx.lineJoin = 'round';
+      this._lots.forEach(function(B){
+        ctx.globalAlpha = B.opacity; ctx.strokeStyle = B.color; ctx.lineWidth = B.weight; ctx.lineCap = B.cap || 'round';
+        if (ctx.setLineDash) ctx.setLineDash(B.dash || []);
+        ctx.beginPath();
+        for (var i = 0; i < B.lines.length; i++) {
+          var b = B.lines[i].b;
+          if (b[2] < x0 || b[0] > x1 || b[3] < y0 || b[1] > y1) continue;
+          var w = B.lines[i].w, n = w.length, lx = w[0] * k - ox, ly = w[1] * k - oy;
+          ctx.moveTo(lx, ly);
+          for (var j = 2; j < n; j += 2) {
+            var x = w[j] * k - ox, y = w[j + 1] * k - oy;
+            if (j < n - 2 && Math.abs(x - lx) + Math.abs(y - ly) < 0.8) continue;
+            ctx.lineTo(x, y); lx = x; ly = y;
+          }
+        }
+        ctx.stroke();
+      });
+      ctx.globalAlpha = 1; if (ctx.setLineDash) ctx.setLineDash([]);
+    },
+    _containsPoint: function(p){
+      var k = this._k, x = (p.x + this._o.x) / k, y = (p.y + this._o.y) / k, best = null;
+      for (var li = this._lots.length - 1; li >= 0 && !best; li--) {
+        var B = this._lots[li];
+        if (!B.tip) continue;
+        var tol = (B.weight / 2 + 2) / k, bd = tol * tol;          // 2 px de marge : les traits fins se survolent mieux
+        for (var i = 0; i < B.lines.length; i++) {
+          var b = B.lines[i].b;
+          if (x < b[0] - tol || x > b[2] + tol || y < b[1] - tol || y > b[3] + tol) continue;
+          var d = segDist2(B.lines[i].w, x, y);
+          if (d <= bd) { bd = d; best = B.lines[i]; }
+        }
+      }
+      this._hit = best;
+      return !!best;
+    }
+  }) : null;
+  // Infobulle collante dont le texte suit la ligne survolée (une seule couche pour des milliers de lignes)
+  function lineTips(fl){
+    fl.bindTooltip(function(){ return fl._hit ? fl._hit.tip : ''; }, { sticky: true, className: 'line-tip' });
+    fl.on('mousemove', function(){
+      if (fl._hit === fl._tipFor) return;
+      fl._tipFor = fl._hit;
+      if (fl.isTooltipOpen()) fl.getTooltip().update();
+    });
+    return fl;
+  }
   function buildLines(key, filter){
     var C = couche(key), g = L.layerGroup();
     if (!C) return g;
-    C.lines.forEach(function(a){
-      if (filter && !filter(a)) return;
-      var cl = C.classes[a[0]] || {}, pts = decodeLine(a), tip = esc((C.labels && C.labels[a[1]]) || cl.label || '');
-      if (filter) {
-        g.addLayer(L.polyline(pts, { renderer: canvas, color: RSSCE_STYLE.color, weight: RSSCE_STYLE.weight, opacity: RSSCE_STYLE.opacity, lineCap: 'butt', interactive: true })
-          .bindTooltip('RSSCE estimé · ' + tip, { sticky: true, className: 'line-tip' }));
-        return;
-      }
-      if (key === 'rail') g.addLayer(L.polyline(pts, { renderer: canvas, color: cl.color, weight: RAIL_TIES.w, dashArray: RAIL_TIES.dash, lineCap: 'butt', opacity: 0.85, interactive: false }));
-      var pl = L.polyline(pts, { renderer: canvas, color: cl.color, weight: key === 'rail' ? Math.min(1.6, cl.weight || 1.5) : (cl.weight || 2), dashArray: cl.dash || null, opacity: 0.85, interactive: true });
-      pl.bindTooltip(tip, { sticky: true, className: 'line-tip' });
-      g.addLayer(pl);
-    });
+    var lab = function(a){ return esc((C.labels && C.labels[a[1]]) || (C.classes[a[0]] || {}).label || ''); };
+    if (filter) {
+      var rs = C.lines.filter(filter).map(function(a){ var e = encLine(a, 3); e.tip = 'RSSCE estimé · ' + lab(a); return e; });
+      g.addLayer(lineTips(new FastLines([{ lines: rs, tip: true, cap: 'butt', color: RSSCE_STYLE.color, weight: RSSCE_STYLE.weight, opacity: RSSCE_STYLE.opacity }])));
+      return g;
+    }
+    var by = [];
+    C.lines.forEach(function(a){ var e = encLine(a, 3); e.tip = lab(a); (by[a[0]] = by[a[0]] || []).push(e); });
+    // classes de la moins importante à la plus importante : autoroutes (classe 0) au-dessus ; rail : traverses d'abord
+    var ties = [], lots = [];
+    for (var c = by.length - 1; c >= 0; c--) {
+      if (!by[c]) continue;
+      var cl = C.classes[c] || {};
+      if (key === 'rail') ties.push({ lines: by[c], color: cl.color, weight: RAIL_TIES.w, dash: RAIL_TIES.dash, cap: 'butt', opacity: 0.85 });
+      lots.push({ lines: by[c], tip: true, color: cl.color, weight: key === 'rail' ? Math.min(1.6, cl.weight || 1.5) : (cl.weight || 2), dash: cl.dash || null, opacity: 0.85 });
+    }
+    g.addLayer(lineTips(new FastLines(ties.concat(lots))));
     return g;
   }
 
@@ -1497,17 +1652,19 @@ table.list tbody tr:hover{background:#eef5f7}
     var C = couche('rail');
     if (!C || !C.ponts) return;
     var lab = function(i){ return i == null ? null : C.ponts_labels[i]; };
+    var all = [], byOp = RAIL_BR.map(function(){ return []; });
     C.ponts.forEach(function(b){
-      var st = RAIL_BR[b[0]] || RAIL_BR[2], pts = [], lat = 0, lon = 0;
-      for (var i = 6; i + 1 < b.length; i += 2) { lat += b[i]; lon += b[i + 1]; pts.push([lat / 1e5, lon / 1e5]); }
+      var gi = RAIL_BR[b[0]] ? b[0] : 2, st = RAIL_BR[gi], e = encLine(b, 6);
       var expl = lab(b[1]), prop = lab(b[2]), nom = lab(b[4]);
-      var tip = '<b>' + (b[5] ? 'Pont mobile' : 'Pont ferroviaire') + ' · ' + esc(st.k === 'Autre exploitant' ? (expl || 'exploitant inconnu') : st.k) + '</b>' +
+      e.tip = '<b>' + (b[5] ? 'Pont mobile' : 'Pont ferroviaire') + ' · ' + esc(st.k === 'Autre exploitant' ? (expl || 'exploitant inconnu') : st.k) + '</b>' +
         (nom ? ' · « ' + esc(nom) + ' »' : '') + ' · ≈ ' + nf.format(b[3]) + ' m' +
         (prop && prop !== expl ? '<br><small>Propriétaire : ' + esc(prop) + '</small>' : '');
-      g.addLayer(L.polyline(pts, { renderer: canvas, color: '#ffffff', weight: 7, opacity: 0.9, lineCap: 'butt', interactive: false }));
-      g.addLayer(L.polyline(pts, { renderer: canvas, color: st.color, weight: 4, dashArray: st.dash, lineCap: 'butt', opacity: 1, interactive: true })
-        .bindTooltip(tip, { sticky: true, className: 'line-tip' }));
+      all.push(e); byOp[gi].push(e);
     });
+    // liseré blanc sous tous les ponts, puis un lot par exploitant (trait plein, tirets, pointillé)
+    g.addLayer(lineTips(new FastLines([{ lines: all, color: '#ffffff', weight: 7, opacity: 0.9, cap: 'butt' }].concat(RAIL_BR.map(function(st, i){
+      return { lines: byOp[i], tip: true, color: st.color, weight: 4, dash: st.dash, cap: 'butt', opacity: 1 };
+    })))));
   }
 
   // ---------- Autres ponts hors MTMD (v0.5.6 « ponts forestiers », renommés en v0.6.2) : AQréseau+ du MRNF ----------
@@ -1559,6 +1716,130 @@ table.list tbody tr:hover{background:#eef5f7}
       '<p class="for-warn" title="' + esc((C.avertissement || '') + (C.version ? ' Version ' + C.version + '.' : '')) + '">Aucune valeur légale ; type, portée et état inconnus.</p>';
     return el;
   }
+  // ---------- Ponts remarquables (v0.6.3) : liste « List of bridges in Canada » de Wikipédia, faits Wikidata ----------
+  // Étoiles dorées : ouvrages hors inventaire du MTMD (autres provinces, ou au Québec : fédéraux, ferroviaires…).
+  // Couche à part : jamais comptés dans les filtres, les indicateurs ni les statistiques (etl/wikiponts.py).
+  var WP_COL = '#f2b705', WP_EDGE = '#3d2c00', WP_MARK = {};
+  function starPath(ctx, x, y, r){
+    ctx.beginPath();
+    for (var i = 0; i < 10; i++) {
+      var a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? r * 0.45 : r;
+      ctx[i ? 'lineTo' : 'moveTo'](x + q * Math.cos(a), y + q * Math.sin(a));
+    }
+    ctx.closePath();
+  }
+  function starSvg(px){
+    var c = px / 2, r = px * 0.48, pts = [];
+    for (var i = 0; i < 10; i++) { var a = -Math.PI / 2 + i * Math.PI / 5, q = i % 2 ? r * 0.45 : r; pts.push((c + q * Math.cos(a)).toFixed(2) + ',' + (c + 0.6 + q * Math.sin(a)).toFixed(2)); }
+    return '<svg class="sym" width="' + px + '" height="' + px + '" viewBox="0 0 ' + px + ' ' + px + '" aria-hidden="true"><polygon points="' + pts.join(' ') + '" fill="' + WP_COL + '" stroke="' + WP_EDGE + '" stroke-width="1" stroke-linejoin="round"/></svg>';
+  }
+  function wpRadius(z){ return Math.max(6, Math.min(11, 5 + (z - 4) * 0.6)); }
+  var StarPin = window.L ? L.CircleMarker.extend({
+    _project: function(){ this._radius = this.options.radius = wpRadius(this._map.getZoom()); L.CircleMarker.prototype._project.call(this); },
+    _updatePath: function(){
+      var r = this._renderer;
+      if (!r._drawing || this._empty()) return;
+      var ctx = r._ctx, p = this._point, s = this._radius;
+      ctx.globalAlpha = 1; ctx.lineJoin = 'round'; if (ctx.setLineDash) ctx.setLineDash([]);
+      starPath(ctx, p.x, p.y, s + 1.6); ctx.fillStyle = '#ffffff'; ctx.fill();          // halo blanc : lisible sur tous les fonds
+      starPath(ctx, p.x, p.y, s); ctx.fillStyle = WP_COL; ctx.fill();
+      ctx.lineWidth = 1; ctx.strokeStyle = WP_EDGE; ctx.stroke();
+    }
+  }) : null;
+  function wpUrl(lang, t){ return 'https://' + lang + '.wikipedia.org/wiki/' + encodeURIComponent(t.replace(/ /g, '_')); }
+  function stUrl(id){ return 'https://structurae.info/ouvrages/' + encodeURIComponent(id); }
+  function wpLinks(x, lat, lon){
+    var a = function(href, txt, t){ return '<a href="' + esc(href) + '" target="_blank" rel="noopener"' + (t ? ' title="' + esc(t) + '"' : '') + '>' + txt + ' ↗</a>'; };
+    var l = [];
+    if (x.fr) l.push(a(wpUrl('fr', x.fr), 'Wikipédia'));
+    if (x.en) l.push(a(wpUrl('en', x.en), x.fr ? 'Wikipédia (en)' : 'Wikipédia (anglais)'));
+    if (x.st) l.push(a(stUrl(x.st), 'Structurae', 'Base de données des ouvrages d’art Structurae'));
+    if (lat != null) l.push(a(gsatUrl(lat, lon), 'Vue satellite'));
+    if (x.q) l.push(a('https://www.wikidata.org/wiki/' + x.q, 'Wikidata'));
+    return l;
+  }
+  function fmtM(v){ return v == null ? null : v >= 1000 ? nf2.format(v / 1000) + ' km' : nf.format(Math.round(v)) + ' m'; }
+  function wpPopup(p){
+    var el = document.createElement('div'), row = function(k, v){ return v ? '<dt>' + esc(k) + '</dt><dd>' + esc(v) + '</dd>' : ''; };
+    var im = p.img;
+    el.innerHTML = (im ? '<a class="wp-img" href="' + esc(im.page || im.src) + '" target="_blank" rel="noopener"><img src="' + esc(im.src) + '" alt="' + esc(p.nom) + '" loading="lazy" referrerpolicy="no-referrer"></a>' +
+        '<div class="wp-cred">Photo : ' + esc(im.auteur || 'auteur inconnu') + (im.licence ? ' · ' + esc(im.licence) : '') + ' · Wikimedia Commons</div>' : '') +
+      '<h3>' + starSvg(14) + esc(p.nom) + '<small>' + esc([p.prov, p.an].filter(Boolean).join(' · ')) + (p.nomEn && p.nomEn !== p.nom ? ' · <i>' + esc(p.nomEn) + '</i>' : '') + '</small></h3><dl>' +
+      row('Type', p.type) + row('Longueur', fmtM(p.long)) + row('Portée principale', fmtM(p.portee)) + row('Matériau', p.mat) +
+      row('Franchit', p.franchit) + row('Conception', p.archi) + row('Propriétaire', p.prop) + row('Patrimoine', p.patri) + row('Mise en service', p.an) + '</dl>' +
+      (p.distinction ? '<p class="wp-dist" lang="en" title="Texte de la liste de Wikipédia (anglais)">« ' + esc(p.distinction) + ' »</p>' : '') +
+      (p.resume ? '<p class="wp-res"' + (p.resumeLang === 'en' ? ' lang="en"' : '') + '>' + esc(p.resume) + (p.resumeLang === 'en' ? ' <small class="muted">(Wikipédia en anglais)</small>' : '') + '</p>' : '') +
+      '<p class="for-links">' + wpLinks(p, p.lat, p.lon).join(' · ') + '</p>' +
+      '<p class="wp-note">Hors inventaire du MTMD : non compté dans les filtres ni les statistiques. Données : Wikidata (CC0), Wikipédia (CC BY-SA).</p>';
+    return el;
+  }
+  function buildWiki(){
+    var C = couche('wikiponts'), g = L.layerGroup();
+    if (!C) return g;
+    C.ponts.forEach(function(p){
+      var m = new StarPin([p.lat, p.lon], { renderer: canvas, radius: 7 });
+      m.bindTooltip(function(){ return '<b>' + esc(p.nom) + '</b>' + (p.prov ? ' · ' + esc(p.prov) : '') + (p.an ? ' · ' + p.an : '') + '<br><small>Pont remarquable (Wikipédia)</small>'; }, { direction: 'top', className: 'geo-tip', offset: [0, -6] });
+      m.on('click', function(){ wpOpen(p); });
+      WP_MARK[p.id] = m;
+      g.addLayer(m);
+    });
+    return g;
+  }
+  function wpOpen(p){
+    var m = WP_MARK[p.id];
+    if (!m || !map) return;
+    m.unbindPopup().bindPopup(wpPopup(p), { maxWidth: 340, minWidth: 260, className: 'for-pop wp-pop', autoPanPadding: [30, 30] }).openPopup();
+  }
+  // Fiche d'un ouvrage du MTMD : liens Wikipédia et Structurae quand l'ouvrage est apparié (même nom, ≤ 3 km)
+  function wikiLinksHtml(o){
+    var C = couche('wikiponts'), x = C && !o.src && C.mtmd[o.num];
+    return x ? wpLinks(x).join('') : '';
+  }
+  function refreshWikiLinks(){
+    var o = selNum != null && byNum[selNum], el = $('#dr-wiki');
+    if (o && el) el.innerHTML = wikiLinksHtml(o);
+  }
+  // Vue « Ponts remarquables » : liste à part, groupée par province (le Québec hors inventaire en tête)
+  var wpProvOrder = function(a){ return a === 'Québec' ? '' : a || '~'; };
+  function renderRemarq(){
+    var el = $('#view-remarq'), C = couche('wikiponts');
+    if (!C) {
+      el.innerHTML = '<p class="muted rq-wait">Chargement de la liste…</p>';
+      loadScript('data/couche-wikiponts.js').then(function(){ if (view === 'remarq') renderRemarq(); }, function(){ el.innerHTML = '<p class="muted">Liste absente — exécuter <code>python -m etl.wikiponts</code></p>'; });
+      return;
+    }
+    if (el.dataset.ok) return;
+    var groups = {};
+    C.ponts.forEach(function(p){ (groups[p.prov || 'Autre'] = groups[p.prov || 'Autre'] || []).push(p); });
+    var provs = Object.keys(groups).sort(function(a, b){ return collator.compare(wpProvOrder(a), wpProvOrder(b)); });
+    var nMt = Object.keys(C.mtmd).length;
+    el.innerHTML = '<div class="rq-head"><h2>' + starSvg(18) + 'Ponts remarquables du Canada <small>' + nf.format(C.ponts.length) + ' ouvrages hors inventaire du MTMD</small></h2>' +
+      '<p>Ponts d’intérêt historique ou majeurs de la <a href="' + esc(C.source) + '" target="_blank" rel="noopener">liste des ponts du Canada</a> (Wikipédia), complétés par Wikidata. Ils sont affichés en étoiles sur la carte, ' +
+      'mais <b>ne comptent ni dans les filtres ni dans les statistiques</b>. ' + nf.format(nMt) + ' ouvrages du MTMD reliés à un article ont un lien Wikipédia dans leur fiche. Mise à jour : ' + esc(C.generated) + '.</p>' +
+      '<nav class="rq-nav" aria-label="Provinces">' + provs.map(function(pv, i){ return '<a href="#rq-' + i + '">' + esc(pv) + ' <small>' + groups[pv].length + '</small></a>'; }).join('') + '</nav></div>' +
+      provs.map(function(pv, i){
+        return '<section class="rq-sec" id="rq-' + i + '"><h3>' + esc(pv) + (pv === 'Québec' ? ' <small>hors inventaire du MTMD</small>' : '') + '</h3><div class="rq-grid">' +
+          groups[pv].map(function(p){
+            return '<button type="button" class="rq-card" data-id="' + esc(p.id) + '">' +
+              (p.img ? '<img src="' + esc(p.img.src) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="rq-noimg">' + starSvg(28) + '</span>') +
+              '<span class="rq-t"><b>' + esc(p.nom) + '</b><small>' + esc([p.an, fmtM(p.long), (p.type || '').split(',')[0]].filter(Boolean).join(' · ')) + '</small></span></button>';
+          }).join('') + '</div></section>';
+      }).join('');
+    el.dataset.ok = '1';
+  }
+  $('#view-remarq').addEventListener('click', function(e){
+    var b = e.target.closest('.rq-card'), C = couche('wikiponts');
+    if (!b || !C) return;
+    var p = C.ponts.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0];
+    if (!p || !map) return;
+    showView('carte'); writeHash();
+    var go = function(){ map.setView([p.lat, p.lon], Math.max(map.getZoom(), 13), { animate: false }); wpOpen(p); };
+    var ov = ovByKey('wikiponts');
+    if (map.hasLayer(ov.layer) && ov.filled) setTimeout(go, 30);
+    else { ov.onFilled = go; setOverlay('wikiponts', true); }
+  });
+  $('#view-remarq').addEventListener('error', function(e){ if (e.target.tagName === 'IMG') e.target.replaceWith(document.createRange().createContextualFragment('<span class="rq-noimg">' + starSvg(28) + '</span>')); }, true);
+
   // ---------- Aléa sismique (v0.5.6) : PGA du CNBC (classe C, 2 % en 50 ans) + classes de site de Montréal ----------
   // Images rééchantillonnées en Web Mercator par etl/sismique.py, sous les réseaux (volet « raster »).
   // v0.6.0 : PGA (toute la province) et classes de site (Québec) en deux couches séparées, superposables ;
@@ -1761,7 +2042,7 @@ table.list tbody tr:hover{background:#eef5f7}
     } else {
       h += '<div class="dr-nophoto">' + icon(o.tc, 30) + '<span>Pas de photo</span></div>';
     }
-    h += '<div class="dr-links">' + links.join('') + (o.lat != null ? '<button type="button" data-act="center">Centrer la carte</button><button type="button" class="ld-btn" data-act="lidar" title="Profils en long et en travers, hauteur sous l’ouvrage, relief ombré local (LiDAR 1 m de RNCan, calcul de quelques secondes)">Profil LiDAR</button>' +
+    h += '<div class="dr-links">' + links.join('') + '<span class="dr-wiki" id="dr-wiki">' + wikiLinksHtml(o) + '</span>' + (o.lat != null ? '<button type="button" data-act="center">Centrer la carte</button><button type="button" class="ld-btn" data-act="lidar" title="Profils en long et en travers, hauteur sous l’ouvrage, relief ombré local (LiDAR 1 m de RNCan, calcul de quelques secondes)">Profil LiDAR</button>' +
       (o.obst === "Cours d'eau" ? '<button type="button" class="ld-btn" data-act="hydro" title="Bassin versant, zone inondable, niveaux et débits à la station la plus proche">Cours d’eau</button>' : '') +
       '<button type="button" class="ld-btn" data-act="sismique" title="Spectres d’aléa du CNBC 2020/2025 (classes de site A à E, probabilités 2, 5 et 10 % en 50 ans)">Aléa sismique</button>' : '') + '</div>';
     h += '</div>';
@@ -2309,6 +2590,7 @@ table.list tbody tr:hover{background:#eef5f7}
     if (view === 'stats') renderStats();
     else if (view === 'liste') renderList();
     else if (view === 'defile' && dfDirty) dfBuild();
+    else if (view === 'remarq') renderRemarq();
   }
   function showView(v){
     view = v;
@@ -2936,6 +3218,10 @@ table.list tbody tr:hover{background:#eef5f7}
         return;
       }
       if (ov.key === 'pga' || ov.key === 'classes') { h += lgDet(ov, sismiqueLegend(C, ov.key)); return; }
+      if (ov.key === 'wikiponts') {
+        h += '<div class="lg-sub">Ponts remarquables</div><div class="lg-chips"><span>' + starSvg(14) + nf.format(C.ponts.length) + ' ouvrages hors MTMD (Wikipédia) · <button type="button" class="lg-rq" data-rq>voir la liste</button></span></div>';
+        return;
+      }
       if (!C.classes) return;
       h += lgDet(ov, '<div class="lg-chips">' + C.classes.map(function(cl){
         return '<span>' + lineSwatch(cl, ov.key === 'rail') + esc(cl.label) + '</span>';
@@ -2961,11 +3247,15 @@ table.list tbody tr:hover{background:#eef5f7}
     { key: 'eau', name: 'Cours d’eau', sub: 'GRHQ (MRNF), dès le zoom 8', z: -3, build: function(){
       return L.tileLayer.wms('https://servicescarto.mrnf.gouv.qc.ca/pes/services/Territoire/GRHQ_simple_WMS/MapServer/WMSServer', {
         layers: '1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,18,19', version: '1.3.0', format: 'image/png', transparent: true, minZoom: 8, maxZoom: 18, opacity: 0.85, pane: 'wms',
+        // v0.6.3 : serveur lent → images de 512 px (4 fois moins de requêtes), demandées une fois la carte arrêtée
+        tileSize: 512, updateWhenIdle: true,
         attribution: 'Cours d’eau : GRHQ © MRNF (CC-BY 4.0)' });
     } },
     { key: 'rtss', name: 'Réseau routier (RTSS)', sub: 'MTMD, par classe de route', src: 'data/couche-rtss.js', z: 0, build: function(){ return buildLines('rtss'); } },
     { key: 'rssce', couche: 'rtss', name: 'RSSCE estimé', sub: 'réseau du commerce extérieur, non officiel', src: 'data/couche-rtss.js', z: -1, build: function(){ return buildLines('rtss', function(a){ return a[2] & 1; }); } },
     { key: 'rail', name: 'Réseau ferroviaire et ses ponts', sub: 'MTMD ; ponts CN, CPKC et autres', src: 'data/couche-rail.js', z: 1, build: function(){ var g = buildLines('rail'); buildRailBridges(g); return g; } },
+    // v0.6.3 : ponts remarquables du Canada (Wikipédia, Wikidata), étoiles hors filtres et statistiques
+    { key: 'wikiponts', name: 'Ponts remarquables (Wikipédia)', sub: 'Canada, hors inventaire du MTMD', src: 'data/couche-wikiponts.js', z: 3, build: buildWiki },
     { key: 'geotech', name: 'Sondages géotechniques', sub: 'MTMD et banque de données (BDG)', src: 'data/couche-geotech.js', z: 2, build: function(){
       var G = couche('geotech'), g = L.layerGroup();
       if (G) G.points.forEach(function(p){ g.addLayer(geoMarker(p, false)); });
@@ -2978,7 +3268,7 @@ table.list tbody tr:hover{background:#eef5f7}
     { key: 'classes', couche: 'sismique', name: 'Classes de site sismique', sub: 'A à E (Vs30), échelle du Québec', src: 'data/couche-sismique.js', z: -4, build: buildClasses }
   ];
   // v0.6.0 : nouvelle clé (couches sismiques renommées, nouveau panneau)
-  var DEFAULT_OVERLAYS = 'eau,rtss,rail', OVERLAY_KEY = 'pq-couches-v060';
+  var DEFAULT_OVERLAYS = 'eau,rtss,rail,wikiponts', OVERLAY_KEY = 'pq-couches-v060';
   // Ordre de dessin du canevas commun (bas → haut) : routes, rail, sondages ; les structures (MTMD et villes)
   // restent au-dessus parce qu'apply() les ajoute en dernier.
   function restack(){
@@ -3060,6 +3350,7 @@ table.list tbody tr:hover{background:#eef5f7}
       ov.layer.addLayer(g);
       restack();
       renderLegend();
+      if (ov.onFilled) { var f = ov.onFilled; ov.onFilled = null; f(); }
       if (ov.key === 'geotech') refreshExtra();
     }, function(){
       map.removeLayer(ov.layer);
@@ -3098,6 +3389,7 @@ table.list tbody tr:hover{background:#eef5f7}
       L.DomEvent.disableClickPropagation(d);
       L.DomEvent.disableScrollPropagation(d);
       legendBody = d.querySelector('.lg-body');
+      legendBody.addEventListener('click', function(e){ if (e.target.closest('[data-rq]')) { showView('remarq'); writeHash(); } });
       legendSel = d.querySelector('select');
       legendSel.value = colorMode;
       legendSel.addEventListener('change', function(){
@@ -3143,7 +3435,11 @@ table.list tbody tr:hover{background:#eef5f7}
       pendingSel = null; writeHash();
     });
     var saved = DEFAULT_OVERLAYS;
-    try { var sv = localStorage.getItem(OVERLAY_KEY); if (sv != null) saved = sv; } catch (e) { /* idem */ }
+    try {
+      var sv = localStorage.getItem(OVERLAY_KEY); if (sv != null) saved = sv;
+      // v0.6.3 : la nouvelle couche des ponts remarquables s'affiche une première fois, même avec un choix enregistré
+      if (sv != null && !localStorage.getItem('pq-wikiponts-v063')) { saved += ',wikiponts'; localStorage.setItem('pq-wikiponts-v063', '1'); }
+    } catch (e) { /* idem */ }
     OVERLAYS.forEach(function(ov){ if (saved.split(',').indexOf(ov.key) >= 0) ov.layer.addTo(map); });
     syncLayerUI();
   } else { apply(); }
@@ -3152,6 +3448,7 @@ table.list tbody tr:hover{background:#eef5f7}
   // Débits de circulation et journal : chargés après l'affichage (fiche enrichie dès qu'ils arrivent)
   loadScript('data/debits.js').then(refreshExtra, function(){ /* fichier optionnel */ });
   loadScript('data/journal.js').then(journalPret, journalPret);
+  loadScript('data/couche-wikiponts.js').then(refreshWikiLinks, function(){ /* fichier optionnel */ });
 })();
 </script>
 </body>

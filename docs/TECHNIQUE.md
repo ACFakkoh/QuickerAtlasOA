@@ -69,6 +69,8 @@ au commerce extérieur) n'est publié nulle part en données ouvertes : depuis l
 tirée de `couche-rtss.js` (bit 1 du champ `flag`, `reseaux.drapeau_rssce`) = autoroutes et leurs bretelles + routes
 nationales 117, 175, 173, 133 et 185, soit ≈ 8 100 km de chaussées (officiel : 8 046 à 8 104 km selon les bilans).
 
+| Ponts remarquables (v0.6.3) : 179 ponts du Canada hors inventaire du MTMD (étoiles, hors filtres et statistiques) + liens Wikipédia / Structurae pour 159 ouvrages du MTMD (même nom à ≤ 3 km, ponts jumeaux compris ; un échangeur ou un tunnel ne se lie pas à l'article d'un pont) | `etl/wikiponts.py` | `data/couche-wikiponts.js` (~0,18 Mo) | Wikipédia anglais « List of bridges in Canada » (tableaux + liste par province), API Wikipédia (en, fr : coordonnées, image libre, résumé), Wikidata (CC0 : type, longueur, portée, ouverture, matériau, obstacle, conception, propriétaire, patrimoine, identifiant Structurae P454 ; requête SPARQL des ponts de la boîte du Québec pour l'appariement), Wikimedia Commons (auteur et licence de chaque image). Structurae : liens seulement (site fermé aux robots, droits réservés) |
+
 ## Constats de jointure (2026-10-11)
 
 - **WFS 11 701 vs outil public 9 880** : toutes les structures de l'outil sont dans le WFS. Les 1 821 en plus sont
@@ -112,6 +114,14 @@ ajustée → altitude sous l'axe ; hauteur = dessus du tablier (MNS) au droit de
 v0.6.1 : pentes de la route portée au meilleur de trois modèles (droite, parabole, double pente). v0.6.2 : sans OSM
 ni pixels de tablier (tablier classé « sol » dans le MNT), l'axe de la route portée est lu sur le relief (direction où
 la surface reste au niveau du tablier) ; alerte de pente à ± 10 % sur la pente affichée ; équation z = a + b·x + x²/c.
+
+**Performance** (v0.6.3) : routes, rail et ponts ferroviaires sont tracés par une seule couche `FastLines` par réseau
+(au lieu de ≈ 25 000 `L.polyline`) : sommets projetés une fois en Mercator au zoom 0, multipliés par 2^zoom ensuite,
+lignes hors écran écartées par leur boîte, tracé par lots de même style, survol par boîtes puis segments. Les points
+(`L.CircleMarker`) gardent aussi leur position « monde » en cache. Zoom à la molette : événements `pinch`, fonds avec
+`updateWhenZooming: false`, ni chargement de tuiles ni test de survol pendant le geste. WMS (cours d'eau, relief LiDAR) en
+tuiles de 512 px chargées à l'arrêt de la carte. Mesures (Chrome sans GPU) : zoom avec routes et rail 316–383 ms → ≈ 100 ms ;
+zoom molette 6 → 14 : ≈ 530 tuiles demandées → ≈ 28.
 
 **Photos** : servies par le MTMD sans en-tête de cache ; `sw.js` (Service Worker, http(s) seulement) les garde en
 cache (600 au plus) pour ne pas les retélécharger à chaque survol.

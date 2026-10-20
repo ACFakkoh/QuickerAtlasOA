@@ -5,7 +5,7 @@ import sys
 import time
 
 from . import (apex_fiche, apex_list, build, db, debits, forestiers, geotech, gps, hauteurs, merge, net, odata, reseaux,
-               sismique, villes, wfs)
+               sismique, villes, wfs, wikiponts)
 
 SOURCES = {m.SOURCE: m for m in (wfs, apex_list, hauteurs, gps, odata.TabBord, odata.Limites, odata.HauteursDetail)}
 log = logging.getLogger("etl")
@@ -41,7 +41,7 @@ def main(argv=None) -> int:
     up.add_argument("--no-fetch", action="store_true", help="consolider sans rien télécharger")
     up.add_argument("--sans-couches", action="store_true",
                     help="ne pas régénérer les couches de la carte (routes, rail, géotechnique, débits, villes, forestiers)")
-    co = sub.add_parser("couches", help="régénère les couches de la carte (routes, rail, géotechnique, débits, villes, forestiers)")
+    co = sub.add_parser("couches", help="régénère les couches de la carte (routes, rail, géotechnique, débits, villes, forestiers, Wikipédia)")
     co.add_argument("--no-fetch", action="store_true", help="relire data/raw/ sans télécharger")
     sub.add_parser("report", help="rapport de jointure entre sources")
     sub.add_parser("export", help="régénère data/structures.js, data/details.js et data/journal.js depuis la base")
@@ -89,7 +89,8 @@ def _couches(fetch: bool) -> bool:
     etapes = [("réseaux", lambda: reseaux.run(fetch=fetch)), ("géotechnique", lambda: geotech.run(fetch=fetch)),
               ("débits", lambda: debits.run(fetch=fetch)), ("villes", lambda: villes.run(fetch=fetch)),
               ("ponts forestiers", lambda: forestiers.run(fetch=fetch)),
-              ("sismique", lambda: sismique.run(fetch=fetch))]
+              ("sismique", lambda: sismique.run(fetch=fetch)),
+              ("ponts remarquables (Wikipédia)", lambda: wikiponts.run(fetch=fetch))]
     for nom, f in etapes:
         try:
             res = f()
