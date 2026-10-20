@@ -9,7 +9,9 @@ Sources (lecture seule, API publiques, User-Agent identifié) :
 - Wikidata (CC0) : type, longueur, portée, ouverture, matériau, obstacle, architecte, propriétaire, statut
   patrimonial, identifiant Structurae ; et, pour l'appariement, les ponts géolocalisés de la boîte du Québec
   ayant un article (fr ou en) ;
-- Wikimedia Commons : auteur et licence de chaque image.
+- Wikimedia Commons : auteur et licence de chaque image ; pour un pont sans image d'article, image Wikidata (P18),
+  catégorie Commons (P373), photo choisie à la main, ou fichier dont le titre reprend le nom du pont (recherche
+  géolocalisée à 30 km, ou rayon de 600 m autour du pont).
 
 Structurae n'a pas d'API ; le site refuse tout accès automatisé (403) et réserve ses droits (robots.txt) : on
 n'en garde que le lien (identifiant P454 de Wikidata ou renvoi de la liste), jamais le contenu.
@@ -28,7 +30,8 @@ Sortie : `data/couche-wikiponts.js` :
                  "an": 1997, "type": "pont à poutres", "long": 12900, "portee": 250, "mat": "béton précontraint",
                  "franchit": "détroit de Northumberland", "archi": "...", "prop": "...", "patri": "...",
                  "distinction": "<texte anglais de la liste>", "resume": "...", "resumeLang": "fr",
-                 "img": {"src": "<miniature>", "page": "<page Commons>", "auteur": "...", "licence": "CC BY-SA 4.0"},
+                 "img": {"src": "<miniature>", "page": "<page Commons>", "auteur": "...", "licence": "CC BY-SA 4.0",
+                         "origine": "wikidata|categorie|choisie|recherche|proximite (absent : image de l'article)"},
                  "fr": "<titre fr>", "en": "<titre en>", "q": "Q865076", "st": "<id Structurae>"}, ...]}
 
 Cache : réponses brutes dans `data/raw/wikiponts/` (`--no-fetch` les relit).
@@ -80,6 +83,12 @@ BOITE_QC = ((-79.8, 44.9), (-57.1, 62.6))
 # Wikidata : propriété → champ (valeurs « élément » traduites en libellé français, à défaut anglais)
 P_ITEMS = {"P31": "type", "P186": "mat", "P177": "franchit", "P84": "archi", "P127": "prop", "P1435": "patri"}
 P_LONG, P_PORTEE, P_OUVERTURE, P_DEBUT, P_STRUCTURAE, P_COORD = "P2043", "P2787", "P1619", "P571", "P454", "P625"
+P_IMAGE, P_COMMONSCAT = "P18", "P373"
+RAYON_PHOTO_M = 600                     # photo de Commons « à proximité » : rayon de recherche autour du pont
+RE_PHOTO = re.compile(r"\.(jpe?g|png|webp|tiff?)$", re.I)
+# Photos choisies à la main (description et catégories de Commons vérifiées le 2026-10-20) pour des ponts sans image
+# (pas de photo pour le pont suspendu de la rivière de la Paix : effondré en 1957 ; le pont-pipeline voisin est un autre ouvrage)
+PHOTOS_CHOISIES = {"Q14875601": "Route 1 bridge Jemseg.JPG"}                               # Transcanadienne, Jemseg (N.-B.)
 UNITES_M = {"Q11573": 1.0, "Q828224": 1000.0, "Q3710": 0.3048, "Q174728": 0.01}     # m, km, pied, cm
 TYPES_GENERIQUES = {"Q12280", "Q1825472"}                                               # « pont », « ouvrage d'art »
 MOTS_VIDES = {"pont", "ponts", "bridge", "bridges", "viaduc", "viaduct", "de", "du", "des", "la", "le", "les", "l", "d",
@@ -273,6 +282,8 @@ def faits_wikidata(e: dict) -> dict:
     f["an"] = next((a for a in map(_annee, _val(cl, P_OUVERTURE)) if a), None) or \
         next((a for a in map(_annee, _val(cl, P_DEBUT)) if a), None)
     f["st"] = next(iter(_val(cl, P_STRUCTURAE)), None)
+    f["image"] = next(iter(_val(cl, P_IMAGE)), None)
+    f["commonscat"] = next(iter(_val(cl, P_COMMONSCAT)), None)
     co = next(iter(_val(cl, P_COORD)), None)
     f["lat"], f["lon"] = (co["latitude"], co["longitude"]) if co else (None, None)
     sl = e.get("sitelinks", {})
@@ -308,6 +319,76 @@ def images(s, fichiers: list[str], fetch: bool) -> dict[str, dict]:
                 "src": (ii.get("thumburl") or ii.get("url") or "").split("?")[0] or None, "page": ii.get("descriptionurl"),
                 "auteur": _sans_html(meta.get("Artist", {}).get("value")),
                 "licence": _sans_html(meta.get("LicenseShortName", {}).get("value"))}
+    return out
+
+
+def choisir_photo(resultats: list[dict], noms: list[str | None]) -> str | None:
+    """Fichiers de Commons (geosearch ou recherche) → le premier (le plus proche, ou le plus pertinent) dont le titre
+    contient tous les mots significatifs d'un des noms du pont et un mot « pont » (bridge, crossing…). Sinon : aucun."""
+    cles = [m for m in (mots(n) for n in noms) if m]
+    for r in sorted(resultats, key=lambda r: r.get("dist", 0)):
+        t = r.get("title", "").split(":", 1)[-1]
+        if not RE_PHOTO.search(t):
+            continue
+        base = t.rsplit(".", 1)[0].replace("_", " ")
+        if any(c <= mots(base) for c in cles) and RE_PONT.search(base):
+            return t
+    return None
+
+
+def resultats_recherche(d: dict, lat: float, lon: float, max_km: float = 30) -> list[dict]:
+    """Recherche de Commons (generator=search, prop=coordinates) → [{title, dist}] par pertinence, sans les fichiers
+    non géolocalisés ou situés à plus de `max_km` du pont (même nom ailleurs : St. Louis Bridge du Missouri…)."""
+    out = []
+    for pg in sorted(d.get("query", {}).get("pages", []), key=lambda x: x.get("index", 0)):
+        co = (pg.get("coordinates") or [None])[0]
+        if not co:
+            continue                                    # sans position, impossible d'écarter un homonyme
+        else:
+            dx = (co["lon"] - lon) * math.cos(math.radians(lat)) * M_PAR_DEGRE
+            if math.hypot(dx, (co["lat"] - lat) * M_PAR_DEGRE) > max_km * 1000:
+                continue
+        out.append({"title": pg["title"], "dist": 0})
+    return out
+
+
+def photos_de_secours(s, ponts: list[dict], ent: dict, fetch: bool) -> dict[str, tuple[str, str]]:
+    """Ponts sans image d'article → (fichier Commons, origine) : image Wikidata (P18), catégorie Commons (P373),
+    sinon fichier trouvé par la recherche de Commons, sinon photo géolocalisée à moins de RAYON_PHOTO_M ; dans ces
+    deux derniers cas, le titre du fichier doit reprendre le nom du pont et un mot « pont » (voir choisir_photo)."""
+    out = {}
+    for p in ponts:
+        if p.get("img"):
+            continue
+        f = faits_wikidata(ent.get(p["q"], {}))
+        if f["image"]:
+            out[p["q"]] = (f["image"], "wikidata")
+            continue
+        if p["q"] in PHOTOS_CHOISIES:
+            out[p["q"]] = (PHOTOS_CHOISIES[p["q"]], "choisie")
+            continue
+        if f["commonscat"]:
+            d = _get_json(s, API["commons"], {"action": "query", "list": "categorymembers", "cmtype": "file",
+                                              "cmtitle": "Category:" + f["commonscat"], "cmlimit": 50},
+                          f"cat_{_cle(f['commonscat'])}.json", fetch)
+            fic = next((m["title"][5:] for m in d.get("query", {}).get("categorymembers", []) if RE_PHOTO.search(m["title"])), None)
+            if fic:
+                out[p["q"]] = (fic, "categorie")
+                continue
+        noms = [p["nom"], p.get("en"), p.get("fr")]
+        d = _get_json(s, API["commons"], {"action": "query", "generator": "search", "gsrnamespace": 6, "gsrlimit": 30,
+                                          "gsrsearch": p.get("en") or p["nom"], "prop": "coordinates"},
+                      f"rech_{_cle(p.get('en') or p['nom'])}.json", fetch)
+        fic = choisir_photo(resultats_recherche(d, p["lat"], p["lon"]), noms)
+        if fic:
+            out[p["q"]] = (fic, "recherche")
+            continue
+        d = _get_json(s, API["commons"], {"action": "query", "list": "geosearch", "gsnamespace": 6, "gslimit": 50,
+                                          "gscoord": f"{p['lat']}|{p['lon']}", "gsradius": RAYON_PHOTO_M},
+                      f"geo_{_cle(p['lat'], p['lon'], RAYON_PHOTO_M)}.json", fetch)
+        fic = choisir_photo(d.get("query", {}).get("geosearch", []), noms)
+        if fic:
+            out[p["q"]] = (fic, "proximite")
     return out
 
 
@@ -476,6 +557,13 @@ def run(fetch: bool = True) -> dict:
     lib = entites(s, sorted(vals), fetch, props="labels")
     imgs = images(s, [a["image"] for a in art_en.values()] + [a["image"] for a in art_fr.values()], fetch)
     payload = construire(liste, art_en, art_fr, ent, lib, imgs, qc, charger_mtmd())
+    secours = photos_de_secours(s, payload["ponts"], ent, fetch)
+    imgs2 = images(s, [f for f, _ in secours.values()], fetch)
+    for p in payload["ponts"]:
+        f, origine = secours.get(p["q"], (None, None))
+        img = imgs2.get(f or "") or imgs2.get((f or "").replace(" ", "_"))
+        if img and img.get("src"):
+            p["img"] = {**img, "origine": origine}
     corps = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     OUT.write_text(f"window.PQ_COUCHES=window.PQ_COUCHES||{{}};window.PQ_COUCHES.wikiponts={corps};\n",
                    encoding="utf-8", newline="\n")

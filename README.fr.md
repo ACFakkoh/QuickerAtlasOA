@@ -15,7 +15,7 @@ plus rapide à explorer.
 - **Chercher et filtrer** : par nom, route, cours d’eau, municipalité, région, type de pont, année, longueur,
   état (ICG), restrictions (IAS), limitation de poids ou de hauteur.
 - **Lire la fiche d’un ouvrage** : photo, dimensions, état, dernière inspection, trafic, liens vers la fiche et le
-  rapport d’inspection officiels du MTMD, et vers Wikipédia et Structurae pour environ 160 ponts connus.
+  rapport d’inspection officiels du MTMD, et vers Wikipédia pour environ 160 ponts connus.
 - **Changer de point de vue** : carte, liste exportable (CSV), statistiques cliquables, défilement photo par photo, ou
   liste des **ponts remarquables du Canada** (Wikipédia) : étoiles dorées sur la carte, hors filtres et statistiques.
 - **Ajouter des couches** : réseau routier et ferroviaire, cours d’eau, sondages géotechniques, aléa sismique et

@@ -252,3 +252,43 @@ def test_repli_textuel_ajoute_l_annee():
             "geometry": {"type": "LineString", "coordinates": [[-71.0, 46.0], [-71.001, 46.001]]}}
     s = debits.parse_feature(feat)
     assert s["annees"] == {2025} and s["series"]["djma"] == {2025: 1780}
+
+
+
+# --- Audit v0.6.4 : débits sur / sous -------------------------------------------------
+def test_v064_numero_de_la_limite_ignore():
+    """Le début d'une section de l'A-40 nommé « R-138 » (sa limite) ne fait pas de cette section la route 138."""
+    idx, secs = _mini()
+    secs[0]["routes_rtss"] = set()                       # la 138 sans n° RTSS : seul le libellé citerait 138…
+    secs[1]["routes_desc"] = {138}                       # …et l'A-40 commence à la 138
+    m = _apparier(idx, secs, route="Autoroute 40", obstacle="Route 138", obstacle_route=True)
+    assert _nums(secs, m["sur"]) == ["A40"] and "A40" not in _nums(secs, m["sous"])
+
+
+def test_v064_meme_section_jamais_sur_et_sous():
+    idx, secs = _mini()
+    # A-40 au-dessus d'un raccordement de l'A-40 : le n° commun désigne la voie portée, rien sous
+    m = _apparier(idx, secs, route="Autoroute 40", obstacle="Autoroute 40 Sud", obstacle_route=True)
+    assert _nums(secs, m["sur"]) == ["A40"] and m["sous"] == []
+    assert not set(m["sur"]) & set(m["sous"])
+
+
+def test_v064_bretelles_sans_debits_de_l_autoroute():
+    idx, secs = _mini()
+    # bretelle ou voie de service : pas les débits de l'A-40 voisine, ni dessus ni dessous
+    for route in ("Bretelle de l'A-40 Nord vers R-138", "Voie de service A-40 Nord", "Échangeur A-40 vers R-138"):
+        m = _apparier(idx, secs, route=route, obstacle="Ruisseau", obstacle_route=False, djma=30000)
+        assert m is None or "A40" not in _nums(secs, m["sur"])
+    m = _apparier(idx, secs, route="Route 138", obstacle="Racc. A-40 N / R-138 E", obstacle_route=True)
+    assert _nums(secs, m["sur"]) == ["R138"] and m["sous"] == []
+    # route franchie sans n° sous une bretelle de l'A-40 : la section de l'A-40 n'est pas l'obstacle
+    m = _apparier(idx, secs, route="Bretelle A-40 Nord", obstacle="Rue des Érables", obstacle_route=True)
+    assert m is None or "A40" not in _nums(secs, m["sous"])
+
+
+def test_v064_section_portee_la_plus_coherente_en_tete():
+    idx, secs = _mini()
+    secs.append(_sec("R138B", 138, "R-138", [(LON - 0.01, LAT + 10 * M), (LON + 0.01, LAT + 10 * M)], 900))
+    idx.add_ligne(len(secs) - 1, secs[-1]["lignes"][0])
+    m = _apparier(idx, secs, route="Route 138", obstacle="Fossé", obstacle_route=False, djma=1000)
+    assert _nums(secs, m["sur"])[0] == "R138B" and m["dsur"] == 0     # 900 ≈ 1 000 (fiche) passe devant 5 000

@@ -12,7 +12,7 @@ bridges, culverts, retaining walls and tunnels. The interface is in French, like
 - **Search and filter** by name, road, river, town, region, bridge type, year, length, condition index (ICG),
   load or height restriction.
 - **Open a structure sheet** with its photo, dimensions, condition, last inspection, traffic, and links to the
-  official MTMD sheet and inspection report, plus Wikipedia and Structurae for about 160 well-known bridges.
+  official MTMD sheet and inspection report, plus Wikipedia for about 160 well-known bridges.
 - **Switch views**: map, CSV-exportable list, clickable statistics, a photo-by-photo slideshow, or the list of
   **notable bridges of Canada** (Wikipedia): gold stars on the map, kept out of filters and statistics.
 - **Add layers**: road and rail networks, rivers, geotechnical boreholes, seismic hazard and site classes, other

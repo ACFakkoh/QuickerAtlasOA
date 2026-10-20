@@ -18,6 +18,18 @@ Sortie `data/debits.js` : `window.PQ_DEBITS={...};` avec
 Garde-fous (v0.5.2) : une section portée n'est retenue que si son DJMA est cohérent avec celui de la fiche de
 la structure (facteur ≤ 8 avec concordance de n°, ≤ 3 en repli géométrique ; repli refusé si la fiche n'a pas
 de DJMA), et les libellés « Accès route 175 », « Chemin de desserte (A-20) » ne désignent pas la route citée.
+
+Audit v0.6.4 (docs/rapports/2026-10-20-audit-debits.md) :
+- le n° de route d'une section est celui de son RTSS, jamais un n° lu dans la description de son début : ce
+  libellé nomme la LIMITE de la section (« R-117, Val-Morin »), c.-à-d. la route croisée — d'où les débits de
+  l'A-15 affichés « sous » le viaduc de l'A-15 au-dessus de la route 117 ;
+- une même section n'est jamais à la fois portée et franchie ; un n° commun à la voie portée et à l'obstacle
+  (A-40 au-dessus d'un raccordement de l'A-40) désigne la voie portée ;
+- bretelles et raccordements (« Racc. A-15 S / A-40 E », « Bretelle … vers A-25 N ») : les n° cités sont ceux
+  des routes reliées ; le jeu de données ne compte pas les bretelles → aucune section, plutôt que celle de
+  l'autoroute ;
+- plusieurs sections portées retenues (autre chaussée, section voisine) : la plus cohérente avec le DJMA de
+  la fiche passe en tête (c'est elle que la fiche affiche).
 """
 import argparse
 import math
@@ -60,6 +72,10 @@ _RE_RTSS = re.compile(r"^(\d{5})-\d{2}-\d{3}-")
 _RE_ANCIEN = re.compile(r"anciens?(?:ne)?\s*$", re.I)
 # Chemin d'accès ou de desserte : la route citée est celle qu'il dessert, pas la voie portée
 _RE_ACCES = re.compile(r"^\s*(?:chemin\s+d\W?\s*)?acc[eè]s\b|desserte", re.I)
+# Bretelle, raccordement, échangeur, voie de service : les n° cités sont ceux des routes reliées ou longées, pas
+# la voie elle-même (v0.6.4)
+_RE_BRETELLE = re.compile(r"\b(?:racc\b|raccordement|bretelles?\b|bret\.|[ée]changeur|virage en u|voies? de service|musoir)"
+                          r"|^\s*(?:sortie|entr[ée]e)\b", re.I)
 
 
 def route_numbers(texte: str | None) -> list[int]:
@@ -227,14 +243,13 @@ def parse(content: bytes | str) -> list[dict]:
 # --- Appariement --------------------------------------------------------------------
 def _choisir(near: dict[int, float], sections: list[dict], nums: set[int], rayon: float,
              ok=lambda i: True) -> tuple[list[int], float] | None:
-    """Sections dont le n° de route concorde (rtss d'abord, puis libellé) et acceptées par `ok`,
-    la plus proche en tête."""
+    """Sections dont le n° de route (RTSS) concorde et acceptées par `ok`, la plus proche en tête.
+    `routes_desc` (n° cités au début de la section = sa limite, une route croisée) n'est plus utilisé (v0.6.4)."""
     if not nums:
         return None
-    for cle in ("routes_rtss", "routes_desc"):
-        c = sorted((d, i) for i, d in near.items() if d <= rayon and nums & sections[i][cle] and ok(i))
-        if c:
-            return [i for d, i in c if d <= c[0][0] + EXTRA_M][:MAX_SECTIONS], c[0][0]
+    c = sorted((d, i) for i, d in near.items() if d <= rayon and nums & sections[i]["routes_rtss"] and ok(i))
+    if c:
+        return [i for d, i in c if d <= c[0][0] + EXTRA_M][:MAX_SECTIONS], c[0][0]
     return None
 
 
@@ -262,30 +277,38 @@ def apparier(index: Index, sections: list[dict], *, route: str | None, obstacle:
         return None
     approx = 0
     sur, d_sur, sous, d_sous = [], None, [], None
+    bret_sur, bret_sous = bool(_RE_BRETELLE.search(route or "")), bool(_RE_BRETELLE.search(obstacle or ""))
+    nums_r = set() if bret_sur else set(route_numbers(route))
+    nums_o_cites = set(route_numbers(obstacle)) if obstacle_route and not bret_sous else set()
+    nums_o = nums_o_cites - nums_r                     # n° commun : c'est la voie portée
     # 1. concordance de n° de route (portée, puis franchie) ; portée : DJMA non contradictoire avec la fiche
-    r = _choisir(near, sections, set(route_numbers(route)), R_SUR,
+    r = _choisir(near, sections, nums_r, R_SUR,
                  ok=lambda i: djma_coherent(sections[i], djma, FACTEUR_NUM) is not False)
     if r:
         sur, d_sur = r
-    nums_o = set(route_numbers(obstacle)) if obstacle_route else set()
-    r = _choisir(near, sections, nums_o, R_SOUS)
+    r = _choisir(near, sections, nums_o, R_SOUS, ok=lambda i: i not in sur)
     if r:
         sous, d_sous = r
     # 2. replis sans concordance (< 40 m) : jamais la section déjà retenue pour l'autre voie.
     #    Portée : seulement si la fiche a un DJMA et qu'il concorde (sinon, mieux vaut rien qu'une autre route).
-    if not sur:
+    #    Bretelle : pas de repli (le jeu ne compte pas les bretelles ; la plus proche serait l'autoroute).
+    if not sur and not bret_sur:
         proches = sorted((d, i) for i, d in near.items() if d <= R_APPROX and i not in sous
+                         and not (sections[i]["routes_rtss"] & nums_o_cites)
                          and djma_coherent(sections[i], djma, FACTEUR_APPROX))
         if proches:
             d_sur, sur, approx = proches[0][0], [proches[0][1]], approx | 1
-    if obstacle_route and not nums_o:                   # route franchie sans n° : autre section proche
+    if obstacle_route and not nums_o_cites and not bret_sous:   # route franchie sans n° : autre section proche
         nums_sur = set().union(*(sections[i]["routes_rtss"] for i in sur)) if sur else set()
+        nums_sur |= set(route_numbers(route))          # bretelle de l'A-15 : l'A-15 voisine n'est pas l'obstacle
         proches = sorted((d, i) for i, d in near.items() if d <= R_APPROX and i not in sur
                          and not (nums_sur and nums_sur & sections[i]["routes_rtss"]))
         if proches:
             d_sous, sous, approx = proches[0][0], [proches[0][1]], approx | 2
     if not sur and not sous:
         return None
+    if len(sur) > 1 and djma and djma > 1:             # la section affichée = la plus cohérente avec la fiche
+        sur = sorted(sur, key=lambda i: abs(math.log(djma_recent(sections[i]) / djma)) if djma_recent(sections[i]) else 99)
     m = {"sur": sur, "sous": sous, "approx": approx}
     if sur:
         m["dsur"] = round(d_sur)

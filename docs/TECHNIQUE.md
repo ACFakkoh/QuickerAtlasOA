@@ -63,13 +63,18 @@ et distance à la structure (`approx` = repli géométrique sans concordance de 
 deux garde-fous depuis la v0.5.2 : le DJMA de la section doit être cohérent avec celui de la fiche (facteur ≤ 8 si le n°
 concorde, ≤ 3 en repli, et pas de repli sans DJMA dans la fiche) ; « Accès route 175 » ou « Chemin de desserte (A-20) »
 ne désignent pas la route citée. Les classeurs .xlsx de la source ne sont plus proposés (source citée dans la fiche).
+Audit v0.6.4 (`docs/rapports/2026-10-20-audit-debits.md`) : le n° d'une section est celui de son RTSS seulement (le
+libellé de début nomme sa limite, une route croisée) ; une section n'est jamais à la fois portée et franchie ; un n°
+commun aux deux voies désigne la portée ; bretelles, raccordements, échangeurs et voies de service ne reçoivent pas les
+débits de l'autoroute voisine ; parmi les sections portées retenues, la plus cohérente avec le DJMA de la fiche est
+affichée, avec une note quand elle diffère de la fiche (souvent : un sens dans la fiche, deux sens dans la section).
 Les ouvrages des villes situés à moins de 30 m d'une structure du MTMD de même famille sont marqués `doublon` : le
 visualiseur ne les compte qu'une fois, sous leur n° du MTMD. Le RSSCE (réseau stratégique en soutien
 au commerce extérieur) n'est publié nulle part en données ouvertes : depuis la v0.5.5, la couche « RSSCE estimé » est
 tirée de `couche-rtss.js` (bit 1 du champ `flag`, `reseaux.drapeau_rssce`) = autoroutes et leurs bretelles + routes
 nationales 117, 175, 173, 133 et 185, soit ≈ 8 100 km de chaussées (officiel : 8 046 à 8 104 km selon les bilans).
 
-| Ponts remarquables (v0.6.3) : 179 ponts du Canada hors inventaire du MTMD (étoiles, hors filtres et statistiques) + liens Wikipédia / Structurae pour 159 ouvrages du MTMD (même nom à ≤ 3 km, ponts jumeaux compris ; un échangeur ou un tunnel ne se lie pas à l'article d'un pont) | `etl/wikiponts.py` | `data/couche-wikiponts.js` (~0,18 Mo) | Wikipédia anglais « List of bridges in Canada » (tableaux + liste par province), API Wikipédia (en, fr : coordonnées, image libre, résumé), Wikidata (CC0 : type, longueur, portée, ouverture, matériau, obstacle, conception, propriétaire, patrimoine, identifiant Structurae P454 ; requête SPARQL des ponts de la boîte du Québec pour l'appariement), Wikimedia Commons (auteur et licence de chaque image). Structurae : liens seulement (site fermé aux robots, droits réservés) |
+| Ponts remarquables (v0.6.3 ; v0.6.4 : infobulle et fiche à droite comme le MTMD, case dans le panneau des filtres, lien Wikipédia seul — français, sinon anglais —, photos de secours : image Wikidata P18, catégorie Commons P373, photo choisie à la main, recherche Commons géolocalisée à 30 km ou fichier à 600 m dont le titre reprend le nom du pont et « bridge » ; sinon vue aérienne Esri) : 179 ponts du Canada hors inventaire du MTMD (étoiles, hors filtres et statistiques) + lien Wikipédia pour 159 ouvrages du MTMD (même nom à ≤ 3 km, ponts jumeaux compris ; un échangeur ou un tunnel ne se lie pas à l'article d'un pont) | `etl/wikiponts.py` | `data/couche-wikiponts.js` (~0,18 Mo) | Wikipédia anglais « List of bridges in Canada » (tableaux + liste par province), API Wikipédia (en, fr : coordonnées, image libre, résumé), Wikidata (CC0 : type, longueur, portée, ouverture, matériau, obstacle, conception, propriétaire, patrimoine, identifiant Structurae P454 ; requête SPARQL des ponts de la boîte du Québec pour l'appariement), Wikimedia Commons (auteur et licence de chaque image). Structurae : liens seulement (site fermé aux robots, droits réservés) |
 
 ## Constats de jointure (2026-10-11)
 
@@ -122,6 +127,11 @@ lignes hors écran écartées par leur boîte, tracé par lots de même style, s
 `updateWhenZooming: false`, ni chargement de tuiles ni test de survol pendant le geste. WMS (cours d'eau, relief LiDAR) en
 tuiles de 512 px chargées à l'arrêt de la carte. Mesures (Chrome sans GPU) : zoom avec routes et rail 316–383 ms → ≈ 100 ms ;
 zoom molette 6 → 14 : ≈ 530 tuiles demandées → ≈ 28.
+
+**Carte** (v0.6.4) : boutons en haut à gauche (« + », « − », Québec, « Couches »), chacun dans sa case de 36 px ; le
+panneau des couches s'ouvre sous son bouton, au-dessus de la légende. Numéros des structures dès le zoom 12 (14 avant),
+une étiquette qui en chevaucherait une autre étant omise (grille de 8 px), celle de la structure ouverte en premier.
+Lien `#w=Q…` : pont remarquable ouvert (fiche à droite).
 
 **Photos** : servies par le MTMD sans en-tête de cache ; `sw.js` (Service Worker, http(s) seulement) les garde en
 cache (600 au plus) pour ne pas les retélécharger à chaque survol.

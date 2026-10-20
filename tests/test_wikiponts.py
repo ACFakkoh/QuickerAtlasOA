@@ -103,3 +103,21 @@ def test_construire_lie_le_mtmd_et_garde_les_autres_en_etoiles():
     assert [p["nom"] for p in out["ponts"]] == ["Pont Alexandra"]                  # la ville est écartée, Pierre-Laporte lié
     a = out["ponts"][0]
     assert (a["resume"], a["resumeLang"], a["img"]["licence"]) == ("Pont en treillis.", "fr", "CC BY-SA 4.0")
+
+
+
+def test_choisir_photo_nom_complet_et_mot_pont():
+    noms = ["Cochin Bridge", "Cochin Bridge (Saskatchewan)"]
+    res = [{"title": "File:BURN! - Birthday Day Trip to Cochin SK.jpg", "dist": 10},
+           {"title": "File:Cochin Bridge from the east.jpg", "dist": 300},
+           {"title": "File:Cochin Bridge.pdf", "dist": 1}]
+    assert wp.choisir_photo(res, noms) == "Cochin Bridge from the east.jpg"          # nom + « bridge », image
+    assert wp.choisir_photo([{"title": "File:Albert Edward Bridge.jpg"}], ["Edward's Way Bridge"]) is None
+
+
+def test_resultats_recherche_ecarte_les_homonymes_lointains():
+    d = {"query": {"pages": [
+        {"index": 2, "title": "File:St. Louis Bridge, Saskatchewan.jpg", "coordinates": [{"lat": 52.93, "lon": -105.81}]},
+        {"index": 1, "title": "File:Eads Bridge, St. Louis.jpg", "coordinates": [{"lat": 38.63, "lon": -90.18}]},
+        {"index": 3, "title": "File:St. Louis Bridge sans position.jpg"}]}}
+    assert [r["title"] for r in wp.resultats_recherche(d, 52.925, -105.808)] == ["File:St. Louis Bridge, Saskatchewan.jpg"]
