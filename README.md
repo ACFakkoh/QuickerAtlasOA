@@ -15,7 +15,8 @@ bridges, culverts, retaining walls and tunnels. The interface is in French, like
   official MTMD sheet and inspection report, plus Wikipedia for about 160 well-known bridges.
 - **Switch views**: map, CSV-exportable list, clickable statistics, a photo-by-photo slideshow, or the list of
   **notable bridges of Canada** (Wikipedia): gold stars on the map, kept out of filters and statistics.
-- **Add layers**: road and rail networks, rivers, geotechnical boreholes, seismic hazard and site classes, other
+- **Add layers**: road and rail networks, rivers, geotechnical boreholes, seismic hazard and site classes, MTMD
+  spring-thaw zones, other
   bridges outside the MTMD inventory (forest, municipal…), and the Montréal and Sherbrooke city inventories.
 - **Run engineering tools** from a structure sheet. The LiDAR profile computes the clearance under the deck and the
   road grades from 1 m elevation models, computed live in your browser (inset above). The river tool shows flows at

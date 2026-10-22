@@ -19,7 +19,7 @@ plus rapide à explorer.
 - **Changer de point de vue** : carte, liste exportable (CSV), statistiques cliquables, défilement photo par photo, ou
   liste des **ponts remarquables du Canada** (Wikipédia) : étoiles dorées sur la carte, hors filtres et statistiques.
 - **Ajouter des couches** : réseau routier et ferroviaire, cours d’eau, sondages géotechniques, aléa sismique et
-  classes de site, autres ponts hors MTMD (forestiers, municipaux…), ouvrages des villes de Montréal et Sherbrooke.
+  classes de site, zones de dégel du MTMD, autres ponts hors MTMD (forestiers, municipaux…), ouvrages des villes de Montréal et Sherbrooke.
 - **Outils d’ingénierie** (dans la fiche) : profil LiDAR (hauteur sous l’ouvrage, pentes), cours d’eau et débits au
   pont, aléa sismique du code national du bâtiment.
 

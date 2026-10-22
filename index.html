@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>QuickerAtlasOA v0.6.4 · Atlas des ouvrages d’art du Québec</title>
+<title>QuickerAtlasOA v0.6.5 · Atlas des ouvrages d’art du Québec</title>
 <meta name="description" content="Proposition de visualisation de l'inventaire des structures (ponts, ponceaux, murs, tunnels) du ministère des Transports et de la Mobilité durable du Québec.">
 <meta name="theme-color" content="#102d41">
 <link rel="preconnect" href="https://server.arcgisonline.com">
@@ -34,6 +34,15 @@ label{font-size:.875rem}
 .brand>div>span{font-weight:350;color:#9cdfcf}
 .brand small{font-weight:500;letter-spacing:0;font-size:.75rem;color:#a9c2cf;overflow:hidden;text-overflow:ellipsis;margin-left:10px}
 .brand-mark{display:block;flex:none;width:28px;height:28px}
+/* v0.6.5 : avertissement « non officiel » au centre du bandeau (deux lignes au plus ; version courte si étroit) */
+.disclaimer{flex:0 0 600px;min-width:0;margin:0 auto;display:flex;align-items:center;gap:8px;padding:3px 10px;border:1px solid rgba(242,193,78,.55);border-radius:6px;background:rgba(242,193,78,.1);color:#f6e2b3;font-size:.72rem;line-height:1.25}
+.disclaimer svg{flex:none}
+.disclaimer b{color:#ffd77a;font-weight:650}
+.disclaimer .dc-long{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.disclaimer .dc-short{display:none;white-space:nowrap}
+@media(max-width:1250px){.disclaimer .dc-long{display:none}.disclaimer .dc-short{display:inline}.disclaimer{flex:0 1 auto}}
+@media(max-width:700px){.disclaimer{padding:3px 6px;gap:5px;flex:none}.disclaimer .dc-x{display:none}.brand>div{overflow:hidden}}
+@media(max-width:500px){.brand{flex:none}.brand>div{display:none}.topbar{gap:8px}}
 .header-right{display:flex;gap:14px;align-items:center;flex:none}
 .release-info{display:flex;gap:10px;align-items:baseline;font-size:.78rem;text-align:right;color:#ecf6f5;white-space:nowrap}.release-info small{font-size:.75rem;color:#b5cbd6}
 .gh-link{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;color:#fff;opacity:.85}
@@ -174,6 +183,18 @@ label{font-size:.875rem}
 .dr-sec .wp-dist{margin:0 0 6px;font-size:.8rem;font-style:italic;line-height:1.45}
 .dr-sec .wp-res{margin:0 0 6px;font-size:.8rem;line-height:1.5}
 .dr-sec .wp-note{margin:0;font-size:.75rem;color:var(--muted);line-height:1.4}
+.dr-sec .wp-note a{color:inherit}
+/* v0.6.5 : textes de l'infobox anglaise en italique ; introduction anglaise dépliable ; vue aérienne composée */
+.dr-grid dd.wp-en{font-style:italic}
+.dr-sec .wp-src{margin:-2px 0 6px;font-size:.72rem}
+.wp-more{margin:4px 0 0;font-size:.8rem}
+.wp-more summary{cursor:pointer;color:var(--accent,#1f6f8b);font-weight:600;margin-bottom:6px}
+.aer{display:block;position:relative;aspect-ratio:4/3;overflow:hidden;background:#33414a}
+.dr-photo .aer img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-height:none;aspect-ratio:auto}
+.aer::after{content:'';position:absolute;inset:0;box-shadow:inset 0 0 60px rgba(0,0,0,.45);pointer-events:none}
+.aer-star{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);filter:drop-shadow(0 0 3px #fff) drop-shadow(0 1px 3px rgba(0,0,0,.6))}
+.aer-star svg{display:block}
+.aer-bar{position:absolute;left:8px;bottom:8px;z-index:1;height:16px;border:2px solid #fff;border-top:0;color:#fff;font-size:.68rem;font-weight:650;line-height:12px;text-align:center;text-shadow:0 0 3px #000}
 .dr-ico .sym{display:block}
 .dr-wiki{display:contents}
 .lg-rq{border:0;background:none;padding:0;font:inherit;color:#005a80;text-decoration:underline;cursor:pointer}
@@ -375,7 +396,11 @@ abbr[title]{text-decoration:underline dotted #8aa1ae;text-underline-offset:2px;c
 .lc-ov input:checked+.lc-sw::after{transform:translateX(12px)}
 .lc-ov input:focus-visible+.lc-sw{outline:3px solid var(--focus);outline-offset:2px}
 .lc-n{font-size:.8125rem;line-height:1.25;color:var(--ink)}.lc-n small{display:block;color:var(--muted);font-size:.72rem}
-.lc-foot{margin:6px 4px 0;font-size:.72rem;color:var(--muted)}
+.lc-grp{margin:8px 4px 2px;font-size:.72rem;color:var(--muted)}
+/* v0.6.5 : repère « ZONE n » des zones de dégel (losange de la figure du MTMD) */
+.dg-lbl span{position:absolute;inset:0;z-index:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font:800 15px/1 system-ui,sans-serif}
+.dg-lbl span::before{content:'';position:absolute;inset:8px;z-index:-1;transform:rotate(45deg);border:2.5px solid #fff;border-radius:4px;background:rgba(16,45,65,.85)}
+.dg-lbl span small{font-size:7px;letter-spacing:.5px;font-weight:700;margin-bottom:1px}
 .lg-col{flex-direction:column;flex-wrap:nowrap}
 .leaflet-control-scale-line{border-color:#17374b;color:#17374b;background:#ffffffcc;font-size:.72rem}
 
@@ -598,6 +623,12 @@ table.list tbody tr:hover{background:#eef5f7}
     </svg>
     <div>Quicker<span>AtlasOA</span><small>Atlas des ouvrages d’art du Québec · inventaire du MTMD</small></div>
   </div>
+  <!-- v0.6.5 : avertissement permanent (outil personnel, non affilié au MTMD) -->
+  <p class="disclaimer" role="note" title="Programme non officiel, pour visualisation et apprentissage uniquement, non affilié au MTMD ni au gouvernement du Québec. Ne pas utiliser pour la conception, la construction ou la gestion d’actifs.">
+    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2.8 1.6 20.6h20.8z" fill="#f2c14e"/><path d="M12 9v5.2M12 16.6v1.4" stroke="#102d41" stroke-width="2.2" stroke-linecap="round"/></svg>
+    <span class="dc-long">Programme <b>non officiel</b>, pour visualisation et apprentissage uniquement, non affilié. Ne pas utiliser pour la conception, la construction ou la gestion d’actifs.</span>
+    <span class="dc-short"><b>Non officiel</b><span class="dc-x"> · visualisation seulement</span></span>
+  </p>
   <div class="header-right">
     <button type="button" class="news-btn" id="news-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="news" title="Changements entre les mises à jour et inspections récentes">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
@@ -810,7 +841,7 @@ table.list tbody tr:hover{background:#eef5f7}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="data/structures.js"></script>
 <script src="data/details.js"></script>
-<script>window.PQ_META={"version": "0.6.4", "date": "2026-10-20", "author": "Anthony Chéruel"};</script>
+<script>window.PQ_META={"version": "0.6.5", "date": "2026-10-22", "author": "Anthony Chéruel"};</script>
 <script>
 (function(){
   'use strict';
@@ -1777,12 +1808,27 @@ table.list tbody tr:hover{background:#eef5f7}
     return ESRI + 'World_Imagery/MapServer/export?bbox=' + [x - hw, y - hh, x + hw, y + hh].map(function(v){ return v.toFixed(1); }).join(',') +
       '&bboxSR=3857&imageSR=3857&size=' + w + ',' + h + '&format=jpg&f=image';
   }
-  // Photo d'un pont remarquable : image libre de Commons (article, Wikidata ou recherche), sinon vue aérienne
-  var WP_ORIG = { recherche: 'trouvée sur Commons', proximite: 'prise à proximité', choisie: 'trouvée sur Commons', categorie: 'catégorie Commons du pont', wikidata: 'Wikidata' };
+  // Photo d'un pont remarquable : image libre de Commons (article, Wikidata ou recherche) ou, v0.6.5, de Flickr
+  // (licence Creative Commons, choisie à la main), sinon vue aérienne cadrée sur la longueur du pont.
+  // v0.6.5 : un clic sur la photo ouvre l'article Wikipédia du pont (avant : la page du fichier sur Commons).
+  var WP_ORIG = { recherche: 'trouvée sur Commons', proximite: 'prise à proximité', choisie: 'trouvée sur Commons', categorie: 'catégorie Commons du pont', wikidata: 'Wikidata', flickr: 'trouvée par Openverse, vérifiée' };
+  function wpArticle(p){ return p.fr ? wpUrl('fr', p.fr) : p.en ? wpUrl('en', p.en) : null; }
+  function aerialSpan(p){ return Math.max(320, Math.min(4000, (p.long || 250) * 1.6)); }   // largeur de la vue (m)
   function wpPhoto(p, w, h){
-    var im = p.img;
-    if (im) return { src: im.src, href: im.page || im.src, cap: 'Photo : ' + (im.auteur || 'auteur inconnu') + (im.licence ? ' · ' + im.licence : '') + ' · Wikimedia Commons' + (WP_ORIG[im.origine] ? ' (' + WP_ORIG[im.origine] + ')' : '') };
-    return { src: aerialUrl(p.lat, p.lon, w, h, 600), href: gsatUrl(p.lat, p.lon), cap: 'Vue aérienne : Esri, Maxar (aucune photo libre)', aer: true };
+    var im = p.img, art = wpArticle(p);
+    if (im) return { src: im.src, href: art || im.page || im.src, cap: 'Photo : ' + esc(im.auteur || 'auteur inconnu') + (im.licence ? ' · ' + esc(im.licence) : '') +
+      (im.page ? ' · <a href="' + esc(im.page) + '" target="_blank" rel="noopener">' + esc(im.site || 'Wikimedia Commons') + '</a>' : ' · ' + esc(im.site || 'Wikimedia Commons')) +
+      (WP_ORIG[im.origine] ? ' (' + WP_ORIG[im.origine] + ')' : '') };
+    return { src: aerialUrl(p.lat, p.lon, w, h, aerialSpan(p)), href: art || gsatUrl(p.lat, p.lon), cap: 'Vue aérienne : Esri, Maxar (aucune photo libre trouvée)', aer: true };
+  }
+  // Vue aérienne de la fiche (v0.6.5) : image Esri en double résolution, routes et noms par-dessus (couche « Transportation »),
+  // étoile au centre et échelle ; le cadre suit la longueur du pont
+  function wpAerialHtml(p, w, h){
+    var m = aerialSpan(p), ref = aerialUrl(p.lat, p.lon, w * 2, h * 2, m).replace('World_Imagery', 'Reference/World_Transportation').replace('format=jpg', 'format=png32&transparent=true');
+    var bar = m > 1500 ? 500 : m > 700 ? 200 : 100;
+    return '<span class="aer"><img src="' + esc(aerialUrl(p.lat, p.lon, w * 2, h * 2, m)) + '" alt="Vue aérienne de ' + esc(p.nom) + '" referrerpolicy="no-referrer">' +
+      '<img class="aer-ref" src="' + esc(ref) + '" alt="" referrerpolicy="no-referrer" onerror="this.remove()">' +
+      '<span class="aer-star">' + starSvg(24) + '</span><span class="aer-bar" style="width:' + (bar / m * 100).toFixed(1) + '%">' + bar + ' m</span></span>';
   }
   // Survol : photo, nom et année, comme les structures du MTMD (tipHtml)
   function wpTip(p){
@@ -1791,27 +1837,40 @@ table.list tbody tr:hover{background:#eef5f7}
       '<div class="mtip-l">' + starSvg(12) + ' <b>' + esc(p.nom) + '</b>' + (p.an ? ' · ' + p.an : '') + ' <small>· ' + esc(p.prov || 'pont remarquable') + '</small></div></div>';
   }
   // Clic : fiche à droite, même gabarit que celle du MTMD (ficheHtml)
+  // v0.6.5 : construction (début – fin), largeur, hauteur, dégagement, travées, voies, constructeur, débit, péage, coût
+  // (infobox de Wikipédia en anglais et en français) ; introduction entière, et celle de l'anglais quand elle est bien plus longue
+  function wpParas(t, en){ return String(t).split(/\n+/).map(function(x){ return '<p class="wp-res"' + (en ? ' lang="en"' : '') + '>' + esc(x) + '</p>'; }).join(''); }
   function wpFicheHtml(p){
-    var secs = [], ph = wpPhoto(p, 640, 480);
+    var secs = [], ph = wpPhoto(p, 320, 240), art = wpArticle(p), en = p.txtEn || [];
     function sec(name, rows){ rows = rows.filter(Boolean); if (rows.length) secs.push('<section class="dr-sec"><h3>' + esc(name) + '</h3><dl class="dr-grid">' + rows.join('') + '</dl></section>'); }
     function row(k, v){ return v ? '<dt>' + esc(k) + '</dt><dd title="' + esc(v) + '">' + esc(v) + '</dd>' : ''; }
+    // texte repris de l'infobox anglaise : en italique, signalé au survol
+    function rowT(k, f){ var v = p[f]; return v ? (en.indexOf(f) >= 0 ? '<dt>' + esc(k) + '</dt><dd class="wp-en" lang="en" title="' + esc(v) + ' — Wikipédia en anglais">' + esc(v) + '</dd>' : row(k, v)) : ''; }
+    var fin = p.fin || (p.debut && p.an > p.debut ? p.an : null);
+    var chantier = p.debut && fin ? p.debut + ' – ' + fin : p.debut ? 'début ' + p.debut : fin ? 'fin ' + fin : null;
     var links = [wpLink(p), '<a href="' + esc(gsatUrl(p.lat, p.lon)) + '" target="_blank" rel="noopener">Vue satellite ↗</a>'].filter(Boolean);
     var h = '<div class="dr-head"><div class="dr-ico">' + starSvg(22) + '</div>' +
       '<div class="dr-title"><h2>' + esc(p.nom) + '</h2><div class="dr-num">Pont remarquable' + (p.prov ? ' · ' + esc(p.prov) : '') + (p.nomEn && p.nomEn !== p.nom ? ' · <i lang="en">' + esc(p.nomEn) + '</i>' : '') + '</div></div>' +
       '<button type="button" class="dr-close" data-act="close" aria-label="Fermer la fiche" title="Fermer (Échap)">×</button></div>' +
       '<div class="dr-body"><div class="dr-top"><div class="dr-side">' +
-      '<a class="dr-photo" href="' + esc(ph.href) + '" target="_blank" rel="noopener" aria-label="' + (ph.aer ? 'Ouvrir la vue satellite' : 'Ouvrir la photo sur Wikimedia Commons') + '">' +
-      '<img src="' + esc(ph.src) + '" alt="' + esc((ph.aer ? 'Vue aérienne de ' : 'Photo de ') + p.nom) + '" referrerpolicy="no-referrer"><figcaption>' + (ph.aer ? 'Vue aérienne' : 'Photo : Commons') + '</figcaption></a>' +
+      '<a class="dr-photo' + (ph.aer ? ' is-aer' : '') + '" href="' + esc(ph.href) + '" target="_blank" rel="noopener" aria-label="' + (art ? 'Ouvrir l’article Wikipédia du pont' : 'Ouvrir la vue satellite') + '">' +
+      (ph.aer ? wpAerialHtml(p, 320, 240) : '<img src="' + esc(ph.src) + '" alt="' + esc('Photo de ' + p.nom) + '" referrerpolicy="no-referrer">') +
+      '<figcaption>' + (ph.aer ? 'Vue aérienne' : 'Photo') + (art ? ' · article Wikipédia ↗' : '') + '</figcaption></a>' +
       '<div class="dr-links">' + links.join('') + '<button type="button" data-act="center">Centrer la carte</button></div></div>';
-    sec('Identification', [row('Province', p.prov), row('Mise en service', p.an), row('Type', p.type), row('Matériau', p.mat), row('Franchit', p.franchit),
-      row('Conception', p.archi), row('Propriétaire', p.prop), row('Patrimoine', p.patri), row('Coordonnées', nf5.format(p.lat) + ', ' + nf5.format(p.lon))]);
+    sec('Identification', [row('Province', p.prov), row('Mise en service', p.an), row('Construction', chantier), rowT('Fermeture', 'ferme'),
+      row('Type', p.type), rowT('Structure', 'conception'), rowT('Matériau', 'mat'), row('Franchit', p.franchit), rowT('Porte', 'porte'),
+      rowT('Conception', 'archi'), rowT('Construit par', 'constr'), rowT('Propriétaire', 'prop'), rowT('Patrimoine', 'patri'),
+      row('Coordonnées', nf5.format(p.lat) + ', ' + nf5.format(p.lon))]);
     h += '<div class="dr-id">' + secs.shift() + '</div></div><div class="dr-flow">';
-    sec('Dimensions', [row('Longueur', fmtM(p.long)), row('Portée principale', fmtM(p.portee))]);
+    sec('Dimensions', [row('Longueur totale', fmtM(p.long)), row('Portée principale', fmtM(p.portee)), row('Largeur', fmtM(p.larg)), row('Hauteur', fmtM(p.haut)),
+      row('Dégagement sous l’ouvrage', fmtM(p.degag)), row('Travées', p.travees), row('Piles en rivière', p.piles), row('Voies', p.voies)]);
+    sec('Exploitation', [rowT('Débit journalier', 'trafic'), rowT('Péage', 'peage'), rowT('Coût de construction', 'cout')]);
     var desc = (p.distinction ? '<p class="wp-dist" lang="en" title="Texte de la liste de Wikipédia (anglais)">« ' + esc(p.distinction) + ' »</p>' : '') +
-      (p.resume ? '<p class="wp-res"' + (p.resumeLang === 'en' ? ' lang="en"' : '') + '>' + esc(p.resume) + (p.resumeLang === 'en' ? ' <small class="muted">(Wikipédia en anglais)</small>' : '') + '</p>' : '');
+      (p.resume ? wpParas(p.resume, p.resumeLang === 'en') + (p.resumeLang === 'en' ? '<p class="muted wp-src">Wikipédia en anglais (aucun article en français)</p>' : '') : '') +
+      (p.resumeEn ? '<details class="wp-more"><summary>Plus de détails (Wikipédia en anglais)</summary>' + wpParas(p.resumeEn, true) + '</details>' : '');
     if (desc) secs.push('<section class="dr-sec"><h3>Description</h3>' + desc + '</section>');
     secs.push('<section class="dr-sec"><h3>Source</h3><p class="wp-note">Hors inventaire du MTMD : non compté dans les filtres ni les statistiques. ' +
-      'Données : Wikipédia (CC BY-SA), Wikidata (CC0). ' + esc(ph.cap) + '.</p></section>');
+      'Données : Wikipédia (CC BY-SA ; infobox et introduction des articles français et anglais), Wikidata (CC0)' + (en.length ? ' ; texte en italique : Wikipédia en anglais' : '') + '. ' + ph.cap + '.</p></section>');
     return h + secs.join('') + '</div></div>';
   }
   function buildWiki(){
@@ -1919,6 +1978,33 @@ table.list tbody tr:hover{background:#eef5f7}
     if (K) g.addLayer(L.imageOverlay(K.img, K.bounds, { pane: rasterPane('raster-classes', 340), opacity: 0.7, interactive: false, className: 'img-px', attribution: 'Classes de site : ' + esc(K.source || '') }));
     if (C && C.classes && C.mtl && C.mtl.img !== C.classes.img) g.addLayer(L.imageOverlay(C.mtl.img, C.mtl.bounds, { pane: rasterPane('raster-classes', 340), opacity: 0.7, interactive: false, className: 'img-px', attribution: 'Classes de site, Montréal : ' + esc(C.mtl.source || '') }));
     return g;
+  }
+  // ---------- Zones de dégel (v0.6.5) : polygones du MTMD, couleurs de la figure officielle (gris, bleu, marine) ----------
+  // Canevas à part sous les réseaux (volet 336, sous le PGA) et non cliquable : les structures restent sélectionnables.
+  // Les trois teintes se distinguent par la clarté (lisibles avec un daltonisme) ; un repère « ZONE n » les nomme.
+  var DEGEL_COL = { 1: '#c4c6d8', 2: '#2ea7e0', 3: '#27466c' };
+  var DEGEL_LBL = { 1: [45.85, -71.9], 2: [47.55, -75.4], 3: [50.35, -75.6] };      // emplacements de la figure du MTMD
+  var moisFr = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+  function dateFr(s){ var m = /^(\d{4})-(\d\d)-(\d\d)/.exec(s || ''); return m ? (+m[3] === 1 ? '1er' : +m[3]) + ' ' + moisFr[+m[2] - 1] : ''; }
+  function buildDegel(){
+    var C = couche('degel'), g = L.layerGroup();
+    if (!C) return g;
+    var k = C.echelle || 1e4, rend = L.canvas({ pane: rasterPane('raster-degel', 336), padding: 0.3 });
+    C.zones.forEach(function(z){
+      var rings = z.anneaux.map(function(a){ return a.map(function(p){ return [p[0] / k, p[1] / k]; }); });
+      g.addLayer(L.polygon(rings, { renderer: rend, interactive: false, color: '#ffffff', weight: 1, opacity: 0.8,
+        fillColor: DEGEL_COL[z.num] || '#999', fillOpacity: z.num === 3 ? 0.45 : 0.5, attribution: esc(C.attribution || '') }));
+      if (DEGEL_LBL[z.num]) g.addLayer(L.marker(DEGEL_LBL[z.num], { interactive: false, keyboard: false, pane: rasterPane('raster-degel-lbl', 337),
+        icon: L.divIcon({ className: 'dg-lbl', iconSize: [46, 46], iconAnchor: [23, 23], html: '<span><small>ZONE</small>' + z.num + '</span>' }) }));
+    });
+    return g;
+  }
+  function degelLegend(C){
+    var an = (C.zones[0] && C.zones[0].debut || '').slice(0, 4);
+    return '<div class="lg-ramp lg-col">' + C.zones.map(function(z){
+      return '<span><i style="background:' + (DEGEL_COL[z.num] || '#999') + '"></i>' + esc(z.nom) + ' <small class="muted">' + esc((z.partie || '').replace(/^Partie (\S+) du Québec$/, '($1)')) +
+        (z.debut && z.fin ? ' · ' + dateFr(z.debut) + ' – ' + dateFr(z.fin) : '') + '</small></span>';
+    }).join('') + '</div><div class="lg-src">Période de dégel ' + esc(an) + ' (dates officielles, mises à jour chaque printemps). Source : <a href="' + esc(C.source) + '" target="_blank" rel="noopener">MTMD, Données Québec</a>.</div>';
   }
   function sismiqueLegend(C, part){
     var h = '';
@@ -3294,6 +3380,7 @@ table.list tbody tr:hover{background:#eef5f7}
         return;
       }
       if (ov.key === 'pga' || ov.key === 'classes') { h += lgDet(ov, sismiqueLegend(C, ov.key)); return; }
+      if (ov.key === 'degel') { h += lgDet(ov, degelLegend(C)); return; }
       if (ov.key === 'wikiponts') {
         h += '<div class="lg-sub">Ponts remarquables</div><div class="lg-chips"><span>' + starSvg(14) + nf.format(C.ponts.length) + ' ouvrages hors MTMD (Wikipédia) · <button type="button" class="lg-rq" data-rq>voir la liste</button></span></div>';
         return;
@@ -3341,8 +3428,12 @@ table.list tbody tr:hover{background:#eef5f7}
     { key: 'forestiers', name: 'Autres ponts hors MTMD (forestiers, municipaux… ; AQréseau+)', filtre: true, src: 'data/couche-forestiers.js', z: 1.5, build: buildForestiers },
     // Aléa sismique en deux couches superposables (v0.6.0) : PGA de la province et classes de site du Québec
     { key: 'pga', couche: 'sismique', name: 'Aléa sismique (PGA)', sub: 'CNBC 2020, classe C, 2 % en 50 ans', src: 'data/couche-sismique.js', z: -5, build: buildPga },
-    { key: 'classes', couche: 'sismique', name: 'Classes de site sismique', sub: 'A à E (Vs30), échelle du Québec', src: 'data/couche-sismique.js', z: -4, build: buildClasses }
+    { key: 'classes', couche: 'sismique', name: 'Classes de site sismique', sub: 'A à E (Vs30), échelle du Québec', src: 'data/couche-sismique.js', z: -4, build: buildClasses },
+    // v0.6.5 : zones de dégel du MTMD (limites de charge au printemps)
+    { key: 'degel', name: 'Zones de dégel', sub: 'MTMD, zones 1, 2 et 3', src: 'data/couche-degel.js', z: -6, propre: true, build: buildDegel }
   ];
+  // v0.6.5 : PGA, classes de site et zones de dégel couvrent toute la province : une seule à la fois
+  var EXCLUSIFS = ['pga', 'classes', 'degel'];
   // v0.6.0 : nouvelle clé (couches sismiques renommées, nouveau panneau)
   var DEFAULT_OVERLAYS = 'eau,rtss,rail,wikiponts', OVERLAY_KEY = 'pq-couches-v060';
   // Ordre de dessin du canevas commun (bas → haut) : routes, rail, sondages ; les structures (MTMD et villes)
@@ -3391,9 +3482,10 @@ table.list tbody tr:hover{background:#eef5f7}
             return '<button type="button" role="radio" aria-checked="false" data-fond="' + esc(n) + '" title="' + esc(n) + '">' + esc(FOND_COURT[n] || n) + '</button>';
           }).join('') + '</div><div class="lc-h">Couches de données</div><div class="lc-ovs">' +
           OVERLAYS.filter(function(ov){ return !ov.filtre; }).map(function(ov){
-            return '<label class="lc-ov"><input type="checkbox" role="switch" data-ov="' + ov.key + '"><span class="lc-sw" aria-hidden="true"></span>' +
+            return (ov.key === EXCLUSIFS[0] ? '<div class="lc-grp">Aléa sismique et dégel : une couche à la fois</div>' : '') +
+              '<label class="lc-ov"><input type="checkbox" role="switch" data-ov="' + ov.key + '"><span class="lc-sw" aria-hidden="true"></span>' +
               '<span class="lc-n">' + esc(ov.name) + (ov.sub ? '<small>' + esc(ov.sub) + '</small>' : '') + '</span></label>';
-          }).join('') + '</div><p class="lc-foot">Autres ponts hors MTMD et ponts remarquables : cases dans le panneau des filtres.</p></div>';
+          }).join('') + '</div></div>';
         L.DomEvent.disableClickPropagation(d);
         L.DomEvent.disableScrollPropagation(d);
         var btn = d.querySelector('.lc-btn'), pan = d.querySelector('.lc-panel');
@@ -3409,7 +3501,10 @@ table.list tbody tr:hover{background:#eef5f7}
     });
     OVERLAYS.forEach(function(ov){
       ov.layer = L.layerGroup();
-      ov.layer.on('add', function(){ onOverlayAdd(ov); syncLayerUI(); });
+      ov.layer.on('add', function(){
+        if (EXCLUSIFS.indexOf(ov.key) >= 0) EXCLUSIFS.forEach(function(k){ if (k !== ov.key) setOverlay(k, false); });
+        onOverlayAdd(ov); syncLayerUI();
+      });
       ov.layer.on('remove', function(){ saveOverlays(); renderLegend(); syncLayerUI(); });
     });
     $('#forestiers').addEventListener('change', function(){ setOverlay('forestiers', this.checked); });
@@ -3423,7 +3518,7 @@ table.list tbody tr:hover{background:#eef5f7}
     (ov.src ? loadScript(ov.src) : Promise.resolve()).then(function(){
       ov.filled = true;
       var g = ov.build();
-      ov.paths = g.eachLayer ? flatPaths(g) : null;          // tuiles WMS : rien à réordonner dans le canevas
+      ov.paths = g.eachLayer && !ov.propre ? flatPaths(g) : null;   // tuiles WMS, canevas propre (dégel) : rien à réordonner
       ov.layer.addLayer(g);
       restack();
       renderLegend();

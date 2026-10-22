@@ -89,6 +89,18 @@ RE_PHOTO = re.compile(r"\.(jpe?g|png|webp|tiff?)$", re.I)
 # Photos choisies à la main (description et catégories de Commons vérifiées le 2026-10-20) pour des ponts sans image
 # (pas de photo pour le pont suspendu de la rivière de la Paix : effondré en 1957 ; le pont-pipeline voisin est un autre ouvrage)
 PHOTOS_CHOISIES = {"Q14875601": "Route 1 bridge Jemseg.JPG"}                               # Transcanadienne, Jemseg (N.-B.)
+# v0.6.5 : photos hors Commons (Flickr, licences Creative Commons, trouvées par Openverse) pour des ponts sans image
+# libre sur Commons ; chaque photo vérifiée à l'œil le 2026-10-22 (titre, sujet, lieu). Usage non commercial,
+# auteur et licence affichés. Écartées : photos du GouvNB pour le pont de Burton (sans le pont).
+FLICKR = "https://live.staticflickr.com/"
+PHOTOS_EXTERNES = {
+    "Q7589572": {"src": FLICKR + "477/19441909203_d48d21a4fa_z.jpg", "page": "https://www.flickr.com/photos/21953562@N07/19441909203",
+                 "auteur": "cmh2315fl", "licence": "CC BY-NC 2.0"},                            # St. Louis Bridge (Sask.)
+    "Q5030388": {"src": FLICKR + "276/19448683654_94d54cfdbb_z.jpg", "page": "https://www.flickr.com/photos/21953562@N07/19448683654",
+                 "auteur": "cmh2315fl", "licence": "CC BY-NC 2.0"},                            # Canadian Northern, Prince Albert
+    "Q7157445": {"src": FLICKR + "65535/54067844169_b30b6171b5_z.jpg", "page": "https://www.flickr.com/photos/46154524@N04/54067844169",
+                 "auteur": "Ted LaBar (photo de 1943)", "licence": "CC BY-NC 2.0"},           # pont suspendu de la rivière de la Paix
+}
 UNITES_M = {"Q11573": 1.0, "Q828224": 1000.0, "Q3710": 0.3048, "Q174728": 0.01}     # m, km, pied, cm
 TYPES_GENERIQUES = {"Q12280", "Q1825472"}                                               # « pont », « ouvrage d'art »
 MOTS_VIDES = {"pont", "ponts", "bridge", "bridges", "viaduc", "viaduct", "de", "du", "des", "la", "le", "les", "l", "d",
@@ -208,15 +220,27 @@ def parse_liste(page_html: str) -> list[dict]:
 
 
 # --- Articles, Wikidata, Commons --------------------------------------------------------------------
+def couper(t: str | None, n: int) -> str | None:
+    """Texte coupé à la dernière fin de phrase avant `n` caractères (paragraphes gardés)."""
+    if not t:
+        return None
+    t = re.sub(r"\n{2,}", "\n", t.strip())
+    if len(t) <= n:
+        return t
+    m = max(t.rfind(". ", 0, n), t.rfind(".\n", 0, n))
+    return t[:m + 1] if m > n // 3 else t[:n].rsplit(" ", 1)[0] + "…"
+
+
 def infos_articles(s, titres: list[str], lang: str, fetch: bool) -> dict[str, dict]:
-    """Titre (tel que demandé) → {titre, q, lat, lon, image, resume, fr} pour les articles existants."""
+    """Titre (tel que demandé) → {titre, q, lat, lon, image, resume, fr} pour les articles existants.
+    v0.6.5 : introduction entière de l'article (avant : trois phrases), coupée à INTRO_MAX[lang] caractères."""
     out = {}
     for lot in _lots(sorted(set(titres)), 20):                       # 20 : limite des résumés par requête
         d = _get_json(s, API[lang], {"action": "query", "titles": "|".join(lot), "redirects": 1,
                                      "prop": "coordinates|pageimages|pageprops|extracts|langlinks", "colimit": "max",
                                      "piprop": "name", "ppprop": "wikibase_item", "exintro": 1, "explaintext": 1,
-                                     "exsentences": 3, "exlimit": "max", "lllang": "fr", "lllimit": "max"},
-                      f"art_{lang}_{_cle(*lot)}.json", fetch).get("query", {})
+                                     "exlimit": "max", "lllang": "fr", "lllimit": "max"},
+                      f"art2_{lang}_{_cle(*lot)}.json", fetch).get("query", {})
         alias = {}
         for k in ("normalized", "redirects"):
             for x in d.get(k, []):
@@ -230,8 +254,171 @@ def infos_articles(s, titres: list[str], lang: str, fetch: bool) -> dict[str, di
             co = (pg.get("coordinates") or [{}])[0]
             out[demande] = {"titre": pg["title"], "q": pg.get("pageprops", {}).get("wikibase_item"),
                             "lat": co.get("lat"), "lon": co.get("lon"), "image": pg.get("pageimage"),
-                            "resume": (pg.get("extract") or "").strip() or None,
+                            "resume": couper(pg.get("extract"), INTRO_MAX[lang]),
                             "fr": (pg.get("langlinks") or [{}])[0].get("title")}
+    return out
+
+
+# --- Infobox (v0.6.5) : année de construction, portée, largeur, travées… -------------------------------
+# Libellé de l'infobox → champ. Anglais : modèle « Infobox bridge » ; français : « Infobox Pont ».
+IB_EN = {"total length": "long", "longest span": "portee", "width": "larg", "height": "haut", "clearance below": "degag",
+         "no. of spans": "travees", "piers in water": "piles", "no. of lanes": "voies", "construction start": "debut",
+         "construction end": "fin", "opened": "ouvert", "inaugurated": "inaug", "closed": "ferme", "collapsed": "ferme",
+         "construction cost": "cout", "daily traffic": "trafic", "toll": "peage", "design": "conception", "material": "mat",
+         "carries": "porte", "designer": "archi", "engineering design by": "archi", "architect": "archi",
+         "constructed by": "constr", "fabrication by": "constr", "maintained by": "prop", "owner": "prop"}
+IB_FR = {"longueur": "long", "portée principale": "portee", "largeur": "larg", "hauteur": "haut", "hauteur libre": "degag",
+         "construction": "construction", "mise en service": "ouvert", "ouverture": "ouvert", "inauguration": "inaug",
+         "fin du service": "ferme", "démolition": "ferme", "type": "conception", "matériau(x)": "mat", "matériau": "mat",
+         "fonction": "porte", "architecte(s)": "archi", "architecte": "archi", "ingénieur(s)": "archi", "concepteur": "archi",
+         "entreprise(s)": "constr", "propriétaire": "prop", "gestion": "prop", "maintenance": "prop", "protection": "patri"}
+CHAMPS_M = ("long", "portee", "larg", "haut", "degag")
+CHAMPS_N = ("travees", "piles", "voies")
+CHAMPS_TXT = ("conception", "mat", "porte", "archi", "constr", "prop", "cout", "trafic", "peage", "patri")
+INTRO_MAX = {"fr": 1400, "en": 1800}
+TXT_MAX = 140
+RE_ANNEE = re.compile(r"(?<!\d)(1[6-9]\d\d|20\d\d)(?!\d)")
+RE_AGE = re.compile(r";?\s*\d+\s+(?:years?|months?|days?)\s+ago|;?\s*il y a \d+\s+ans?", re.I)
+NOMBRE = {"en": r"(\d[\d,]*(?:\.\d+)?)", "fr": r"(\d[\d   ]*(?:,\d+)?)"}
+UNITES_TXT = [(r"km|kilom[eè]t(?:re|er)s?", 1000.0), (r"m|m[eè]t(?:re|er)s?", 1.0),
+              (r"ft|feet|foot|pi|pieds?", 0.3048), (r"mi|miles?", 1609.344)]
+# Matériaux de l'infobox anglaise → français (liste fermée ; un mot inconnu fait garder le texte anglais)
+MATERIAUX = {"steel": "acier", "concrete": "béton", "reinforced concrete": "béton armé", "prestressed concrete": "béton précontraint",
+             "wood": "bois", "timber": "bois", "iron": "fer", "wrought iron": "fer forgé", "cast iron": "fonte", "stone": "pierre",
+             "masonry": "maçonnerie", "earth": "terre", "aluminum": "aluminium", "aluminium": "aluminium", "granite": "granit",
+             "brick": "brique", "asphalt": "asphalte", "rock": "roc", "rockfill": "enrochement"}
+
+
+def _propre(td) -> str:
+    """Texte d'une cellule d'infobox sans renvois, dates cachées (microformats) ni « il y a N ans »."""
+    for el in td.select("sup, .reference, .noprint, style, [style*='display:none'], [style*='display: none']"):
+        el.decompose()
+    for br in td.select("br"):
+        br.replace_with(", ")
+    for li in td.select("li"):
+        li.insert_after(", ")
+    t = re.sub(r"\s+", " ", td.get_text(" ", strip=True).replace(" ", " "))
+    t = RE_AGE.sub("", t)
+    t = re.sub(r"\(\s*\d{4}-\d{2}-\d{2}\s*\)", "", t)                 # ( 1930-05-14 ) des modèles de date
+    t = re.sub(r"\s+([,;.)])", r"\1", re.sub(r"\(\s+", "(", t))
+    return re.sub(r"(,\s*)+$", "", re.sub(r",\s*,", ",", t)).strip(" ,;")
+
+
+def infobox(page_html: str) -> dict[str, str]:
+    """HTML rendu de la section 0 → {libellé en minuscules: texte} de la première infobox (vide si aucune)."""
+    if not page_html:
+        return {}
+    soup = BeautifulSoup(page_html, "lxml")
+    box = soup.select_one("table.infobox, div.infobox_v3, table.infobox_v2, div.infobox")
+    out = {}
+    if not box:
+        return out
+    for tr in box.select("tr"):
+        th, td = tr.find("th", recursive=False), tr.find("td", recursive=False)
+        if th and td:
+            k = re.sub(r"\s+", " ", th.get_text(" ", strip=True).replace(" ", " ")).lower()
+            v = _propre(td)
+            if k and v and k not in out:
+                out[k] = v
+    return out
+
+
+def _nombre(txt: str, lang: str) -> float | None:
+    t = re.sub(r"[   ]", "", txt) if lang == "fr" else txt.replace(",", "")
+    try:
+        return float(t.replace(",", ".") if lang == "fr" else t)
+    except ValueError:
+        return None
+
+
+def longueur_m(txt: str | None, lang: str = "en") -> float | None:
+    """« 1,234 m (4,049 ft) », « 24 feet (7.3 m) », « 2 009 m » → mètres (unité métrique préférée, sinon pieds, milles)."""
+    if not txt:
+        return None
+    for unite, k in UNITES_TXT:
+        m = re.search(NOMBRE[lang] + r"\s*(?:" + unite + r")(?![a-zé])", txt, re.I)
+        if m:
+            v = _nombre(m.group(1).strip(), lang)
+            if v:
+                return round(v * k, 1)
+    return None
+
+
+def annee(txt: str | None) -> int | None:
+    m = RE_ANNEE.search(txt or "")
+    return int(m.group(1)) if m else None
+
+
+def entier(txt: str | None) -> int | None:
+    m = re.match(r"\s*(\d{1,3})(?!\d|[.,]\d)", txt or "")
+    return int(m.group(1)) if m else None
+
+
+def court(t: str, n: int = TXT_MAX) -> str:
+    """Texte d'infobox limité à `n` caractères, coupé au mot avec « … »."""
+    return t if len(t) <= n else t[:n].rsplit(" ", 1)[0].rstrip(" ,;:(") + "…"
+
+
+def _materiaux(txt: str) -> str | None:
+    """« Steel, wood, concrete » → « acier, bois, béton » ; None si un mot n'est pas dans MATERIAUX."""
+    parts = [p.strip().lower() for p in re.split(r",| and | & |/", txt) if p.strip()]
+    fr = [MATERIAUX.get(p) for p in parts]
+    return ", ".join(dict.fromkeys(fr)) if parts and all(fr) else None
+
+
+def faits_infobox(ib_en: dict, ib_fr: dict) -> dict:
+    """Infobox anglaise et française → faits (français préféré pour les textes, anglais pour les nombres).
+    Les textes repris de l'anglais sont listés dans « en » (affichés comme tels, en italique)."""
+    def lire(ib, table):
+        r = {}
+        for k, v in ib.items():
+            c = table.get(k)
+            if c and c not in r:
+                r[c] = v
+        return r
+    en, fr = lire(ib_en, IB_EN), lire(ib_fr, IB_FR)
+    f, en_txt = {}, []
+    for c in CHAMPS_M:
+        v = longueur_m(en.get(c), "en") or longueur_m(fr.get(c), "fr")
+        if v and 0.5 <= v <= 60_000:
+            f[c] = v
+    for c in CHAMPS_N:
+        v = entier(en.get(c))
+        if v:
+            f[c] = v
+    debut, fin = annee(en.get("debut")), annee(en.get("fin"))
+    ans_fr = [int(a) for a in RE_ANNEE.findall(fr.get("construction", ""))]
+    debut = debut or (ans_fr[0] if ans_fr else None)
+    fin = fin or (ans_fr[-1] if len(ans_fr) > 1 else None)
+    f["debut"], f["fin"] = debut, fin
+    f["ouvert"] = annee(en.get("ouvert")) or annee(fr.get("ouvert")) or annee(en.get("inaug")) or annee(fr.get("inaug"))
+    ferme = en.get("ferme") or fr.get("ferme")
+    if ferme:
+        f["ferme"] = court(ferme)
+    for c in CHAMPS_TXT:
+        if fr.get(c):
+            f[c] = court(fr[c])
+        elif en.get(c):
+            tr = _materiaux(en[c]) if c == "mat" else None
+            f[c] = court(tr or en[c])
+            if not tr and c not in ("trafic", "voies"):
+                en_txt.append(c)
+    if en_txt:
+        f["en"] = en_txt
+    return {k: v for k, v in f.items() if v is not None}
+
+
+def infoboxes(s, titres: list[str], lang: str, fetch: bool) -> dict[str, dict]:
+    """Titre → infobox de l'article (section 0 rendue par l'API, une requête par article)."""
+    out = {}
+    for t in sorted(set(x for x in titres if x)):
+        try:
+            d = _get_json(s, API[lang], {"action": "parse", "page": t, "prop": "text", "section": 0, "redirects": 1,
+                                         "disablelimitreport": 1, "disableeditsection": 1}, f"ib_{lang}_{_cle(t)}.json", fetch)
+        except (OSError, ValueError) as e:                 # article renommé, cache absent : pas d'infobox
+            log.warning("infobox %s:%s : %s", lang, t, e)
+            continue
+        out[t] = infobox(d.get("parse", {}).get("text", ""))
     return out
 
 
@@ -279,8 +466,9 @@ def faits_wikidata(e: dict) -> dict:
     f["type"] = [q for q in f["type"] if q not in TYPES_GENERIQUES] or f["type"]
     f["long"] = next((m for m in map(_metres, _val(cl, P_LONG)) if m), None)
     f["portee"] = next((m for m in map(_metres, _val(cl, P_PORTEE)) if m), None)
-    f["an"] = next((a for a in map(_annee, _val(cl, P_OUVERTURE)) if a), None) or \
-        next((a for a in map(_annee, _val(cl, P_DEBUT)) if a), None)
+    f["ouverture"] = next((a for a in map(_annee, _val(cl, P_OUVERTURE)) if a), None)
+    f["creation"] = next((a for a in map(_annee, _val(cl, P_DEBUT)) if a), None)
+    f["an"] = f["ouverture"] or f["creation"]
     f["st"] = next(iter(_val(cl, P_STRUCTURAE)), None)
     f["image"] = next(iter(_val(cl, P_IMAGE)), None)
     f["commonscat"] = next(iter(_val(cl, P_COMMONSCAT)), None)
@@ -483,8 +671,9 @@ def apparier(cands: list[dict], mtmd: list[tuple], max_m: float = DISTANCE_MAX_M
 
 # --- Assemblage -------------------------------------------------------------------------------------
 def construire(liste: list[dict], art_en: dict, art_fr: dict, ent: dict, lib: dict, imgs: dict,
-               qc: list[dict], mtmd: list[tuple]) -> dict:
+               qc: list[dict], mtmd: list[tuple], ib_en: dict | None = None, ib_fr: dict | None = None) -> dict:
     ponts, vus = [], set()
+    ib_en, ib_fr = ib_en or {}, ib_fr or {}
     for e in liste:
         a = art_en.get(e["titre"])
         if not a or not a["q"] or a["q"] in vus:        # deux entrées de la liste peuvent mener au même article
@@ -502,14 +691,35 @@ def construire(liste: list[dict], art_en: dict, art_fr: dict, ent: dict, lib: di
         afr = art_fr.get(fr_titre) if fr_titre else None
         noms = lambda k: ", ".join(dict.fromkeys(x for x in (libelle(lib.get(q)) for q in f[k]) if x)) or None
         nom = f["nom"] or e["nom"] or a["titre"]
+        ib = faits_infobox(ib_en.get(a["titre"], {}), ib_fr.get(fr_titre, {}) if fr_titre else {})
+        # v0.6.5 : textes de Wikidata (libellés français) d'abord, puis infobox ; textes anglais signalés dans « txtEn »
+        en_txt = set(ib.get("en", []))
+        texte = lambda k, wd: wd or ib.get(k)
         p = {"id": a["q"], "nom": nom[:1].upper() + nom[1:], "nomEn": a["titre"], "prov": e["prov"],
-             "section": e["section"], "lat": round(lat, 5), "lon": round(lon, 5), "an": f["an"],
-             "type": noms("type"), "long": f["long"], "portee": f["portee"], "mat": noms("mat"),
-             "franchit": noms("franchit"), "archi": noms("archi"), "prop": noms("prop"), "patri": noms("patri"),
-             "distinction": e["distinction"], "fr": fr_titre, "en": a["titre"], "q": a["q"],
+             "section": e["section"], "lat": round(lat, 5), "lon": round(lon, 5),
+             "an": f["ouverture"] or ib.get("ouvert") or ib.get("fin") or f["creation"],
+             "debut": ib.get("debut") or (f["creation"] if f["creation"] and f["ouverture"] and f["creation"] < f["ouverture"] else None),
+             "fin": ib.get("fin"), "ferme": ib.get("ferme"),
+             "type": noms("type"), "conception": ib.get("conception"), "long": f["long"] or ib.get("long"),
+             "portee": f["portee"] or ib.get("portee"), "larg": ib.get("larg"), "haut": ib.get("haut"),
+             "degag": ib.get("degag"), "travees": ib.get("travees"), "piles": ib.get("piles"), "voies": ib.get("voies"),
+             "mat": texte("mat", noms("mat")), "franchit": noms("franchit"), "porte": ib.get("porte"),
+             "archi": texte("archi", noms("archi")), "constr": ib.get("constr"), "prop": texte("prop", noms("prop")),
+             "patri": texte("patri", noms("patri")), "cout": ib.get("cout"), "trafic": ib.get("trafic"),
+             "peage": ib.get("peage"), "distinction": e["distinction"], "fr": fr_titre, "en": a["titre"], "q": a["q"],
              "st": f["st"] or e["st"]}
+        if p["debut"] and p["an"] and p["debut"] > p["an"]:
+            p["debut"] = None                           # « début » postérieur à la mise en service : reconstruction
+        if p["fin"] and p["fin"] == p["an"]:
+            p["fin"] = None
+        txt_en = sorted(k for k in en_txt if k in p and p[k] == ib.get(k))
+        if txt_en:
+            p["txtEn"] = txt_en
         if afr and afr.get("resume"):
             p["resume"], p["resumeLang"] = afr["resume"], "fr"
+            # l'introduction anglaise est souvent bien plus fournie : gardée quand elle double au moins le français
+            if a["resume"] and len(a["resume"]) > 1.6 * len(afr["resume"]):
+                p["resumeEn"] = a["resume"]
         elif a["resume"]:
             p["resume"], p["resumeLang"] = a["resume"], "en"
         img = imgs.get((afr or {}).get("image") or "") or imgs.get(a["image"] or "")
@@ -556,7 +766,10 @@ def run(fetch: bool = True) -> dict:
     vals = {q for a in art_en.values() if a["q"] in ent for k in P_ITEMS.values() for q in faits_wikidata(ent[a["q"]])[k]}
     lib = entites(s, sorted(vals), fetch, props="labels")
     imgs = images(s, [a["image"] for a in art_en.values()] + [a["image"] for a in art_fr.values()], fetch)
-    payload = construire(liste, art_en, art_fr, ent, lib, imgs, qc, charger_mtmd())
+    ib_en = infoboxes(s, [a["titre"] for a in art_en.values()], "en", fetch)
+    ib_fr = infoboxes(s, [a["titre"] for a in art_fr.values()], "fr", fetch)
+    ib_fr.update({t: ib_fr[a["titre"]] for t, a in art_fr.items() if a["titre"] in ib_fr})   # titre demandé → infobox
+    payload = construire(liste, art_en, art_fr, ent, lib, imgs, qc, charger_mtmd(), ib_en, ib_fr)
     secours = photos_de_secours(s, payload["ponts"], ent, fetch)
     imgs2 = images(s, [f for f, _ in secours.values()], fetch)
     for p in payload["ponts"]:
@@ -564,6 +777,8 @@ def run(fetch: bool = True) -> dict:
         img = imgs2.get(f or "") or imgs2.get((f or "").replace(" ", "_"))
         if img and img.get("src"):
             p["img"] = {**img, "origine": origine}
+        elif not p.get("img") and p["q"] in PHOTOS_EXTERNES:
+            p["img"] = {**PHOTOS_EXTERNES[p["q"]], "site": "Flickr", "origine": "flickr"}
     corps = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     OUT.write_text(f"window.PQ_COUCHES=window.PQ_COUCHES||{{}};window.PQ_COUCHES.wikiponts={corps};\n",
                    encoding="utf-8", newline="\n")

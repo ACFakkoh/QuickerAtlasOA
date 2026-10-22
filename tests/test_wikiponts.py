@@ -121,3 +121,69 @@ def test_resultats_recherche_ecarte_les_homonymes_lointains():
         {"index": 1, "title": "File:Eads Bridge, St. Louis.jpg", "coordinates": [{"lat": 38.63, "lon": -90.18}]},
         {"index": 3, "title": "File:St. Louis Bridge sans position.jpg"}]}}
     assert [r["title"] for r in wp.resultats_recherche(d, 52.925, -105.808)] == ["File:St. Louis Bridge, Saskatchewan.jpg"]
+
+
+# --- v0.6.5 : infobox et introduction ------------------------------------------------------------------
+INFOBOX_EN = """<table class="infobox"><tbody>
+<tr><th colspan="2">Pierre Laporte Bridge</th></tr>
+<tr><th class="infobox-label">Carries</th><td>6 lanes of <a href="/wiki/A-73">A-73</a><sup class="reference">[1]</sup></td></tr>
+<tr><th>Total&nbsp;length</th><td>1,041&nbsp;m (3,415&nbsp;ft)</td></tr>
+<tr><th>Longest span</th><td>667.5 m (2,190 ft)</td></tr>
+<tr><th>Width</th><td>29 feet (8.8 m)</td></tr>
+<tr><th>Clearance below</th><td>55 m (180 ft) at mid-span</td></tr>
+<tr><th>No. of spans</th><td>3</td></tr>
+<tr><th>Construction start</th><td>1966</td></tr>
+<tr><th>Construction end</th><td>1970</td></tr>
+<tr><th>Opened</th><td>November 6, 1970<span style="display:none"> (<span class="bday">1970-11-06</span>)</span>; 55 years ago</td></tr>
+<tr><th>Material</th><td>Steel, concrete</td></tr>
+<tr><th>Design</th><td>Suspension bridge</td></tr>
+<tr><th>Daily traffic</th><td>120,000</td></tr>
+</tbody></table>"""
+INFOBOX_FR = """<div class="infobox_v3"><table><tbody>
+<tr><th>Fonction</th><td>Pont routier</td></tr>
+<tr><th>Longueur</th><td>1&nbsp;041&nbsp;m</td></tr>
+<tr><th>Construction</th><td>1966-1970</td></tr>
+<tr><th>Architecte(s)</th><td>Montreal Engineering</td></tr>
+</tbody></table></div>"""
+
+
+def test_infobox_libelles_et_textes_nettoyes():
+    ib = wp.infobox(INFOBOX_EN)
+    assert ib["total length"] == "1,041 m (3,415 ft)"                      # espace insécable normalisée
+    assert ib["carries"] == "6 lanes of A-73"                              # renvoi [1] retiré
+    assert ib["opened"] == "November 6, 1970"                              # date cachée et « 55 years ago » retirées
+    assert wp.infobox("<p>sans infobox</p>") == {}
+
+
+def test_longueur_annee_entier():
+    assert wp.longueur_m("1,041 m (3,415 ft)") == 1041.0
+    assert wp.longueur_m("29 feet (8.8 m)") == 8.8                         # unité métrique préférée
+    assert wp.longueur_m("100 ft") == 30.5
+    assert wp.longueur_m("2.3 km") == 2300.0
+    assert wp.longueur_m("1 234,5 m", "fr") == 1234.5
+    assert wp.longueur_m("12 miles") == 19312.1
+    assert wp.longueur_m("aucune") is None
+    assert wp.annee("(original) October 10, 1907; (replica) 2018") == 1907
+    assert wp.entier("2, one each on either side") == 2 and wp.entier("1.5") is None
+
+
+def test_faits_infobox_francais_prefere_nombres_anglais():
+    f = wp.faits_infobox(wp.infobox(INFOBOX_EN), wp.infobox(INFOBOX_FR))
+    assert (f["long"], f["portee"], f["larg"], f["degag"], f["travees"]) == (1041.0, 667.5, 8.8, 55.0, 3)
+    assert (f["debut"], f["fin"], f["ouvert"]) == (1966, 1970, 1970)
+    assert f["porte"] == "Pont routier" and f["archi"] == "Montreal Engineering"   # français d'abord
+    assert f["mat"] == "acier, béton"                                               # matériaux traduits
+    assert f["conception"] == "Suspension bridge" and "conception" in f["en"]       # texte anglais signalé
+    assert f["trafic"] == "120,000" and "trafic" not in f["en"]
+
+
+def test_couper_a_la_phrase():
+    t = "Première phrase. Deuxième phrase un peu plus longue. Troisième."
+    assert wp.couper(t, 40) == "Première phrase."
+    assert wp.couper("Court.", 40) == "Court."
+    assert wp.couper(None, 40) is None
+
+
+def test_court_au_mot():
+    assert wp.court("abc def ghi", 7) == "abc…"
+    assert wp.court("abc", 7) == "abc"
