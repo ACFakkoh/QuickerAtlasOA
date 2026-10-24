@@ -1,7 +1,7 @@
 # AGENTS.md — QuickerAtlasOA
 
 Atlas web des ≈ 11 700 structures du MTMD (Québec) : ETL Python → SQLite → fichiers `data/*.js` → visualiseur HTML
-unique (Leaflet, sans build, sans clé d'API). En ligne : <https://acfakkoh.github.io/QuickerAtlas/> (GitHub Pages,
+unique (Leaflet, sans build, sans clé d'API). En ligne : <https://acheruel.github.io/QuickerAtlas/> (GitHub Pages,
 `main`, racine). Doc technique détaillée : [docs/TECHNIQUE.md](docs/TECHNIQUE.md). Historique : `docs/rapports/`.
 
 ## Règles du projet

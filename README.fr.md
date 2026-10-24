@@ -2,7 +2,7 @@
 
 *[English version](README.md)*
 
-**[▶ Ouvrir l’atlas](https://acfakkoh.github.io/QuickerAtlas/)** — gratuit, sans compte, dans le navigateur.
+**[▶ Ouvrir l’atlas](https://acheruel.github.io/QuickerAtlas/)** — gratuit, sans compte, dans le navigateur.
 
 ![Carte de QuickerAtlas](docs/capture.jpg)
 

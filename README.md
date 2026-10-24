@@ -1,6 +1,6 @@
 # QuickerAtlas: an atlas of Québec's bridges
 
-**[▶ Open the atlas](https://acfakkoh.github.io/QuickerAtlas/)**. It's free, needs no account and runs in the browser. *[Version française](README.fr.md)*
+**[▶ Open the atlas](https://acheruel.github.io/QuickerAtlas/)**. It's free, needs no account and runs in the browser. *[Version française](README.fr.md)*
 
 ![QuickerAtlas: map, structure sheet and LiDAR profile](docs/capture.jpg)
 
