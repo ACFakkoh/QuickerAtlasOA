@@ -1,6 +1,6 @@
 # QuickerAtlas: an atlas of Québec's bridges
 
-**[▶ Open the atlas](https://acfakkoh.github.io/QuickerAtlasOA/)**. It's free, needs no account and runs in the browser. *[Version française](README.fr.md)*
+**[▶ Open the atlas](https://acfakkoh.github.io/QuickerAtlas/)**. It's free, needs no account and runs in the browser. *[Version française](README.fr.md)*
 
 ![QuickerAtlas: map, structure sheet and LiDAR profile](docs/capture.jpg)
 
@@ -37,5 +37,5 @@ OpenStreetMap, MRNF, NBC 2020, Wikipedia (CC BY-SA) and Wikidata (CC0). It is re
 ---
 
 Developers: data pipeline, sources and architecture are in [docs/TECHNIQUE.md](docs/TECHNIQUE.md) (French).
-The repository and web address keep their original name, `QuickerAtlasOA`.
+The repository was renamed from `QuickerAtlasOA` (October 2026): the old web address no longer works.
 Author: Anthony Chéruel.

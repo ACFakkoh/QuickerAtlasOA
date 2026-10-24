@@ -2,7 +2,7 @@
 
 *[English version](README.md)*
 
-**[▶ Ouvrir l’atlas](https://acfakkoh.github.io/QuickerAtlasOA/)** — gratuit, sans compte, dans le navigateur.
+**[▶ Ouvrir l’atlas](https://acfakkoh.github.io/QuickerAtlas/)** — gratuit, sans compte, dans le navigateur.
 
 ![Carte de QuickerAtlas](docs/capture.jpg)
 
@@ -41,5 +41,5 @@ en haut à droite de l’atlas.
 ---
 
 Développeurs : mise à jour des données, sources et architecture dans [docs/TECHNIQUE.md](docs/TECHNIQUE.md).
-Le dépôt et l’adresse web gardent leur nom d’origine, `QuickerAtlasOA`.
+Le dépôt s’appelait `QuickerAtlasOA` jusqu’en octobre 2026 : l’ancienne adresse web ne marche plus.
 Auteur : Anthony Chéruel.

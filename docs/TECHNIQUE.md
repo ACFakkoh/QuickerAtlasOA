@@ -99,7 +99,7 @@ nationales 117, 175, 173, 133 et 185, soit ≈ 8 100 km de chaussées (officiel 
 Charge `data/structures.js` (~2 Mo, format compact décrit dans `etl/build.py`) et `data/details.js` (fiche détaillée, ~2,6 Mo) par `<script src>`,
 puis `data/debits.js` et `data/journal.js`, et à la demande les couches ci-dessus (les ouvrages des villes avec la case
 « Inclure les ouvrages des villes ») : s'ouvre directement en `file://` (double-clic) ou via `python -m http.server` à la racine.
-**En ligne** : <https://acfakkoh.github.io/QuickerAtlasOA/> (GitHub Pages, branche `main`, racine). Depuis la v0.6.0,
+**En ligne** : <https://acfakkoh.github.io/QuickerAtlas/> (GitHub Pages, branche `main`, racine). Depuis la v0.6.0,
 `index.html` **est** le visualiseur (copie à l'identique du fichier versionné, refaite à chaque publication :
 `cp QuickerAtlasOA-vX.Y.Z-AAAA-MM-JJ.html index.html`) : l'adresse publique reste la racine du site, sans redirection
 vers le nom de fichier versionné ; `.nojekyll` désactive Jekyll. Le site n'a besoin que
@@ -110,8 +110,9 @@ sismique ») et, depuis la v0.6.0, `js/lidar.js` (« Profil LiDAR », contrat `w
 qu'à la première ouverture. Contrat : `window.QA_MOD[clé].render(o, body, ctx)` ; la page leur
 prête `window.QA` (échappement, formats, `fetchT` borné dans le temps corps compris, `loadScript`, `distM`, `det`).
 
-**Interface** (v0.6.6) : nom affiché « QuickerAtlas » (le dépôt, l'adresse et les fichiers versionnés gardent
-`QuickerAtlasOA`). Fenêtre d'accueil `<dialog id="welcome">` ouverte à chaque chargement : avertissement « non
+**Interface** (v0.6.6) : nom affiché « QuickerAtlas » ; dépôt renommé `ACFakkoh/QuickerAtlas`, site
+<https://acfakkoh.github.io/QuickerAtlas/> (l'ancienne adresse `…/QuickerAtlasOA/` répond 404) ; les fichiers versionnés
+gardent le préfixe `QuickerAtlasOA-v…` (lu par `tests/js/viewer_pure.mjs`). Fenêtre d'accueil `<dialog id="welcome">` ouverte à chaque chargement : avertissement « non
 officiel » à accepter (Échap ignoré ; rouverte si le navigateur la ferme sans « J'ai compris ») ; la pastille « Non
 officiel » du bandeau la rouvre. Onglets en boutons avec icônes (`#view-tabs`) : Carte, Liste, Statistiques, Galerie
 (ancienne vue « Défilement », clé `defile` inchangée dans le hash), « Quoi de neuf » (bouton sans vue, panneau placé sous
