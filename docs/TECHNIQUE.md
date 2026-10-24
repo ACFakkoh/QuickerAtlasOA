@@ -1,4 +1,4 @@
-# QuickerAtlasOA — documentation technique (données, ETL, couches)
+# QuickerAtlas — documentation technique (données, ETL, couches)
 
 Copie modernisée et enrichie de l'[inventaire des structures](https://www.transports.gouv.qc.ca/fr/projets-infrastructures/structures/Pages/inventaires-structures.aspx)
 du ministère des Transports et de la Mobilité durable du Québec : base SQLite consolidée et visualiseur cartographique.
@@ -109,6 +109,15 @@ des HTML, de `sw.js`, de `js/` et de `data/` (sans `raw/` ni `ponts.sqlite`, exc
 sismique ») et, depuis la v0.6.0, `js/lidar.js` (« Profil LiDAR », contrat `window.QA_MOD.lidar.open(o)`) ne sont chargés
 qu'à la première ouverture. Contrat : `window.QA_MOD[clé].render(o, body, ctx)` ; la page leur
 prête `window.QA` (échappement, formats, `fetchT` borné dans le temps corps compris, `loadScript`, `distM`, `det`).
+
+**Interface** (v0.6.6) : nom affiché « QuickerAtlas » (le dépôt, l'adresse et les fichiers versionnés gardent
+`QuickerAtlasOA`). Fenêtre d'accueil `<dialog id="welcome">` ouverte à chaque chargement : avertissement « non
+officiel » à accepter (Échap ignoré ; rouverte si le navigateur la ferme sans « J'ai compris ») ; la pastille « Non
+officiel » du bandeau la rouvre. Onglets en boutons avec icônes (`#view-tabs`) : Carte, Liste, Statistiques, Galerie
+(ancienne vue « Défilement », clé `defile` inchangée dans le hash), « Quoi de neuf » (bouton sans vue, panneau placé sous
+lui par `placeNews`), Ponts remarquables ; libellés courts sous 800 px. Bouton « Masquer » sous « Couches »
+(`setPtsHidden`) : retire le groupe des structures, les numéros et les couches de points `forestiers` et `wikiponts`
+(gardées dans `pq-couches-v060` et remises au réaffichage) ; état non conservé d'une visite à l'autre.
 
 **LiDAR** (MNEHR 1 m de Ressources naturelles Canada, Licence du gouvernement ouvert – Canada) : fonds « Relief ombré
 MNT / MNS » en tuiles WMS, et bouton « Profil LiDAR » de la fiche, calculé à la demande dans le navigateur (WCS en

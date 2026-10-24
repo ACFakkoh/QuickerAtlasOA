@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>QuickerAtlasOA v0.6.5 · Atlas des ouvrages d’art du Québec</title>
+<title>QuickerAtlas v0.6.6 · Atlas des ouvrages d’art du Québec</title>
 <meta name="description" content="Proposition de visualisation de l'inventaire des structures (ponts, ponceaux, murs, tunnels) du ministère des Transports et de la Mobilité durable du Québec.">
 <meta name="theme-color" content="#102d41">
 <link rel="preconnect" href="https://server.arcgisonline.com">
@@ -34,14 +34,12 @@ label{font-size:.875rem}
 .brand>div>span{font-weight:350;color:#9cdfcf}
 .brand small{font-weight:500;letter-spacing:0;font-size:.75rem;color:#a9c2cf;overflow:hidden;text-overflow:ellipsis;margin-left:10px}
 .brand-mark{display:block;flex:none;width:28px;height:28px}
-/* v0.6.5 : avertissement « non officiel » au centre du bandeau (deux lignes au plus ; version courte si étroit) */
-.disclaimer{flex:0 0 600px;min-width:0;margin:0 auto;display:flex;align-items:center;gap:8px;padding:3px 10px;border:1px solid rgba(242,193,78,.55);border-radius:6px;background:rgba(242,193,78,.1);color:#f6e2b3;font-size:.72rem;line-height:1.25}
+/* v0.6.6 : l'avertissement complet passe dans la fenêtre d'accueil ; le bandeau garde une pastille qui la rouvre */
+.disclaimer{flex:none;margin:0 auto;display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border:1px solid rgba(242,193,78,.55);border-radius:999px;background:rgba(242,193,78,.1);color:#f6e2b3;font-size:.75rem;font-weight:500;line-height:1.25;white-space:nowrap}
+.disclaimer:hover:not(:disabled){background:rgba(242,193,78,.22)}
 .disclaimer svg{flex:none}
 .disclaimer b{color:#ffd77a;font-weight:650}
-.disclaimer .dc-long{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.disclaimer .dc-short{display:none;white-space:nowrap}
-@media(max-width:1250px){.disclaimer .dc-long{display:none}.disclaimer .dc-short{display:inline}.disclaimer{flex:0 1 auto}}
-@media(max-width:700px){.disclaimer{padding:3px 6px;gap:5px;flex:none}.disclaimer .dc-x{display:none}.brand>div{overflow:hidden}}
+@media(max-width:700px){.disclaimer{padding:3px 8px;gap:5px}.disclaimer .dc-x{display:none}.brand>div{overflow:hidden}}
 @media(max-width:500px){.brand{flex:none}.brand>div{display:none}.topbar{gap:8px}}
 .header-right{display:flex;gap:14px;align-items:center;flex:none}
 .release-info{display:flex;gap:10px;align-items:baseline;font-size:.78rem;text-align:right;color:#ecf6f5;white-space:nowrap}.release-info small{font-size:.75rem;color:#b5cbd6}
@@ -115,11 +113,15 @@ label{font-size:.875rem}
 
 /* Colonne principale */
 .main{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0}
-.main-head{display:flex;align-items:stretch;flex-wrap:wrap;gap:4px 18px;border-bottom:1px solid var(--line);flex:none}
-.view-tabs{display:flex;gap:20px;flex:none}
-.view-tabs button{border:0;border-radius:0;background:none;padding:8px 1px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
-.view-tabs button:hover:not(.active){background:none;color:var(--ink)}
-.view-tabs button.active{color:var(--teal);border-bottom-color:var(--teal)}
+.main-head{display:flex;align-items:center;flex-wrap:wrap;gap:6px 18px;flex:none}
+/* v0.6.6 : onglets en boutons (fond, bordure, icône) : on voit qu'ils se cliquent ; l'onglet actif est plein */
+.view-tabs{display:flex;gap:3px;flex:none;padding:3px;background:#e2eaf0;border:1px solid #cdd9e2;border-radius:10px}
+.view-tabs button{display:inline-flex;align-items:center;gap:6px;border:1px solid transparent;border-radius:7px;background:none;padding:5px 11px;color:var(--ink);font-weight:600;white-space:nowrap}
+.view-tabs button svg{flex:none;color:#4d6a7b}
+.view-tabs button:hover:not(.active){background:#fff;border-color:#c3d2dc;box-shadow:0 1px 2px #15354a14}
+.view-tabs button.active{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 1px 3px #00736d55}
+.view-tabs button.active svg{color:#fff}
+.view-tabs .tab-c{display:none}
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
 .metric{background:#fff;padding:12px 15px;min-width:0;text-align:left}
 .metric-label{font-size:.75rem;letter-spacing:.8px;font-weight:600;text-transform:uppercase;color:var(--muted)}
@@ -218,11 +220,10 @@ label{font-size:.875rem}
 .lg-sub{margin-top:6px;font-size:.75rem;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:650}
 .leaflet-tooltip{font-family:"Segoe UI",Arial,sans-serif;font-size:.78rem;color:var(--ink);border-color:var(--line)}
 
-/* « Quoi de neuf » (P5) : bouton de la barre du haut et panneau */
-.news-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid #ffffff38;background:#ffffff12;color:#fff;border-radius:999px;padding:6px 13px;font-size:.8125rem}
-.news-btn:hover:not(:disabled){background:#ffffff26}
-.news-btn[aria-expanded=true]{background:#fff;color:var(--navy)}
-.news-n{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#73e4c2;color:var(--navy);font-size:.75rem;font-weight:700;display:inline-grid;place-items:center;font-variant-numeric:tabular-nums}
+/* « Quoi de neuf » (P5) : bouton et panneau. v0.6.6 : bouton dans la barre des onglets (avant : barre du haut),
+   panneau placé sous le bouton à l'ouverture */
+.view-tabs .news-btn[aria-expanded=true]{background:var(--mint);border-color:var(--teal);color:#00534f}
+.news-n{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--navy);color:#fff;font-size:.75rem;font-weight:700;display:inline-grid;place-items:center;font-variant-numeric:tabular-nums}
 .news-n[hidden]{display:none}
 .news{position:fixed;z-index:2500;top:calc(var(--topbar-h) + 8px);right:28px;width:min(560px,calc(100vw - 32px));max-height:calc(100vh - var(--topbar-h) - 24px);display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 40px #102d4133}
 .news[hidden]{display:none}
@@ -260,6 +261,28 @@ label{font-size:.875rem}
 /* Fenêtre « Profil LiDAR » (même facture que les fenêtres de QuickerBridge) */
 .section-dialog{max-width:none;width:min(1360px,97vw);max-height:94vh;padding:0;border:0;border-radius:12px;box-shadow:0 20px 60px #0b1e2b66;overflow:auto;background:#fff;color:#17374b}
 .section-dialog::backdrop{background:#0b1e2b99;backdrop-filter:blur(2px)}
+/* v0.6.6 : fenêtre d'accueil (avertissement à accepter à chaque démarrage) */
+.welcome{width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 32px);padding:0;border:0;border-radius:16px;background:#fff;color:var(--ink);box-shadow:0 24px 60px #0b1e2b66;overflow:auto}
+.welcome::backdrop{background:#0b1e2bb3;backdrop-filter:blur(3px)}
+.welcome[open]{animation:wcin .25s ease-out}
+@keyframes wcin{from{opacity:0;transform:translateY(10px) scale(.98)}}
+.wc-hero{display:flex;align-items:center;gap:16px;padding:22px 24px 20px;background:linear-gradient(135deg,#102d41 0%,#17435c 100%);color:#fff}
+.wc-mark{flex:none}
+.wc-hero h2{margin:0 0 6px;font-size:1.4rem;font-weight:650;letter-spacing:-.4px}
+.wc-hero h2 span{font-weight:350;color:#9cdfcf}
+.wc-hero p{margin:0;font-size:.875rem;line-height:1.45;color:#cfe0e8}
+.wc-hero p b{color:#fff;font-variant-numeric:tabular-nums}
+.wc-list{list-style:none;margin:0;padding:16px 24px 6px;display:flex;flex-direction:column;gap:9px}
+.wc-list li{display:flex;align-items:flex-start;gap:11px;font-size:.875rem;line-height:1.4}
+.wc-list svg{flex:none;color:var(--teal);margin-top:1px}
+.wc-warn{display:flex;gap:11px;align-items:flex-start;margin:12px 24px 0;padding:11px 14px;border:1px solid #e9cf86;border-left:4px solid #f2c14e;border-radius:8px;background:#fff8e6}
+.wc-warn svg{flex:none;margin-top:1px}
+.wc-warn p{margin:0;font-size:.8125rem;line-height:1.5;color:#4a3a12}
+.wc-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px 16px;padding:16px 24px 20px}
+.wc-foot small{font-size:.75rem;color:var(--muted)}
+.wc-ok{margin-left:auto;background:var(--teal);border-color:var(--teal);color:#fff;padding:9px 18px;font-size:.9rem;border-radius:8px}
+.wc-ok:hover:not(:disabled){background:#005f5a}
+@media(max-width:500px){.wc-hero{padding:18px 18px 16px;gap:12px}.wc-mark{width:42px;height:42px}.wc-hero h2{font-size:1.2rem}.wc-list,.wc-foot{padding-left:18px;padding-right:18px}.wc-warn{margin:12px 18px 0}.wc-ok{width:100%}}
 .sp-head{position:sticky;top:0;z-index:1200;display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f3f7f9;border-bottom:1px solid var(--line);cursor:move;user-select:none;touch-action:none}
 .sp-head b{display:block;font-size:1rem}
 .sp-head small{display:block;font-size:.75rem;color:var(--muted)}
@@ -376,9 +399,12 @@ abbr[title]{text-decoration:underline dotted #8aa1ae;text-underline-offset:2px;c
 .leaflet-top.leaflet-left .leaflet-control{margin-top:6px}
 .leaflet-top.leaflet-left .leaflet-control:first-child{margin-top:10px}
 /* Panneau des couches (v0.6.0 ; v0.6.4 : en haut à gauche, bouton « Couches » nommé) */
-.lc{position:relative}
+.lc{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+/* v0.6.6 : bouton « Masquer » (toutes les structures) sous « Couches » ; enfoncé = fond marine, libellé « Afficher » */
+.lc-pts[aria-pressed=true]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.lc-pts[aria-pressed=true]:hover{background:#17435c;color:#fff}
 .lc-btn{height:36px;padding:0 11px 0 8px;display:flex;align-items:center;gap:6px;border:2px solid #0000002e;border-radius:8px;background:#fff;color:var(--ink);background-clip:padding-box;font-size:.8125rem;font-weight:600;white-space:nowrap}
-.lc.open .lc-btn{color:#00534f;background:var(--mint);border-color:var(--teal)}
+.lc.open .lc-btn[aria-expanded]{color:#00534f;background:var(--mint);border-color:var(--teal)}
 .lc-panel{position:absolute;left:0;top:42px;width:300px;max-height:max(240px,calc(100vh - 330px));overflow:auto;scrollbar-width:thin;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 28px #102d4129;padding:10px 12px 8px}
 .lc-panel[hidden]{display:none}
 .lc-h{font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:2px 0 6px}
@@ -587,11 +613,13 @@ table.list tbody tr:hover{background:#eef5f7}
   .defile{min-height:72vh}
   .df-info{flex-wrap:wrap;padding:8px 10px}
   .df-titles{flex-basis:calc(100% - 40px)}
-  .news{right:16px;top:calc(var(--topbar-h) + 6px)}
-  .news-btn .news-lbl{display:none}
-  /* v0.6.3 : onglets et indicateurs dans la largeur du téléphone (la barre des indicateurs débordait de 140 px) */
-  .view-tabs{flex:1 1 100%;min-width:0;gap:14px;overflow-x:auto;scrollbar-width:none}
-  .view-tabs button{flex:none}
+  /* v0.6.3 : onglets et indicateurs dans la largeur du téléphone (la barre des indicateurs débordait de 140 px).
+     v0.6.6 : icône au-dessus d'un libellé court, les six onglets tiennent sur une ligne sans défilement */
+  .view-tabs{flex:1 1 100%;min-width:0;gap:2px}
+  .view-tabs button{flex:1 1 auto;min-width:0;flex-direction:column;gap:2px;padding:4px 3px;font-size:.66rem;line-height:1.1}
+  .view-tabs .tab-l{display:none}.view-tabs .tab-c{display:inline}
+  .news-n{position:absolute;top:0;left:50%;margin-left:5px;min-width:16px;height:16px;font-size:.65rem}
+  .view-tabs .news-btn{position:relative}
   .kpi-bar{margin-left:0;flex:1 1 100%;min-width:0;gap:2px 14px}
 }
 @media(max-width:500px){
@@ -621,19 +649,15 @@ table.list tbody tr:hover{background:#eef5f7}
       </g>
       <path d="M5 37c1.6-6.6 7.4-10.6 15-10.6S33.4 30.4 35 37" fill="none" stroke="#73e4c2" stroke-width="2.4" stroke-linecap="round"/>
     </svg>
-    <div>Quicker<span>AtlasOA</span><small>Atlas des ouvrages d’art du Québec · inventaire du MTMD</small></div>
+    <div>Quicker<span>Atlas</span><small>Atlas des ouvrages d’art du Québec · inventaire du MTMD</small></div>
   </div>
-  <!-- v0.6.5 : avertissement permanent (outil personnel, non affilié au MTMD) -->
-  <p class="disclaimer" role="note" title="Programme non officiel, pour visualisation et apprentissage uniquement, non affilié au MTMD ni au gouvernement du Québec. Ne pas utiliser pour la conception, la construction ou la gestion d’actifs.">
+  <!-- v0.6.5 : avertissement permanent (outil personnel, non affilié au MTMD). v0.6.6 : texte complet dans la fenêtre
+       d'accueil, que cette pastille rouvre -->
+  <button type="button" class="disclaimer" id="disclaimer-btn" aria-haspopup="dialog" aria-controls="welcome" title="Programme non officiel, non affilié au MTMD : revoir l’avertissement">
     <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2.8 1.6 20.6h20.8z" fill="#f2c14e"/><path d="M12 9v5.2M12 16.6v1.4" stroke="#102d41" stroke-width="2.2" stroke-linecap="round"/></svg>
-    <span class="dc-long">Programme <b>non officiel</b>, pour visualisation et apprentissage uniquement, non affilié. Ne pas utiliser pour la conception, la construction ou la gestion d’actifs.</span>
-    <span class="dc-short"><b>Non officiel</b><span class="dc-x"> · visualisation seulement</span></span>
-  </p>
+    <span><b>Non officiel</b><span class="dc-x"> · visualisation et apprentissage</span></span>
+  </button>
   <div class="header-right">
-    <button type="button" class="news-btn" id="news-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="news" title="Changements entre les mises à jour et inspections récentes">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-      <span class="news-lbl">Quoi de neuf</span><span class="news-n" id="news-n" hidden></span>
-    </button>
     <div class="release-info"><b id="release-version"></b><small id="release-date"></small></div>
     <a class="gh-link" href="https://github.com/ACFakkoh/QuickerAtlasOA" target="_blank" rel="noopener" title="Code source sur GitHub" aria-label="Code source sur GitHub">
       <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
@@ -773,12 +797,14 @@ table.list tbody tr:hover{background:#eef5f7}
   <main class="main">
     <div class="main-head">
     <button type="button" class="show-filters" id="show-filters" aria-controls="inputs" aria-expanded="false" hidden title="Afficher le panneau des filtres"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtres<span class="nf-n" id="nf-n"></span></button>
+    <!-- v0.6.6 : onglets avec icônes ; « Défilement » devient « Galerie » ; « Quoi de neuf » entre Galerie et Ponts remarquables -->
     <nav class="view-tabs" id="view-tabs" aria-label="Vues">
-      <button type="button" class="active" data-view="carte" aria-current="page">Carte</button>
-      <button type="button" data-view="liste">Liste</button>
-      <button type="button" data-view="stats">Statistiques</button>
-      <button type="button" data-view="defile">Défilement</button>
-      <button type="button" data-view="remarq" title="Ponts remarquables du Canada (Wikipédia), hors inventaire du MTMD">Ponts remarquables</button>
+      <button type="button" class="active" data-view="carte" aria-current="page"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg>Carte</button>
+      <button type="button" data-view="liste"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2" fill="currentColor"/><circle cx="4.5" cy="12" r="1.2" fill="currentColor"/><circle cx="4.5" cy="18" r="1.2" fill="currentColor"/></svg>Liste</button>
+      <button type="button" data-view="stats"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/></svg><span class="tab-l">Statistiques</span><span class="tab-c">Stats</span></button>
+      <button type="button" data-view="defile" title="Les structures filtrées une à une, en grand, photos d’abord (tirage au hasard)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/><circle cx="15.5" cy="9" r="1.4" fill="currentColor"/></svg>Galerie</button>
+      <button type="button" class="news-btn" id="news-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="news" title="Changements entre les mises à jour et inspections récentes"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="news-lbl"><span class="tab-l">Quoi de neuf</span><span class="tab-c">Nouveau</span></span><span class="news-n" id="news-n" hidden></span></button>
+      <button type="button" data-view="remarq" title="Ponts remarquables du Canada (Wikipédia), hors inventaire du MTMD"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z" fill="currentColor"/></svg><span class="tab-l">Ponts remarquables</span><span class="tab-c">Remarquables</span></button>
     </nav>
     <section class="metrics kpi-bar" aria-label="Indicateurs">
       <div class="metric"><div class="metric-label">Structures</div><div class="metric-value" id="m-count">—</div></div>
@@ -803,7 +829,7 @@ table.list tbody tr:hover{background:#eef5f7}
     <div class="remarq view" id="view-remarq" hidden></div>
 
     <div class="defile view" id="view-defile" hidden>
-      <div class="df-scroll" id="df-scroll" tabindex="0" aria-label="Défilement des structures, une à la fois"></div>
+      <div class="df-scroll" id="df-scroll" tabindex="0" aria-label="Galerie des structures, une à la fois"></div>
       <div class="df-nav">
         <button type="button" id="df-prev" aria-label="Structure précédente" title="Précédente (↑)">↑</button>
         <button type="button" id="df-next" aria-label="Structure suivante" title="Suivante (↓)">↓</button>
@@ -828,6 +854,39 @@ table.list tbody tr:hover{background:#eef5f7}
 </div>
 <div id="tip" role="tooltip" hidden></div>
 <section class="news" id="news" role="dialog" aria-labelledby="news-title" hidden></section>
+<!-- v0.6.6 : fenêtre d'accueil à chaque démarrage ; il faut accepter l'avertissement pour continuer -->
+<dialog id="welcome" class="welcome" aria-labelledby="wc-title" aria-describedby="wc-warn">
+  <div class="wc-hero">
+    <svg class="wc-mark" viewBox="0 0 40 40" width="54" height="54" aria-hidden="true" focusable="false">
+      <g fill="#73e4c2">
+        <path d="M20 4c3 3.6 3.9 7.4 0 12.6-3.9-5.2-3-9 0-12.6z"/>
+        <path d="M18.6 17.4c-3.6.9-7.5.2-8.6-3-.9-2.6.9-4.6 3-4.1-1.6.5-2 2.3-.8 3.4 1.4 1.3 3.9 1.3 6.4.6z"/>
+        <path d="M21.4 17.4c3.6.9 7.5.2 8.6-3 .9-2.6-.9-4.6-3-4.1 1.6.5 2 2.3.8 3.4-1.4 1.3-3.9 1.3-6.4.6z"/>
+        <rect x="14" y="17.3" width="12" height="2" rx="1"/><path d="M18.4 19.3h3.2l-.5 2.7h-2.2z"/>
+        <rect x="3" y="24" width="34" height="2.4" rx="1"/>
+        <path d="M11 26.4v4.6M15.5 26.4v2.5M24.5 26.4v2.5M29 26.4v4.6" stroke="#73e4c2" stroke-width="1.4"/>
+      </g>
+      <path d="M5 37c1.6-6.6 7.4-10.6 15-10.6S33.4 30.4 35 37" fill="none" stroke="#73e4c2" stroke-width="2.4" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <h2 id="wc-title">Bienvenue dans Quicker<span>Atlas</span></h2>
+      <p>L’atlas des <b id="wc-n">≈ 11 700</b> ouvrages d’art du Québec : ponts, ponceaux, murs et tunnels de l’inventaire public du MTMD.</p>
+    </div>
+  </div>
+  <ul class="wc-list">
+    <li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z"/><path d="M9 4v13.5M15 6.5V20"/></svg><span><b>Explorez</b> sur la carte, en liste, en statistiques ou en galerie de photos.</span></li>
+    <li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span><b>Filtrez</b> par type, état (ICG), région, année ou hauteur libre.</span></li>
+    <li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5" stroke-linecap="round"/></svg><span><b>Ouvrez une fiche</b> : photos, inspections, profil LiDAR, cours d’eau, aléa sismique.</span></li>
+  </ul>
+  <div class="wc-warn" id="wc-warn">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2.8 1.6 20.6h20.8z" fill="#f2c14e"/><path d="M12 9v5.2M12 16.6v1.4" stroke="#102d41" stroke-width="2.2" stroke-linecap="round"/></svg>
+    <p>Programme <b>non officiel</b>, pour visualisation et apprentissage uniquement. Il n’est pas affilié au MTMD ni au gouvernement du Québec. Les données peuvent être incomplètes ou en retard sur leurs sources. <b>Ne pas utiliser pour la conception, la construction ou la gestion d’actifs.</b></p>
+  </div>
+  <form method="dialog" class="wc-foot">
+    <small>Données ouvertes, licences citées dans les fiches · <span id="wc-ver"></span></small>
+    <button type="submit" class="wc-ok" value="ok" autofocus>J’ai compris, continuer</button>
+  </form>
+</dialog>
 <dialog id="lidar-dialog" class="section-dialog" aria-labelledby="ld-title">
   <div class="sp-head"><span class="axle-badge">LiDAR</span><div><b id="ld-title">Profil LiDAR</b><small id="ld-sub"></small></div><button type="button" class="sp-close" data-ld-close aria-label="Fermer" title="Fermer (Échap)">×</button></div>
   <div class="ld-body"></div>
@@ -841,7 +900,7 @@ table.list tbody tr:hover{background:#eef5f7}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="data/structures.js"></script>
 <script src="data/details.js"></script>
-<script>window.PQ_META={"version": "0.6.5", "date": "2026-10-22", "author": "Anthony Chéruel"};</script>
+<script>window.PQ_META={"version": "0.6.6", "date": "2026-10-24", "author": "Anthony Chéruel"};</script>
 <script>
 (function(){
   'use strict';
@@ -999,6 +1058,20 @@ table.list tbody tr:hover{background:#eef5f7}
   var META = window.PQ_META || {};
   $('#release-version').textContent = 'v' + META.version + ' · ' + META.author;
   $('#release-date').textContent = 'Mise à jour : ' + META.date + ' · Données : ' + ((D && D.generated) || '—');
+
+  // v0.6.6 : fenêtre d'accueil à chaque démarrage. Elle ne se ferme qu'en acceptant : Échap est ignoré, et si le
+  // navigateur la ferme quand même (Chrome laisse Échap fermer au 2e appui sans geste), elle se rouvre.
+  var welcome = $('#welcome');
+  $('#wc-ver').textContent = 'v' + META.version;
+  function openWelcome(){
+    if (!welcome.showModal || welcome.open) return;              // très vieux navigateur : pas de fenêtre
+    welcome.returnValue = '';
+    welcome.showModal();
+  }
+  welcome.addEventListener('cancel', function(e){ e.preventDefault(); });
+  welcome.addEventListener('close', function(){ if (welcome.returnValue !== 'ok') setTimeout(openWelcome, 0); });
+  $('#disclaimer-btn').addEventListener('click', openWelcome);
+  openWelcome();
   if (!D || !D.rows) { $('#notice').hidden = false; return; }
 
   // ---------- Constantes ----------
@@ -1185,6 +1258,7 @@ table.list tbody tr:hover{background:#eef5f7}
     data[k] = o;
     if (o.num != null) byNum[o.num] = o;
   });
+  $('#wc-n').textContent = nf.format(data.filter(function(o){ return o.pub === 1; }).length);   // inventaire public
   function typeLabel(o){ return o.tl ? o.tl + (o.tc != null ? ' — type ' + o.tc : '') : null; }
   function photoUrl(o){
     var d = detData[o.num];
@@ -1533,7 +1607,7 @@ table.list tbody tr:hover{background:#eef5f7}
   function updateLabels(){
     if (!map) return;
     labelLayer.clearLayers();
-    if (map.getZoom() < LABEL_ZOOM || view !== 'carte') { if (map.hasLayer(labelLayer)) map.removeLayer(labelLayer); return; }
+    if (map.getZoom() < LABEL_ZOOM || view !== 'carte' || ptsHidden) { if (map.hasLayer(labelLayer)) map.removeLayer(labelLayer); return; }
     var b = map.getBounds().pad(0.1), n = 0, taken = {}, G = 8, sel = selNum != null && byNum[selNum];
     var list = sel && sel.lat != null ? [sel].concat(visible) : visible;          // la structure ouverte d'abord
     for (var i = 0; i < list.length && n < LABEL_MAX; i++) {
@@ -2304,7 +2378,7 @@ table.list tbody tr:hover{background:#eef5f7}
     }
   });
   document.addEventListener('keydown', function(e){
-    if (e.key === 'Escape' && ($('#lidar-dialog').open || $('#aux-dialog').open)) return;   // la fenêtre se ferme seule (dialog)
+    if (e.key === 'Escape' && ($('#lidar-dialog').open || $('#aux-dialog').open || welcome.open)) return;   // la fenêtre se ferme seule (dialog)
     if (e.key === 'Escape' && !$('#news').hidden) { closeNews(); return; }
     if (e.key === 'Escape' && (selNum != null || selWp != null)) { closeFiche(); }
   });
@@ -2636,8 +2710,18 @@ table.list tbody tr:hover{background:#eef5f7}
     } else h += '<p class="nw-note">Aucune inspection générale sur la période.</p>';
     el.innerHTML = h + '</section></div>';
   }
+  // v0.6.6 : le panneau s'ouvre sous son bouton (barre des onglets), sans dépasser l'écran
+  function placeNews(){
+    var el = $('#news'), r = $('#news-btn').getBoundingClientRect(), w = Math.min(560, window.innerWidth - 32);
+    el.style.top = Math.round(r.bottom + 6) + 'px';
+    el.style.left = Math.round(Math.max(16, Math.min(r.left, window.innerWidth - w - 16))) + 'px';
+    el.style.right = 'auto';
+    el.style.maxHeight = Math.max(240, Math.round(window.innerHeight - r.bottom - 22)) + 'px';
+  }
+  window.addEventListener('resize', function(){ if (!$('#news').hidden) placeNews(); });
   function openNews(){
     renderNews();
+    placeNews();
     $('#news').hidden = false;
     $('#news-btn').setAttribute('aria-expanded', 'true');
     var c = $('#news').querySelector('[data-nw="close"]'); if (c) c.focus({ preventScroll: true });
@@ -2766,7 +2850,7 @@ table.list tbody tr:hover{background:#eef5f7}
     if (v === 'defile') $('#df-scroll').focus({ preventScroll: true });
   }
   $('#view-tabs').addEventListener('click', function(e){
-    var b = e.target.closest('button');
+    var b = e.target.closest('button[data-view]');          // v0.6.6 : « Quoi de neuf » est dans la barre, sans vue
     if (!b) return;
     showView(b.getAttribute('data-view'));
     writeHash();
@@ -3446,7 +3530,31 @@ table.list tbody tr:hover{background:#eef5f7}
     groups.forEach(function(g){ for (var i = g.paths.length - 1; i >= 0; i--) g.paths[i].bringToBack(); });
   }
   function saveOverlays(){
-    try { localStorage.setItem(OVERLAY_KEY, OVERLAYS.filter(function(ov){ return map.hasLayer(ov.layer); }).map(function(ov){ return ov.key; }).join(',')); } catch (e) { /* idem */ }
+    var on = OVERLAYS.filter(function(ov){ return map.hasLayer(ov.layer); }).map(function(ov){ return ov.key; });
+    try { localStorage.setItem(OVERLAY_KEY, on.concat(ptsOff).join(',')); } catch (e) { /* idem */ }   // couches de points cachées : gardées
+  }
+  // v0.6.6 : masquer toutes les structures (MTMD, villes, autres ponts hors MTMD, ponts remarquables) pour lire les
+  // couches (aléa sismique, classes de site, dégel…). Les couches de points cachées reviennent au réaffichage.
+  var ptsHidden = false, ptsOff = [], PTS_OVS = ['forestiers', 'wikiponts'];
+  var EYE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var EYE_OFF = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7c2 0 3.8.7 5.3 1.7M22 12s-3.6 7-10 7c-2 0-3.8-.7-5.3-1.7"/><path d="M9.9 14.1a3 3 0 0 1 4.2-4.2M3 21 21 3"/></svg>';
+  function ptsBtnHtml(h){ return (h ? EYE_OFF : EYE) + '<span>' + (h ? 'Afficher' : 'Masquer') + '</span>'; }
+  function setPtsHidden(h){
+    if (!map || h === ptsHidden) return;
+    ptsHidden = h;
+    if (h) {
+      ptsOff = PTS_OVS.filter(function(k){ return map.hasLayer(ovByKey(k).layer); });
+      map.removeLayer(group);
+      ptsOff.forEach(function(k){ setOverlay(k, false); });
+    } else {
+      map.addLayer(group);
+      var back = ptsOff; ptsOff = [];
+      back.forEach(function(k){ setOverlay(k, true); });
+      if (selRing) selRing.bringToFront();
+    }
+    updateLabels();
+    var b = lcEl && lcEl.querySelector('.lc-pts');
+    if (b) { b.setAttribute('aria-pressed', String(h)); b.innerHTML = ptsBtnHtml(h); }   // aria-label fixe + aria-pressed : état lu par les lecteurs d'écran
   }
   function ovByKey(k){ return OVERLAYS.filter(function(x){ return x.key === k; })[0]; }
   function setOverlay(k, on){ var ov = ovByKey(k); if (ov && map) { if (on) map.addLayer(ov.layer); else map.removeLayer(ov.layer); } }
@@ -3477,6 +3585,7 @@ table.list tbody tr:hover{background:#eef5f7}
         var d = L.DomUtil.create('div', 'lc');
         d.innerHTML = '<button type="button" class="lc-btn" aria-expanded="false" aria-controls="lc-panel" title="Fond de carte (plan, satellite…) et couches de données (routes, rail, cours d’eau, sismique…)">' +
           '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 15.5l9 5 9-5-3.2-1.8L12 17l-5.8-3.3z" fill="#7d93a3"/><path d="M3 11.5l9 5 9-5-3.2-1.8L12 13l-5.8-3.3z" fill="#2f6f8f"/><path d="M12 2.5l9 5-9 5-9-5z" fill="currentColor"/></svg>Couches</button>' +
+          '<button type="button" class="lc-btn lc-pts" aria-pressed="false" aria-label="Masquer les structures" title="Masquer ou afficher tous les points de structures, pour bien voir les couches (aléa sismique, classes de site, dégel…)">' + ptsBtnHtml(false) + '</button>' +
           '<div class="lc-panel" id="lc-panel" hidden><div class="lc-h">Fond de carte</div><div class="lc-fonds" role="radiogroup" aria-label="Fond de carte">' +
           FOND_ORDER.filter(function(n){ return FONDS[n]; }).map(function(n){
             return '<button type="button" role="radio" aria-checked="false" data-fond="' + esc(n) + '" title="' + esc(n) + '">' + esc(FOND_COURT[n] || n) + '</button>';
@@ -3489,6 +3598,7 @@ table.list tbody tr:hover{background:#eef5f7}
         L.DomEvent.disableClickPropagation(d);
         L.DomEvent.disableScrollPropagation(d);
         var btn = d.querySelector('.lc-btn'), pan = d.querySelector('.lc-panel');
+        d.querySelector('.lc-pts').addEventListener('click', function(){ setPtsHidden(!ptsHidden); });
         var setOpen = function(o){ pan.hidden = !o; btn.setAttribute('aria-expanded', String(o)); d.classList.toggle('open', o); };
         btn.addEventListener('click', function(){ setOpen(pan.hidden); });
         document.addEventListener('pointerdown', function(e){ if (!pan.hidden && !d.contains(e.target)) setOpen(false); });

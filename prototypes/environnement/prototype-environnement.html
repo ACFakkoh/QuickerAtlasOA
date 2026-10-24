@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototype Zones sensibles · QuickerAtlasOA</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" integrity="sha512-h9FcoyWjHcOcmEVkxOfTLnmZFWIH0iZhZT1H2TbOq55xssQGEJHEaIm+PgoUaZbRvQTNTluNOEfb1ZRy6D3BOw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+<style>
+/* Thème repris de l'atlas ; couleurs des thèmes = palette Okabe-Ito (lisible en daltonisme).
+   Chaque thème est doublé d'un motif (hachures, points…) ET d'une lettre : jamais la couleur seule. */
+:root{--navy:#102d41;--ink:#17374b;--muted:#566e7c;--line:#dce5eb;--bg:#f0f4f7;--teal:#00736d;--mint:#d9f5eb;--shadow:0 2px 7px #15354a08;
+  --blue:#0072b2;--blue-d:#004f7a;--blue-l:#dcecf7;--orange:#d55e00;--orange-l:#fdeee0;--gold:#e69f00;--gold-l:#fff6e0;
+  font-family:"Segoe UI",Arial,sans-serif;color:var(--ink);font-size:16px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg)}
+a{color:var(--blue-d)}
+header{background:var(--navy);color:#fff;padding:18px 28px}
+header h1{margin:0;font-size:1.4rem;font-weight:650;letter-spacing:-.4px}
+header h1 span{font-weight:350;color:#9cdfcf}
+header p{margin:6px 0 0;color:#b5cbd6;font-size:.85rem;max-width:1050px;line-height:1.5}
+main{max-width:1500px;margin:0 auto;padding:20px 28px 40px;display:flex;flex-direction:column;gap:20px}
+.intro{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.box{background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:14px 16px;font-size:.86rem;line-height:1.5}
+.box h2{margin:0 0 6px;font-size:.75rem;letter-spacing:.07em;text-transform:uppercase}
+.box p{margin:0}
+.site{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.site-h{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;padding:14px 18px;border-bottom:1px solid var(--line);background:#f6f9fb}
+.site-h h2{margin:0;font-size:1.08rem;letter-spacing:-.2px}
+.site-h .tag{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue-d);background:var(--blue-l);border-radius:999px;padding:2px 9px}
+.site-h .sub{color:var(--muted);font-size:.82rem}
+.pad{padding:14px 18px}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.card{all:unset;box-sizing:border-box;cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;display:flex;flex-direction:column;gap:3px;font-size:.84rem;line-height:1.4}
+.card:hover,.card:focus-visible{border-color:var(--blue);box-shadow:0 0 0 2px #0072b222}
+.card:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.card .k{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue-d)}
+.card b{font-size:.95rem;color:var(--navy)}
+.card .go{margin-top:2px;color:var(--blue-d);font-weight:650;font-size:.8rem}
+.card .why{color:var(--ink)}
+.live{display:flex;gap:8px;align-items:end;flex-wrap:wrap;font-size:.85rem;margin-top:14px}
+.live input{font:inherit;border:1px solid #cbd8e1;border-radius:6px;padding:7px 9px;width:150px}
+.live .also{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.btn{font:inherit;font-weight:600;border:1px solid var(--blue-d);background:var(--blue-d);color:#fff;border-radius:6px;padding:7px 14px;cursor:pointer}
+.btn.sec{background:#fff;color:var(--blue-d)}
+.btn.sm{padding:3px 10px;font-size:.8rem;font-weight:600}
+.btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.st{color:var(--muted);font-size:.8rem}
+table.t{border-collapse:collapse;width:100%;font-size:.82rem;line-height:1.45}
+table.t th,table.t td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+table.t th{background:#f6f9fb;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+table.t td.n,table.t th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto}
+.qa{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:14px 18px}
+.qa article{border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:.86rem;line-height:1.55}
+.qa article.wide{grid-column:1/-1}
+.qa h3{margin:0 0 6px;font-size:.95rem;color:var(--navy)}
+.qa ul{margin:6px 0 0;padding-left:18px}
+.qa li{margin:2px 0}
+.rec{background:var(--blue-l);border-left:4px solid var(--blue);border-radius:0 8px 8px 0;padding:8px 12px;margin-top:8px}
+.pill{display:inline-block;font-size:.72rem;font-weight:700;border-radius:999px;padding:1px 8px;border:1px solid currentColor;white-space:nowrap}
+.pill.ok{color:var(--blue-d);background:var(--blue-l)}
+.pill.warn{color:#7a4b00;background:var(--gold-l)}
+.pill.bad{color:#9a3c00;background:var(--orange-l)}
+.pill.no{color:var(--muted);background:#f3f6f8}
+footer{color:var(--muted);font-size:.75rem;text-align:center;padding:0 16px 30px;line-height:1.5}
+.mk-bridge{width:22px;height:22px;display:grid;place-items:center;background:var(--navy);border:2px solid #fff;box-shadow:0 0 0 1px var(--navy);color:#fff;font:700 10px/1 "Segoe UI",Arial,sans-serif}
+.env-badge{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid;font:800 10px/1 "Segoe UI",Arial,sans-serif;color:var(--navy);box-shadow:0 0 0 1px #fff}
+.env-eee{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:13px solid #000;filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff)}
+.leaflet-tooltip{font-size:.78rem}
+.leaflet-popup-content{font-size:.8rem;line-height:1.45;margin:10px 12px}
+/* dialogue (même gabarit que « Profil LiDAR » et « Cours d'eau » de l'atlas) */
+.section-dialog{max-width:none;width:min(1360px,97vw);max-height:94vh;padding:0;border:0;border-radius:12px;box-shadow:0 20px 60px #0b1e2b66;overflow:auto;background:#fff;color:#17374b}
+.section-dialog::backdrop{background:#0b1e2b99;backdrop-filter:blur(2px)}
+.sp-head{position:sticky;top:0;z-index:1200;display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f3f7f9;border-bottom:1px solid var(--line)}
+.sp-head b{display:block;font-size:1rem}
+.sp-head small{display:block;font-size:.78rem;color:var(--muted)}
+.axle-badge{flex:none;display:inline-flex;align-items:center;justify-content:center;padding:4px 7px;border-radius:6px;background:#102d41;color:#9fd8ff;font-size:.75rem;font-weight:700;letter-spacing:.04em}
+.sp-close{margin-left:auto;border:0;background:none;padding:3px 8px;font-size:1.3rem;line-height:1;color:var(--muted);cursor:pointer}
+.ev-body{padding:14px 18px 12px}
+.ev-wait{display:flex;flex-direction:column;align-items:center;gap:10px;padding:50px 10px;color:var(--muted);font-size:.9rem}
+.ev-wait ol{margin:0;padding:0;list-style:none;font-size:.82rem;line-height:1.7}
+.ev-spin{width:18px;height:18px;border-radius:50%;border:2.5px solid #cfe3ee;border-top-color:var(--blue);animation:evspin .8s linear infinite}
+@keyframes evspin{to{transform:rotate(360deg)}}
+.ev-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:18px;align-items:start}
+.ev-map{height:min(500px,60vh);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#e7eef2}
+.ev-leg{margin:8px 0 0;display:flex;flex-direction:column;gap:3px;font-size:.78rem}
+.ev-leg label{display:flex;gap:8px;align-items:center;cursor:pointer;padding:2px 4px;border-radius:6px}
+.ev-leg label:hover{background:#f3f7f9}
+.ev-leg svg{flex:none}
+.ev-leg .nb{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700;color:var(--navy)}
+.ev-leg .nb.z{color:var(--muted);font-weight:400}
+.ev-leg .ltr{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;border:2px solid;font:800 9px/1 "Segoe UI",Arial,sans-serif;flex:none}
+.ev-meta{font-size:.76rem;color:var(--muted);margin:6px 0 0;line-height:1.45}
+.ev-right{display:flex;flex-direction:column;gap:9px;min-width:0}
+.ev-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ev-bar .seg{display:flex;gap:4px}
+.ev-bar .seg button{font:inherit;font-size:.8rem;border:1px solid var(--line);background:#fff;border-radius:999px;padding:3px 11px;cursor:pointer;color:var(--ink)}
+.ev-bar .seg button[aria-pressed=true]{background:var(--blue-d);border-color:var(--blue-d);color:#fff}
+.ev-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ev-chip{display:flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:4px 9px;font-size:.78rem;background:#fff}
+.ev-chip b{font-size:.98rem;font-variant-numeric:tabular-nums;color:var(--navy)}
+.ev-chip.on{border-color:#e9c46a;background:var(--gold-l)}
+.ev-chip.off{color:var(--muted)}
+.ev-chip.unk{border-style:dashed}
+.ev-ban{border-radius:8px;padding:8px 12px;font-size:.82rem;line-height:1.5;border:1px solid}
+.ev-ban b{font-weight:700}
+.ev-ban.warn{background:var(--gold-l);border-color:#efcf8f;color:#7a4b00}
+.ev-ban.ok{background:#f1f8fd;border-color:#8cc3e6;color:#0b3a57}
+.ev-ban.bad{background:var(--orange-l);border-color:#e8a46b;color:#7a2f00}
+table.ev{border-collapse:collapse;width:100%;font-size:.8rem;line-height:1.42}
+table.ev th,table.ev td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+table.ev th{background:#f6f9fb;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);position:sticky;top:0}
+table.ev td.th{white-space:nowrap}
+table.ev td.th .ltr{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;border:2px solid;font:800 9.5px/1 "Segoe UI",Arial,sans-serif;margin-right:6px;vertical-align:middle}
+table.ev td.th b{vertical-align:middle}
+table.ev td.d{white-space:nowrap;font-variant-numeric:tabular-nums}
+table.ev tr.absent td{color:var(--muted);background:#fafbfc}
+table.ev details summary{cursor:pointer;color:var(--blue-d);font-weight:600}
+table.ev ul{margin:3px 0 0;padding-left:16px}
+table.ev li{margin:1px 0}
+table.ev .src{font-size:.72rem;color:var(--muted)}
+.ev-src{font-size:.75rem;color:var(--muted);margin:10px 0 0;line-height:1.45}
+.ev-retry{margin:8px 0}
+@media(max-width:1000px){.intro,.cards,.qa{grid-template-columns:1fr}.ev-grid{grid-template-columns:minmax(0,1fr)}.ev-map{height:340px}}
+@media(max-width:600px){main{padding:14px 16px}header{padding:14px 16px}}
+</style>
+</head>
+<body>
+<!-- Motifs de remplissage (SVG réutilisé par les cartes et les légendes). Pas display:none : Chrome n'afficherait pas les motifs. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs id="env-defs"></defs></svg>
+<header>
+  <h1>Quicker<span>AtlasOA</span> · prototype Zones sensibles</h1>
+  <p>Ce que les données ouvertes du Québec (aires protégées, habitats fauniques et floristiques, espèces en situation précaire, milieux humides, zones inondables, espèces exotiques envahissantes) permettent de montrer autour d’un ouvrage : une fenêtre « Zones sensibles » avec carte et tableau récapitulatif (présent ou absent, distance, nom, superficie, statut, source). Les couches du MELCCFP sont interrogées en direct depuis le navigateur ; seuls les habitats fauniques du MRNF, dont le serveur refuse les requêtes de navigateur, sont précalculés.</p>
+</header>
+<main>
+  <section class="intro">
+    <div class="box"><h2>Ce que la fenêtre répond</h2><p>« Quelles zones sensibles répertoriées touchent ou entourent cet ouvrage ? » Pour chaque thème : présent ou absent dans le rayon choisi (500 m, 1 km, 2 km), distance au pont, nom et type de l’objet, superficie, statut légal, source, licence et date. C’est un <b>repère de planification</b>, pas un avis réglementaire.</p></div>
+    <div class="box"><h2>Données et prudence</h2><p>Toutes les sources sont ouvertes (CC-BY 4.0). Les espèces sensibles à la diffusion sont <b>masquées par la source</b> : on ne montre que ce que le CDPNQ publie, et pour les couches masquées seulement la forme généralisée, sans nom. « Absent » veut dire « rien de répertorié », pas « rien sur le terrain ».</p></div>
+    <div class="box"><h2>Lecture des couleurs</h2><p>Chaque thème a une <b>lettre</b>, une <b>couleur</b> (palette Okabe-Ito) et un <b>motif</b> : P = hachures /, H = quadrillage, F = traits verticaux, S = points, M = traits horizontaux, Z = hachures \, E = triangle noir. Bordure pointillée = statut plus faible (informationnel, potentiel, faible courant).</p></div>
+  </section>
+
+  <section class="site" id="s-choix">
+    <div class="site-h"><span class="tag">1 · Fenêtre</span><h2>Ouvrir « Zones sensibles » pour un ouvrage</h2><span class="sub">six situations très différentes, choisies en interrogeant réellement les services</span></div>
+    <div class="pad">
+      <div class="cards" id="cards"></div>
+      <div class="live"><label>N° de structure<br><input id="live-num" value="15382" autocomplete="off" inputmode="text"></label><button type="button" class="btn" id="live-go">Ouvrir pour ce numéro</button>
+        <span class="also">À essayer aussi : <button type="button" class="btn sec sm" data-num="15382">15382 · renouée du Japon</button><button type="button" class="btn sec sm" data-num="14240JH">14240JH · centre-ville de Montréal</button></span>
+        <span class="st" id="live-st"></span></div>
+      <p class="st" style="margin:8px 0 0">N’importe quel numéro marche pour les couches en direct. Les habitats fauniques ne sont précalculés que pour les huit ouvrages ci-dessus ; ailleurs la fenêtre se rabat sur la version du registre des aires protégées (sans espèces).</p>
+    </div>
+  </section>
+
+  <section class="site" id="s-src">
+    <div class="site-h"><span class="tag">2 · Sources</span><h2>Ce qui a été testé et ce qui marche</h2><span class="sub">essais du 2026-10-24, depuis un navigateur (en-tête Origin) et depuis Python</span></div>
+    <div class="pad scroll">
+      <table class="t" id="t-src"></table>
+    </div>
+  </section>
+
+  <section class="site" id="s-apport">
+    <div class="site-h"><span class="tag">3 · Bilan</span><h2>Ce que ça apporterait à l’atlas</h2><span class="sub">et ce qui reste à décider</span></div>
+    <div class="qa">
+      <article><h3>Couche ou fenêtre ?</h3>
+        <ul><li><b>Fenêtre</b> (comme « Profil LiDAR » et « Cours d’eau ») : la bonne forme. La question se pose pour un ouvrage à la fois (projet de remplacement, autorisation, travaux en eau).</li>
+        <li><b>Couche</b> : possible pour le contexte seulement (tuiles du registre des aires protégées, milieux humides potentiels). À zoom régional elle serait illisible : 2,4 millions de polygones de milieux humides potentiels.</li></ul>
+        <div class="rec">Recommandation : bouton « Zones sensibles » dans la fiche, pour tous les ouvrages. La plupart des ponceaux franchissent un cours d’eau : ils sont les premiers concernés.</div></article>
+      <article><h3>Ce que ça apporte au gestionnaire</h3>
+        <ul><li>Savoir, avant d’ouvrir un dossier, quels volets d’autorisation s’annoncent : milieu humide, habitat faunique, espèce en situation précaire, zone inondable.</li>
+        <li>Repérer la nature de l’enjeu : un refuge biologique ou un habitat floristique légal ne se traitent pas comme un milieu humide potentiel.</li>
+        <li>Lister les espèces exotiques envahissantes près d’un chantier (renouée du Japon, nerprun) : nettoyage des engins.</li></ul></article>
+      <article><h3>Coûts et limites</h3>
+        <ul><li><b>Poids</b> : 10 requêtes en direct à l’ouverture, de 24 Ko (forêt) à 1,1 Mo (rives du Saint-Laurent : polygones très longs de la BDZI et du CDPNQ), en 0,3 à 1 s. Le pied de la fenêtre affiche la mesure réelle.</li>
+        <li><b>Un service sans CORS</b> : habitats fauniques (MRNF). Il faut soit un précalcul au moment de l’ETL, soit une version du registre des aires protégées (déjà en direct).</li>
+        <li><b>Géométries simplifiées</b> (≈ 5 à 20 m) pour alléger : les distances sont à ± 20 m. Ne pas s’en servir pour délimiter.</li>
+        <li><b>Pas d’avis</b> : le gouvernement rappelle que l’absence d’occurrence ne prouve pas l’absence d’espèce ; seul le CDPNQ peut renseigner un projet.</li></ul></article>
+      <article><h3>Ce qui manque</h3>
+        <ul><li><b>Frayères et rivières à saumon</b> : aucun jeu ouvert trouvé sur Données Québec. L’habitat du poisson de la couche HAFA n’est publié que pour 21 baies ; les 595 autres sont « sans publication » (polygone sans espèce).</li>
+        <li><b>Projets de refuge biologique et milieux humides d’intérêt</b> (MRNF) : le service ne renvoie pas leur géométrie par requête ; affichables en tuiles seulement.</li>
+        <li><b>Habitats critiques fédéraux</b> (espèces en péril) : non testé.</li></ul></article>
+    </div>
+  </section>
+</main>
+<footer>Aires protégées, habitats floristiques, milieux humides (potentiels et cartographie détaillée avec Canards Illimités Canada), zones inondables (BDZI), espèces exotiques envahissantes (Sentinelle) : © Gouvernement du Québec, MELCCFP · Occurrences d’espèces en situation précaire : © CDPNQ et ses collaborateurs · Habitats fauniques : © Gouvernement du Québec, MRNF · Toutes ces données : CC-BY 4.0 (Données Québec) · Fonds © Esri · Ouvrages © MTMD / Données Québec (CC-BY 4.0).</footer>
+
+<dialog id="ev-dialog" class="section-dialog" aria-labelledby="ev-title">
+  <div class="sp-head"><span class="axle-badge">ENV</span><div><b id="ev-title">Zones sensibles au pont</b><small id="ev-sub"></small></div><button type="button" class="sp-close" id="ev-close" aria-label="Fermer" title="Fermer (Échap)">×</button></div>
+  <div class="ev-body" id="ev-body"></div>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" integrity="sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="../../data/structures.js"></script>
+<script src="cache/environnement-cache.js"></script>
+<script>
+(function(){
+  'use strict';
+  /* ================= Outils ================= */
+  var nf0 = new Intl.NumberFormat('fr-CA', { maximumFractionDigits: 0 });
+  var nf1 = new Intl.NumberFormat('fr-CA', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  function nfa(v){ return (v >= 100 ? nf0 : nf1).format(v); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function $(s, r){ return (r || document).querySelector(s); }
+  function qs(o){ return Object.keys(o).map(function(k){ return encodeURIComponent(k) + '=' + encodeURIComponent(o[k]); }).join('&'); }
+  var ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
+  var BIO = 'https://geo.environnement.gouv.qc.ca/donnees/rest/services/Biodiversite/';
+  var TP = 'https://www.servicesgeo.enviroweb.gouv.qc.ca/donnees/rest/services/Public/Themes_publics/MapServer/';
+  var CACHE = window.ENV_CACHE || { habitats: {}, jeux: {} };
+  var RAYONS = [500, 1000, 2000], R_MAX = 2000;
+
+  // Compteur de données chargées (octets ≈ caractères)
+  var meter = { bytes: 0, n: 0 };
+  function J(url){
+    return fetch(url).then(function(r){
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    }).then(function(t){ meter.bytes += t.length; meter.n++; var j = JSON.parse(t); if (j && j.error) throw new Error(j.error.message || 'erreur du service'); return j; });
+  }
+
+  /* ================= Ouvrages ================= */
+  var ST = window.STRUCTURES, COLI = {};
+  ST.cols.forEach(function(c, i){ COLI[c] = i; });
+  var byNum = null;
+  function structure(num){
+    if (!byNum) { byNum = {}; ST.rows.forEach(function(r){ byNum[r[0]] = r; }); }
+    var r = byNum[num]; if (!r) return null;
+    var o = {}; ST.cols.forEach(function(c, i){ o[c] = r[i]; });
+    o.obstEnum = ST.enums.obst[o.obst];
+    o.typeNom = ST.types[o.type] ? ST.types[o.type][0] : '';
+    return o;
+  }
+  var EX = [
+    { num: '14945', k: 'Marais du sud · plusieurs habitats', why: 'Baie Breckenridge, Outaouais : milieux humides, aires de concentration d’oiseaux aquatiques, habitat du rat musqué, rainette faux-grillon de l’Ouest.', go: 'Route 148, Pontiac' },
+    { num: '12985', k: 'Dans un parc national', why: 'Parc national du Mont-Orford : le ponceau est dans le parc. Beaucoup de milieux humides et d’occurrences d’espèces en situation précaire (salamandres). Ouvre à 2 km : un ravage de cerfs est à 2,2 km, donc hors cercle.', go: 'Accès Mont-Orford, Orford', r: 2000 },
+    { num: '11726E', k: 'Héronnière et réserve écologique', why: 'Route 175 dans la réserve faunique des Laurentides : héronnière du lac des Élets à 380 m, réserve écologique Victor-A.-Huard à 970 m, une occurrence de hibou des marais (1985).', go: 'Route 175, Lac-Ministuk' },
+    { num: '03575', k: 'Aire de confinement du cerf', why: 'Pont couvert patrimonial au milieu d’une aire de confinement du cerf de Virginie (15 649 ha au HAFA, dont 4 076 ha inscrits au registre) ; beaucoup de milieux humides cartographiés en détail.', go: 'Chemin du Pont-Couvert, La Macaza' },
+    { num: '18136', k: 'Ponceau en forêt · refuge biologique', why: 'Ponceau de la route 198, Gaspésie, à une centaine de mètres d’un refuge biologique ; presque rien d’autre : le cas « forêt publique ».', go: 'Route 198, Saint-Maxime-du-Mont-Louis' },
+    { num: '14464E', k: 'Estuaire d’une rivière à saumon', why: 'Embouchure de la Bonaventure : habitat du poisson, barachois (habitat floristique légal), réserve marine, zones inondables, oiseaux et plantes en situation précaire.', go: 'Route 132, Bonaventure' }
+  ];
+
+  /* ================= Thèmes ================= */
+  var TH = {
+    P: { nom: 'Aires protégées et territoires de conservation', court: 'Aires protégées', coul: '#0072b2', bg: '#dcecf7', mot: 'slash' },
+    H: { nom: 'Habitats fauniques', court: 'Habitats fauniques', coul: '#e69f00', bg: '#fff6e0', mot: 'cross' },
+    F: { nom: 'Habitats floristiques (espèces menacées ou vulnérables)', court: 'Habitats floristiques', coul: '#cc79a7', bg: '#f8e6ef', mot: 'vert' },
+    S: { nom: 'Espèces en situation précaire (CDPNQ)', court: 'Espèces précaires', coul: '#d55e00', bg: '#fdeee0', mot: 'dots' },
+    M: { nom: 'Milieux humides', court: 'Milieux humides', coul: '#2a8fc4', bg: '#e3f3fb', mot: 'horiz' },
+    Z: { nom: 'Zones inondables', court: 'Zones inondables', coul: '#009e73', bg: '#dff4ec', mot: 'back' },
+    E: { nom: 'Espèces exotiques envahissantes', court: 'Exotiques envahissantes', coul: '#000000', bg: '#ffffff', mot: 'tri' },
+    X: { nom: 'Occurrences masquées (forme généralisée)', court: 'Occurrences masquées', coul: '#6b7780', bg: '#eef1f3', mot: 'grey' }
+  };
+  var ORDRE = ['P', 'H', 'F', 'S', 'M', 'Z', 'E'];
+  var PANE_Z = { Sm: 402, M: 405, Z: 410, P: 415, H: 420, F: 425, S: 430, X: 428, E: 435 };
+
+  function patMarkup(id, c, bg, kind){
+    var rect = function(w){ return '<rect width="' + w + '" height="' + w + '" fill="' + bg + '" fill-opacity=".55"/>'; };
+    switch (kind) {
+      case 'slash': return '<pattern id="' + id + '" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' + rect(7) + '<line x1="0" y1="0" x2="0" y2="7" stroke="' + c + '" stroke-width="2.4"/></pattern>';
+      case 'back': return '<pattern id="' + id + '" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">' + rect(7) + '<line x1="0" y1="0" x2="0" y2="7" stroke="' + c + '" stroke-width="2.4"/></pattern>';
+      case 'cross': return '<pattern id="' + id + '" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' + rect(8) + '<line x1="0" y1="0" x2="0" y2="8" stroke="' + c + '" stroke-width="1.9"/><line x1="0" y1="0" x2="8" y2="0" stroke="' + c + '" stroke-width="1.9"/></pattern>';
+      case 'vert': return '<pattern id="' + id + '" width="6" height="6" patternUnits="userSpaceOnUse">' + rect(6) + '<line x1="1.5" y1="0" x2="1.5" y2="6" stroke="' + c + '" stroke-width="2.4"/></pattern>';
+      case 'horiz': return '<pattern id="' + id + '" width="6" height="6" patternUnits="userSpaceOnUse">' + rect(6) + '<line x1="0" y1="1.5" x2="6" y2="1.5" stroke="' + c + '" stroke-width="2.2"/></pattern>';
+      case 'dots': return '<pattern id="' + id + '" width="7" height="7" patternUnits="userSpaceOnUse">' + rect(7) + '<circle cx="3.5" cy="3.5" r="2" fill="' + c + '"/></pattern>';
+      case 'grey': return '<pattern id="' + id + '" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' + rect(9) + '<line x1="0" y1="0" x2="0" y2="9" stroke="' + c + '" stroke-width="1.2" stroke-dasharray="3 2"/></pattern>';
+    }
+    return '';
+  }
+  // Variantes « plus faibles » : motif plus clair
+  var VARIANTES = { M2: { c: '#7fbfe0', bg: '#f2f9fd', mot: 'horiz' }, H2: { c: '#f0c456', bg: '#fffbee', mot: 'cross' }, Z2: { c: '#5fc2a4', bg: '#f1faf6', mot: 'back' } };
+  (function(){
+    var h = '';
+    Object.keys(TH).forEach(function(k){ if (TH[k].mot !== 'tri') h += patMarkup('env-p-' + k, TH[k].coul, TH[k].bg, TH[k].mot); });
+    Object.keys(VARIANTES).forEach(function(k){ var v = VARIANTES[k]; h += patMarkup('env-p-' + k, v.c, v.bg, v.mot); });
+    $('#env-defs').innerHTML = h;
+  })();
+  function swatch(k, pat, dash){
+    var t = TH[k];
+    if (t.mot === 'tri') return '<svg width="26" height="16" viewBox="0 0 26 16" aria-hidden="true"><path d="M13 1.5L20 14.5H6Z" fill="#000" stroke="#fff" stroke-width="1"/></svg>';
+    return '<svg width="26" height="16" viewBox="0 0 26 16" aria-hidden="true"><rect x="1" y="1" width="24" height="14" rx="2" fill="url(#env-p-' + (pat || k) + ')" stroke="' + t.coul + '" stroke-width="1.6"' + (dash ? ' stroke-dasharray="4 3"' : '') + '/></svg>';
+  }
+  function lettre(k){ return '<span class="ltr" style="border-color:' + TH[k].coul + '">' + k + '</span>'; }
+
+  /* ================= Géométrie (anneaux [lon, lat], règle pair-impair) ================= */
+  function kxy(lat){ return [111320 * Math.cos(lat * Math.PI / 180), 110540]; }
+  function polyDist(lat0, lon0, rings){
+    var k = kxy(lat0), inside = false, best = 1e12;
+    rings.forEach(function(r){
+      var c = false, j = r.length - 1, i, ax, ay, bx, by, dx, dy, L2, t, px, py, d;
+      for (i = 0; i < r.length; i++) {
+        var xi = r[i][0], yi = r[i][1], xj = r[j][0], yj = r[j][1];
+        if ((yi > lat0) !== (yj > lat0) && lon0 < (xj - xi) * (lat0 - yi) / (yj - yi) + xi) c = !c;
+        j = i;
+      }
+      if (c) inside = !inside;
+      for (i = 1; i < r.length; i++) {
+        ax = (r[i - 1][0] - lon0) * k[0]; ay = (r[i - 1][1] - lat0) * k[1]; bx = (r[i][0] - lon0) * k[0]; by = (r[i][1] - lat0) * k[1];
+        dx = bx - ax; dy = by - ay; L2 = dx * dx + dy * dy;
+        t = L2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / L2)) : 0;
+        px = ax + t * dx; py = ay + t * dy; d = Math.sqrt(px * px + py * py);
+        if (d < best) best = d;
+      }
+    });
+    return inside ? 0 : best;
+  }
+  function centre(rings){
+    var big = rings[0], a = -1;
+    rings.forEach(function(r){ var xs = r.map(function(p){ return p[0]; }), ys = r.map(function(p){ return p[1]; }), s = (Math.max.apply(0, xs) - Math.min.apply(0, xs)) * (Math.max.apply(0, ys) - Math.min.apply(0, ys)); if (s > a) { a = s; big = r; } });
+    var x = 0, y = 0; big.forEach(function(p){ x += p[0]; y += p[1]; });
+    return [y / big.length, x / big.length];
+  }
+  function distM(la1, lo1, la2, lo2){ var k = kxy((la1 + la2) / 2); return Math.sqrt(Math.pow((la2 - la1) * k[1], 2) + Math.pow((lo2 - lo1) * k[0], 2)); }
+  function fmtD(d){ return d < 1 ? 0 : d < 1000 ? Math.round(d / 5) * 5 : Math.round(d / 10) * 10; }
+  function txtD(d){ if (d == null) return '—'; if (d < 1) return 'dans le polygone'; return d < 1000 ? 'à ' + nf0.format(fmtD(d)) + ' m' : 'à ' + nf1.format(d / 1000) + ' km'; }
+  function ymd(ms){ if (ms == null) return ''; var d = new Date(ms); return isNaN(d) ? '' : d.toISOString().slice(0, 10); }
+
+  /* ================= Fonds ================= */
+  function gris(){ return L.tileLayer(ESRI + 'Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 16, maxZoom: 20, attribution: '© Esri' }); }
+  function plan(){ return L.tileLayer(ESRI + 'World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 19, maxZoom: 20, attribution: '© Esri' }); }
+  function sat(){ return L.tileLayer(ESRI + 'World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 19, maxZoom: 20, attribution: '© Esri' }); }
+  function squareIcon(txt){ return L.divIcon({ className: '', html: '<div class="mk-bridge">' + (txt || '') + '</div>', iconSize: [22, 22], iconAnchor: [11, 11] }); }
+
+  /* ================= Catalogue des sources (tableau de la section 2) ================= */
+  function maj(slug, repli){ var j = CACHE.jeux && CACHE.jeux[slug]; return j && j.maj ? j.maj : repli; }
+  var SRC = {
+    P: { src: 'Registre des aires protégées et des AMCE', serv: 'MELCCFP · Biodiversite/Aires_protegees/MapServer/23', slug: 'aires-protegees-au-quebec', lic: 'CC-BY 4.0' },
+    H: { src: 'Habitats fauniques (HAFA légaux et informationnels)', serv: 'MRNF · GeoServer Habitats_Fauniques_Pub (précalculé)', slug: 'habitats-fauniques', lic: 'CC-BY 4.0' },
+    H2: { src: 'Registre des aires protégées (habitats fauniques inscrits)', serv: 'MELCCFP · Aires_protegees/23, DESIG_GR = Habitat faunique', slug: 'aires-protegees-au-quebec', lic: 'CC-BY 4.0' },
+    F: { src: 'Habitats floristiques', serv: 'MELCCFP · Biodiversite/Habitats_floristiques/MapServer/0', slug: 'habitats-floristiques', lic: 'CC-BY 4.0' },
+    S: { src: 'Occurrences d’espèces en situation précaire (CDPNQ)', serv: 'MELCCFP · Biodiversite/EMVS_publique/MapServer/1 et 3 (couches non sensibles)', slug: 'occurrences-especes-en-situation-precaire', lic: 'CC-BY 4.0' },
+    X: { src: 'Occurrences d’espèces en situation précaire, masquées (CDPNQ)', serv: 'MELCCFP · EMVS_publique/MapServer/2 et 4', slug: 'occurrences-especes-en-situation-precaire', lic: 'CC-BY 4.0' },
+    MD: { src: 'Milieux humides, cartographie détaillée (CIC et MELCCFP)', serv: 'MELCCFP · Biodiversite/MH_detailles/MapServer/0', slug: 'milieux-humides-du-quebec', lic: 'CC-BY 4.0' },
+    MP: { src: 'Milieux humides potentiels', serv: 'MELCCFP · Biodiversite/MH_potentiels/MapServer/0', slug: 'milieux-humides-potentiels', lic: 'CC-BY 4.0' },
+    Z: { src: 'Base de données des zones à risque d’inondation (BDZI)', serv: 'MELCCFP · Themes_publics/MapServer/22', slug: 'base-de-donnees-des-zones-inondables', lic: 'CC-BY 4.0' },
+    E: { src: 'Sentinelle, espèces exotiques envahissantes', serv: 'MELCCFP · Biodiversite/EEE/MapServer/0', slug: 'especes-exotiques-envahissantes', lic: 'CC-BY 4.0' }
+  };
+  function srcLine(k){ var s = SRC[k]; return esc(s.src) + ' · ' + s.lic + ' · mis à jour le ' + esc(maj(s.slug, 'date inconnue')); }
+
+  var SOURCES = [
+    ['P', 'Aires protégées, refuges biologiques, écosystèmes forestiers exceptionnels, réserves, parcs', 'geo.environnement.gouv.qc.ca/…/Aires_protegees/MapServer/23 (5 611 polygones)', 'CC-BY 4.0', 'oui', 'ok', 'Marche. Un polygone par aire ; DESIG_GR classe l’aire (parc, réserve, refuge, habitat faunique, habitat floristique…).', 'aires-protegees-au-quebec'],
+    ['F', 'Habitats floristiques légaux (58)', '…/Habitats_floristiques/MapServer/0', 'CC-BY 4.0', 'oui', 'ok', 'Marche. Les 29 non inscrits au registre ne sont que dans cette couche.', 'habitats-floristiques'],
+    ['S', 'Occurrences d’espèces en situation précaire : 4 621 floristiques et 6 726 fauniques non sensibles', '…/EMVS_publique/MapServer/1 et 3', 'CC-BY 4.0', 'oui', 'ok', 'Marche, avec nom, statut, dernière observation et précision (S < 150 m, M < 1,5 km). Aucune position plus fine que ce que le CDPNQ publie.', 'occurrences-especes-en-situation-precaire'],
+    ['X', 'Mêmes occurrences, couches « masquées » (forme généralisée, sans attributs)', '…/EMVS_publique/MapServer/2 et 4', 'CC-BY 4.0', 'oui', 'ok', 'Marche. Utile seulement pour dire « le CDPNQ détient des données ici » ; la page n’affiche que la forme généralisée.', 'occurrences-especes-en-situation-precaire'],
+    ['MD', 'Milieux humides, cartographie détaillée (sud habité, photo-interprétation)', '…/MH_detailles/MapServer/0', 'CC-BY 4.0', 'oui', 'ok', 'Marche, au sud seulement (basses-terres, Saguenay–Lac-Saint-Jean et secteurs habités). Classe, superficie, pressions.', 'milieux-humides-du-quebec'],
+    ['MP', 'Milieux humides potentiels (2 446 410 polygones, modèle)', '…/MH_potentiels/MapServer/0', 'CC-BY 4.0', 'oui', 'ok', 'Marche, partout. Modèle (confiance faible, moyenne ou élevée) : à valider sur le terrain.', 'milieux-humides-potentiels'],
+    ['Z', 'Zones inondables BDZI (621 polygones)', 'servicesgeo.enviroweb.gouv.qc.ca/…/Themes_publics/MapServer/22', 'CC-BY 4.0', 'oui', 'ok', 'Marche (déjà utilisé par la fenêtre « Cours d’eau »). Couverture partielle du territoire.', 'base-de-donnees-des-zones-inondables'],
+    ['E', 'Sentinelle : 11 015 observations d’espèces exotiques envahissantes (points)', '…/Biodiversite/EEE/MapServer/0', 'CC-BY 4.0', 'oui', 'ok', 'Marche. Attention : la couche 77 de Themes_publics (mêmes données) répond 0 à toute requête spatiale ; utiliser le service Biodiversite.', 'especes-exotiques-envahissantes'],
+    ['H', 'Habitats fauniques légaux et informationnels : poisson, oiseaux aquatiques, héronnières, rat musqué, cerf, vasières, HEMV…', 'servicesvecto3.mern.gouv.qc.ca/geoserver/Habitats_Fauniques_Pub/…/ows (2 261 légaux, 410 informationnels)', 'CC-BY 4.0', 'non', 'bad', 'WFS en GeoJSON marche depuis Python et les tuiles WMS marchent en balise image, mais toute requête avec en-tête Origin reçoit un 403 et le chemin /wfs coupe la connexion. Précalculé ici (build_cache.py).', 'habitats-fauniques'],
+    ['—', 'Refuges biologiques désignés, projets de refuge, EFE classés, milieux humides d’intérêt (MRNF)', 'servicescarto.mrnf.gouv.qc.ca/pes/rest/services/Forets/STF_WMS/MapServer/3, 2, 5, 7', 'CC-BY 4.0', 'oui', 'warn', 'Les attributs répondent, mais la géométrie n’est pas renvoyée par la requête. Les refuges désignés et les EFE sont dans le registre (couche P) ; les projets et les milieux humides d’intérêt ne seraient affichables qu’en tuiles.', 'refuge-biologique-designe-et-en-projet'],
+    ['—', 'Forêt ouverte (IGO2), configuration publique', 'foretouverte.gouv.qc.ca/config/config.json', '—', 'sans objet', 'ok', 'Lue : elle renvoie vers les services ci-dessus (MRNF GeoServer, MRNF STF, MELCCFP Biodiversité). Aucun service propre n’est à appeler.', null],
+    ['—', 'Territoires fauniques structurés (zecs, pourvoiries, réserves)', 'Données Québec', 'CC-BY-NC-ND 4.0', '—', 'no', 'Non retenu : licence sans œuvre dérivée ni usage commercial.', 'territoires-fauniques-structures'],
+    ['—', 'Frayères, rivières à saumon', 'Données Québec', '—', '—', 'no', 'Aucun jeu ouvert trouvé. Seule voie : l’habitat du poisson de la couche HAFA (21 baies publiées).', null]
+  ];
+  (function(){
+    var h = '<thead><tr><th>Thème</th><th>Contenu</th><th>Service et couche</th><th>Licence</th><th>CORS (page web)</th><th>Mise à jour</th><th>Verdict</th></tr></thead><tbody>';
+    SOURCES.forEach(function(r){
+      var th = r[0] === '—' ? '—' : lettre(r[0].charAt(0));
+      var verdict = '<span class="pill ' + r[5] + '">' + ({ ok: '✓ marche', bad: '✗ précalculé', warn: '≈ en partie', no: '— écarté' }[r[5]]) + '</span> ' + esc(r[6]);
+      var j = r[7] && CACHE.jeux && CACHE.jeux[r[7]];
+      h += '<tr><td>' + th + '</td><td>' + esc(r[1]) + '</td><td><small>' + esc(r[2]) + '</small></td><td>' + esc(r[3]) + '</td><td>' + esc(r[4]) + '</td><td>' + (j ? esc(j.maj) : '—') + '</td><td>' + verdict + '</td></tr>';
+    });
+    $('#t-src').innerHTML = h + '</tbody>';
+  })();
+
+  /* ================= Cartes de choix ================= */
+  var cardsEl = $('#cards');
+  EX.forEach(function(e){
+    var s = structure(e.num); e.s = s;
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'card';
+    b.innerHTML = '<span class="k">' + esc(e.k) + '</span><b>N° ' + esc(e.num) + ' · ' + esc(e.go) + '</b><span class="why">' + esc(e.why) + '</span><span class="st">' + esc([s.typeNom, s.long ? 'tablier ' + nf1.format(s.long) + ' m' : '', s.annee ? 'construit en ' + s.annee : ''].filter(Boolean).join(' · ')) + '</span><span class="go">Ouvrir « Zones sensibles » ›</span>';
+    b.addEventListener('click', function(){ openEnv(e.num, e.r); });
+    cardsEl.appendChild(b);
+  });
+  function ouvrirNum(n){
+    n = String(n).trim().toUpperCase();
+    var s = structure(n);
+    if (!s || s.lat == null) { $('#live-st').textContent = 'Numéro introuvable (ou sans coordonnées) dans l’inventaire.'; return; }
+    $('#live-st').textContent = '';
+    openEnv(n);
+  }
+  $('#live-go').addEventListener('click', function(){ ouvrirNum($('#live-num').value); });
+  $('#live-num').addEventListener('keydown', function(e){ if (e.key === 'Enter') ouvrirNum($('#live-num').value); });
+  Array.prototype.forEach.call(document.querySelectorAll('.also button'), function(b){ b.addEventListener('click', function(){ $('#live-num').value = b.getAttribute('data-num'); ouvrirNum(b.getAttribute('data-num')); }); });
+
+  /* ================= Fenêtre « Zones sensibles » ================= */
+  var rInit = 0;
+  var dlg = $('#ev-dialog'), body = $('#ev-body'), dMap = null, runId = 0, cur = null;
+  $('#ev-close').addEventListener('click', function(){ dlg.close(); });
+  dlg.addEventListener('click', function(e){ if (e.target === dlg) dlg.close(); });
+  dlg.addEventListener('close', function(){ runId++; if (dMap) { dMap.remove(); dMap = null; } });
+
+  function openEnv(num, r){
+    rInit = r || rInit;
+    var S = structure(num);
+    if (!S || S.lat == null) return;
+    var my = ++runId; meter = { bytes: 0, n: 0 };
+    $('#ev-sub').textContent = 'N° ' + S.num + ' · ' + S.route + (S.obstacle ? ' → ' + S.obstacle : '') + (S.muncp ? ' · ' + S.muncp : '');
+    var steps = ['Aires protégées (MELCCFP)', 'Habitats floristiques légaux (MELCCFP)', 'Espèces en situation précaire, non sensibles (CDPNQ)', 'Occurrences masquées, forme généralisée (CDPNQ)', 'Milieux humides détaillés (MELCCFP, CIC)', 'Milieux humides potentiels (MELCCFP)', 'Zones inondables (MELCCFP)', 'Espèces exotiques envahissantes (Sentinelle)', 'Habitats fauniques (MRNF, précalculés)'];
+    body.innerHTML = '<div class="ev-wait"><div class="ev-spin"></div><ol>' + steps.map(function(s, i){ return '<li id="ev-s' + i + '">○ ' + esc(s) + '</li>'; }).join('') + '</ol></div>';
+    if (dMap) { dMap.remove(); dMap = null; }
+    if (!dlg.open) dlg.showModal();
+    var t0 = performance.now();
+    function tick(i, ok, extra){ var el = document.getElementById('ev-s' + i); if (el && my === runId) el.textContent = (ok ? '✓ ' : '✗ ') + steps[i] + (extra ? ' · ' + extra : ''); }
+    analyse(S, my, tick).then(function(A){
+      if (my !== runId) return;
+      A.secs = (performance.now() - t0) / 1000; A.bytes = meter.bytes; A.nreq = meter.n;
+      cur = A; A.R = rInit || 1000; rInit = 0;
+      render(A);
+    }).catch(function(err){
+      if (my !== runId) return;
+      body.innerHTML = '<div class="ev-ban bad"><b>Chargement impossible.</b> ' + esc(err.message || err) + '</div><button type="button" class="btn ev-retry" id="ev-retry">Réessayer</button>';
+      $('#ev-retry').addEventListener('click', function(){ openEnv(num); });
+    });
+  }
+
+  /* ---------- Acquisition ---------- */
+  // Codes des milieux humides détaillés (domaines du service MH_detailles)
+  var MH_CLASSE = { EP: 'Eau peu profonde', ME: 'Marécage', MS: 'Marais', PH: 'Prairie humide', TB: 'Tourbière boisée', BG: 'Tourbière ouverte ombrotrophe (bog)', FN: 'Tourbière ouverte minérotrophe (fen)' };
+  var MH_PRESSION = { AUC: 'aucune pression identifiée', AUT: 'autre', AGR: 'agricole', CF: 'coupe forestière', CR: 'creusage', DRA: 'drainage', ESP: 'espèces envahissantes', IND: 'industrielle ou commerciale', REC: 'récréative', REM: 'remblayage', RES: 'résidentielle', RTE: 'réseau de transport d’énergie', TRA: 'réseau de transport routier' };
+  var OFF_GROS = 0.0002; // ≈ 20 m : occurrences du CDPNQ et zones inondables du Saint-Laurent (polygones très longs : 1 Mo à 5 m, 0,4 à 0,6 Mo à 20 m)
+  var OFF = 0.00005; // ≈ 5 m : simplification demandée au serveur (maxAllowableOffset, en degrés)
+  function query(layer, fields, S, extra){
+    var q = { f: 'json', geometry: S.lon + ',' + S.lat, geometryType: 'esriGeometryPoint', inSR: 4326, outSR: 4326, distance: R_MAX, units: 'esriSRUnit_Meter', spatialRel: 'esriSpatialRelIntersects', outFields: fields, returnGeometry: 'true', resultRecordCount: 1500 };
+    for (var k in extra) q[k] = extra[k];
+    return J(layer + '/query?' + qs(q));
+  }
+  function ringsOf(g){ return g && g.rings ? g.rings : null; }
+  function mk(S, th, f, o){
+    var rings = ringsOf(f.geometry); if (!rings) return null;
+    o.th = th; o.rings = rings; o.d = polyDist(S.lat, S.lon, rings); o.c = centre(rings);
+    return o;
+  }
+
+  function analyse(S, my, tick){
+    var A = { S: S, T: {} }; // T[clé] = { ok, items, err }
+    function fin(k, i, items, extra){ A.T[k] = { ok: true, items: items }; tick(i, true, extra !== undefined ? extra : items.length + ' objet(s)'); }
+    function bad(k, i, e){ A.T[k] = { ok: false, items: [], err: String(e && e.message || e) }; tick(i, false, 'indisponible'); }
+    var bioChain = Promise.resolve();
+    function enBio(fn){ bioChain = bioChain.then(fn); return bioChain; } // même hôte : une requête à la fois (poli)
+
+    // 0 · Aires protégées : DESIG_GR classe l'objet (habitat faunique -> H de repli ; habitat floristique -> couche F à part)
+    enBio(function(){ return query(BIO + 'Aires_protegees/MapServer/23', 'DESIG_GR,DESIGNOM,TOPONYME,RESPONSABL,UICN,HA_LEGAL,DA_CREATIO,note', S, { maxAllowableOffset: OFF }).then(function(j){
+      var P = [], H = [];
+      j.features.forEach(function(f){
+        var a = f.attributes, g = a.DESIG_GR || '';
+        if (/floristique/i.test(g)) return;
+        var o = mk(S, /^Habitat faunique/.test(g) ? 'H' : 'P', f, { nom: a.TOPONYME || a.DESIGNOM, type: a.DESIGNOM, groupe: g, sup: a.HA_LEGAL, uicn: a.UICN, cree: a.DA_CREATIO, resp: a.RESPONSABL, note: a.note });
+        if (o) (o.th === 'H' ? H : P).push(o);
+      });
+      A.apHab = H; fin('P', 0, P);
+    }, function(e){ bad('P', 0, e); }); });
+    // 1 · Habitats floristiques légaux
+    enBio(function(){ return query(BIO + 'Habitats_floristiques/MapServer/0', 'TOPONYME,HA_LEGAL,DA_CREATIO,REGISTRE', S, { maxAllowableOffset: OFF }).then(function(j){
+      fin('F', 1, j.features.map(function(f){ var a = f.attributes; return mk(S, 'F', f, { nom: a.TOPONYME, type: 'Habitat floristique légal', sup: a.HA_LEGAL, cree: a.DA_CREATIO, registre: a.REGISTRE }); }).filter(Boolean));
+    }, function(e){ bad('F', 1, e); }); });
+    // 2 · CDPNQ non sensible : flore (couche 1) et faune (couche 3)
+    enBio(function(){
+      var champs = 'SCOMNAME,SNAME,LOIEMV,GROUPE,LASTOBS,EOTYPE,PRECISIONDESC,EORANKDESC';
+      return Promise.all([query(BIO + 'EMVS_publique/MapServer/1', champs, S, { maxAllowableOffset: OFF_GROS }), query(BIO + 'EMVS_publique/MapServer/3', champs, S, { maxAllowableOffset: OFF_GROS })]).then(function(r){
+        var items = [];
+        r.forEach(function(j, i){ j.features.forEach(function(f){ var a = f.attributes; var o = mk(S, 'S', f, { nom: a.SCOMNAME, latin: a.SNAME, type: i ? 'Faune' : 'Flore', statutLoi: a.LOIEMV, obs: a.LASTOBS, prec: a.PRECISIONDESC, eo: a.EOTYPE }); if (o) items.push(o); }); });
+        fin('S', 2, items, items.length + ' occurrence(s)');
+      }, function(e){ bad('S', 2, e); });
+    });
+    // 3 · CDPNQ masqué : on ne garde que la forme généralisée, sans nom
+    enBio(function(){
+      return Promise.all([query(BIO + 'EMVS_publique/MapServer/2', 'GROUPE', S, { maxAllowableOffset: 0.0002 }), query(BIO + 'EMVS_publique/MapServer/4', 'GROUPE', S, { maxAllowableOffset: 0.0002 })]).then(function(r){
+        var items = [];
+        r.forEach(function(j, i){ j.features.forEach(function(f){ var o = mk(S, 'X', f, { nom: 'Occurrence masquée', type: i ? 'Faune' : 'Flore' }); if (o) items.push(o); }); });
+        fin('X', 3, items, items.length + ' forme(s)');
+      }, function(e){ bad('X', 3, e); });
+    });
+    // 4 · Milieux humides détaillés ; 5 · potentiels
+    enBio(function(){ return query(BIO + 'MH_detailles/MapServer/0', 'CLASSE,MH_HA,PRESSION_1,ANNEE_DOCUM,PROJET', S, { maxAllowableOffset: OFF * 2 }).then(function(j){
+      fin('MD', 4, j.features.map(function(f){ var a = f.attributes; var cl = MH_CLASSE[a.CLASSE] || a.CLASSE || 'Milieu humide'; return mk(S, 'M', f, { nom: cl, type: 'Cartographie détaillée', sup: a.MH_HA, classe: cl, detail: true, pression: MH_PRESSION[a.PRESSION_1] || a.PRESSION_1, annee: a.ANNEE_DOCUM }); }).filter(Boolean));
+    }, function(e){ bad('MD', 4, e); }); });
+    enBio(function(){ return query(BIO + 'MH_potentiels/MapServer/0', 'CLASSE,TYPE,SUPERFICIE,CONFIANCE,PHYSIONOMIE', S, { maxAllowableOffset: OFF * 2 }).then(function(j){
+      fin('MP', 5, j.features.map(function(f){ var a = f.attributes; return mk(S, 'M', f, { nom: a.CLASSE || 'Milieu humide potentiel', type: 'Potentiel (modèle)', sup: a.SUPERFICIE, classe: a.CLASSE || 'Milieu humide', detail: false, confiance: a.CONFIANCE, phys: a.PHYSIONOMIE }); }).filter(Boolean));
+    }, function(e){ bad('MP', 5, e); }); });
+    // 7 · EEE (points)
+    enBio(function(){ return query(BIO + 'EEE/MapServer/0', 'Numero_observation,Date_observation,Categorie,Nom_espece_français,Nom_espece_latin,Nombre_individus,Superficie_m2', S, {}).then(function(j){
+      var items = j.features.filter(function(f){ return f.geometry && f.geometry.x != null; }).map(function(f){
+        var a = f.attributes, g = f.geometry;
+        return { th: 'E', nom: a['Nom_espece_français'], latin: a.Nom_espece_latin, type: a.Categorie, date: ymd(a.Date_observation), nb: a.Nombre_individus, m2: a.Superficie_m2, pt: [g.y, g.x], c: [g.y, g.x], d: distM(S.lat, S.lon, g.y, g.x) };
+      });
+      fin('E', 7, items);
+    }, function(e){ bad('E', 7, e); }); });
+    // 6 · Zones inondables (autre hôte : en parallèle)
+    var pZi = query(TP + '22', 'Description,No_rapport,Nm_rapport', S, { maxAllowableOffset: OFF_GROS }).then(function(j){
+      fin('Z', 6, j.features.map(function(f){ var a = f.attributes; return mk(S, 'Z', f, { nom: a.Description || 'Zone inondable', type: 'Zone inondable', rapport: a.No_rapport, rapportNom: a.Nm_rapport, grand: /grand/i.test(a.Description || '') }); }).filter(Boolean));
+    }, function(e){ bad('Z', 6, e); });
+    // 8 · Habitats fauniques précalculés (MRNF) ; sinon repli sur le registre
+    var cacheH = CACHE.habitats && CACHE.habitats[S.num];
+    return Promise.all([bioChain, pZi]).then(function(){
+      if (my !== runId) return A;
+      if (cacheH) {
+        A.hSource = 'cache';
+        var items = [];
+        cacheH.forEach(function(h){
+          var p = h.p, rings = []; h.g.forEach(function(poly){ poly.forEach(function(r){ rings.push(r); }); });
+          var o = { th: 'H', nom: p.TOPONYME, type: (p.CATEGORIE || '').trim(), especes: p.ESPECE, statutH: p.STATUT, sup: p.SUP_HA, annee: p.ANNEE_INV, vig: p.DA_ENT_VIG, region: p.REG_FAUNE, domanial: p.DOMANIALIT, code: p.CODE_HAFA, info: /informationnel/i.test(p.STATUT || '') };
+          o.rings = rings; o.d = polyDist(S.lat, S.lon, rings); o.c = centre(rings); items.push(o);
+        });
+        fin('H', 8, items, items.length + ' habitat(s)');
+      } else {
+        A.hSource = 'registre';
+        A.T.H = { ok: true, items: A.apHab || [], viaRegistre: true, err: A.T.P && !A.T.P.ok ? A.T.P.err : null };
+        if (A.T.P && !A.T.P.ok) A.T.H.ok = false;
+        tick(8, true, 'non précalculé : repli sur le registre (' + A.T.H.items.length + ')');
+      }
+      return A;
+    });
+  }
+
+  /* ---------- Résumés par thème ---------- */
+  function inR(items, R){ return items.filter(function(o){ return o.d <= R; }).sort(function(a, b){ return a.d - b.d; }); }
+  function pluriel(n, s, p){ return nf0.format(n) + ' ' + (n > 1 ? (p || s + 's') : s); }
+  function li(o, txt){ return '<li>' + txt + ' <span class="src">· ' + txtD(o.d) + '</span></li>'; }
+  function liste(arr, fnTxt, max){
+    max = max || 3;
+    if (arr.length <= max) return '<ul>' + arr.map(function(o){ return li(o, fnTxt(o)); }).join('') + '</ul>';
+    return '<ul>' + arr.slice(0, max).map(function(o){ return li(o, fnTxt(o)); }).join('') + '</ul><details><summary>+ ' + (arr.length - max) + ' autre(s)</summary><ul>' + arr.slice(max).map(function(o){ return li(o, fnTxt(o)); }).join('') + '</ul></details>';
+  }
+  function haTxt(v){ return v == null || v === '' ? '—' : nfa(+v) + ' ha'; }
+  function groupBy(arr, f){ var m = {}; arr.forEach(function(o){ var k = f(o); (m[k] = m[k] || []).push(o); }); return m; }
+
+  // Retourne { statutTxt, objetHtml, sup, statutLegal, src } pour une ligne du tableau
+  var RES = {
+    P: function(L){ var n = L[0];
+      return { objet: liste(L, function(o){ return '<b>' + esc(o.nom) + '</b> · ' + esc(o.type || ''); }), sup: haTxt(n.sup),
+        statut: 'Aire protégée inscrite au registre' + (n.uicn ? ' (UICN ' + esc(n.uicn) + ')' : '') + (n.cree ? ', créée le ' + esc(n.cree) : '') + (n.note ? '. ' + esc(n.note) : ''), src: 'P' }; },
+    H: function(L, T){ var n = L[0];
+      if (T.viaRegistre) return { objet: liste(L, function(o){ return '<b>' + esc(o.nom) + '</b> · ' + esc(o.type || ''); }), sup: haTxt(n.sup), statut: 'Habitat faunique inscrit au registre des aires protégées (espèces non précisées ici)', src: 'H2' };
+      return { objet: liste(L, function(o){ return '<b>' + esc(o.type) + '</b> · ' + esc(o.nom) + (o.especes ? ' <span class="src">(' + esc(String(o.especes).toLowerCase()) + ')</span>' : ''); }), sup: haTxt(n.sup),
+        statut: L.every(function(o){ return o.info; }) ? 'Habitat informationnel (sans protection légale propre)' : (L.some(function(o){ return o.info; }) ? 'Habitat légal, ou informationnel pour certains' : 'Habitat faunique légal (Loi sur la conservation et la mise en valeur de la faune)') + (n.annee ? '. Inventaire ' + esc(n.annee) : ''), src: 'H' }; },
+    F: function(L){ var n = L[0];
+      return { objet: liste(L, function(o){ return '<b>' + esc(o.nom) + '</b>'; }), sup: haTxt(n.sup), statut: 'Habitat légal protégé : toute activité qui le modifie exige une autorisation préalable (Loi sur les espèces menacées ou vulnérables, art. 17)' + (n.cree ? '. Créé le ' + esc(n.cree) : ''), src: 'F' }; },
+    S: function(L){
+      var g = groupBy(L, function(o){ return o.nom; }), noms = Object.keys(g).map(function(k){ return { nom: k, d: Math.min.apply(0, g[k].map(function(o){ return o.d; })), items: g[k] }; }).sort(function(a, b){ return a.d - b.d; });
+      var flo = L.filter(function(o){ return o.type === 'Flore'; }).length, fau = L.length - flo;
+      var statuts = {}; L.forEach(function(o){ statuts[o.statutLoi] = (statuts[o.statutLoi] || 0) + 1; });
+      var txt = function(x){ var o = x.items[0]; return '<b>' + esc(x.nom) + '</b>' + (x.items.length > 1 ? ' ×' + x.items.length : '') + ' · ' + esc(o.type.toLowerCase()) + ', ' + esc((o.statutLoi || '').toLowerCase()) + (o.obs ? ', vue en ' + esc(String(o.obs).slice(0, 4)) : '') + (o.prec ? ' <span class="src">(précision ' + esc(String(o.prec).split(' ')[0] === 'M' ? '< 1,5 km' : '< 150 m') + ')</span>' : ''); };
+      var html = '<p style="margin:0">' + pluriel(L.length, 'occurrence') + ' (' + flo + ' flore, ' + fau + ' faune), ' + pluriel(noms.length, 'espèce') + '</p>';
+      var sub = noms.map(function(x){ return { d: x.d, html: txt(x) }; });
+      html += sub.length <= 3 ? '<ul>' + sub.map(function(x){ return '<li>' + x.html + ' <span class="src">· ' + txtD(x.d) + '</span></li>'; }).join('') + '</ul>'
+        : '<ul>' + sub.slice(0, 3).map(function(x){ return '<li>' + x.html + ' <span class="src">· ' + txtD(x.d) + '</span></li>'; }).join('') + '</ul><details><summary>+ ' + (sub.length - 3) + ' autre(s) espèce(s)</summary><ul>' + sub.slice(3).map(function(x){ return '<li>' + x.html + ' <span class="src">· ' + txtD(x.d) + '</span></li>'; }).join('') + '</ul></details>';
+      return { objet: html, sup: '—', statut: Object.keys(statuts).map(function(k){ return nf0.format(statuts[k]) + ' ' + esc(k.toLowerCase()); }).join(', ') + ' (Loi sur les espèces menacées ou vulnérables : désignées ou susceptibles de l’être)', src: 'S' }; },
+    X: function(L){ return { objet: '<p style="margin:0">' + pluriel(L.length, 'forme généralisée', 'formes généralisées') + ' : le CDPNQ détient des données sensibles ici. Noms et positions précises masqués par la source.</p>', sup: '—', statut: 'Sans objet (information masquée)', src: 'X' }; },
+    M: function(L){
+      var g = groupBy(L, function(o){ return (o.detail ? 'détaillé' : 'potentiel') + '|' + o.classe; });
+      var det = L.filter(function(o){ return o.detail; }), pot = L.filter(function(o){ return !o.detail; });
+      var sum = function(a){ return a.reduce(function(s, o){ return s + (+o.sup || 0); }, 0); };
+      var lignes = Object.keys(g).sort(function(a, b){ return a.charAt(0) === b.charAt(0) ? sum(g[b]) - sum(g[a]) : (a.charAt(0) === 'd' ? -1 : 1); }).map(function(k){
+        var a = g[k], p = k.split('|'); return { d: Math.min.apply(0, a.map(function(o){ return o.d; })), html: '<b>' + esc(p[1]) + '</b> ×' + a.length + ' · ' + esc(p[0]) + ' · ' + haTxt(sum(a)) };
+      });
+      var html = '<p style="margin:0">' + (det.length ? pluriel(det.length, 'polygone') + ' détaillé(s)' : '') + (det.length && pot.length ? ' et ' : '') + (pot.length ? pluriel(pot.length, 'polygone') + ' potentiel(s)' : '') + '</p>';
+      html += lignes.length <= 3 ? '<ul>' + lignes.map(function(x){ return '<li>' + x.html + ' <span class="src">· ' + txtD(x.d) + '</span></li>'; }).join('') + '</ul>'
+        : '<ul>' + lignes.slice(0, 3).map(function(x){ return '<li>' + x.html + ' <span class="src">· ' + txtD(x.d) + '</span></li>'; }).join('') + '</ul><details><summary>+ ' + (lignes.length - 3) + ' autre(s) classe(s)</summary><ul>' + lignes.slice(3).map(function(x){ return '<li>' + x.html + ' <span class="src">· ' + txtD(x.d) + '</span></li>'; }).join('') + '</ul></details>';
+      return { objet: html, sup: haTxt(sum(L)) + '<br><span class="src">total, polygones entiers</span>', statut: 'Milieu humide cartographié : une intervention peut exiger une autorisation du MELCCFP (régime des milieux humides et hydriques de la Loi sur la qualité de l’environnement). « Potentiel » = modèle à valider sur le terrain ; ce n’est pas un statut légal.', src: det.length ? 'MD' : 'MP', src2: det.length && pot.length ? 'MP' : null }; },
+    Z: function(L){
+      return { objet: liste(L, function(o){ return '<b>' + esc(o.nom) + '</b> · rapport ' + esc(o.rapport || '—') + (o.rapportNom ? ' <span class="src">(' + esc(o.rapportNom) + ')</span>' : ''); }), sup: '—',
+        statut: 'Zone cartographiée au sens de la Politique de protection des rives, du littoral et des plaines inondables (grand courant 0-20 ans, faible courant 20-100 ans)', src: 'Z' }; },
+    E: function(L){
+      var g = groupBy(L, function(o){ return o.nom; }), noms = Object.keys(g).map(function(k){ return { nom: k, a: g[k], d: Math.min.apply(0, g[k].map(function(o){ return o.d; })) }; }).sort(function(a, b){ return b.a.length - a.a.length; });
+      var html = '<p style="margin:0">' + pluriel(L.length, 'observation') + ', ' + pluriel(noms.length, 'espèce') + '</p>';
+      var f = function(x){ var dd = x.a.map(function(o){ return o.date; }).filter(Boolean).sort(); return '<li><b>' + esc(x.nom) + '</b> ×' + x.a.length + (dd.length ? ' <span class="src">(observée de ' + esc(dd[0].slice(0, 4)) + ' à ' + esc(dd[dd.length - 1].slice(0, 4)) + ')</span>' : '') + ' <span class="src">· la plus proche ' + txtD(x.d) + '</span></li>'; };
+      html += '<ul>' + noms.slice(0, 3).map(f).join('') + '</ul>' + (noms.length > 3 ? '<details><summary>+ ' + (noms.length - 3) + ' autre(s) espèce(s)</summary><ul>' + noms.slice(3).map(f).join('') + '</ul></details>' : '');
+      return { objet: html, sup: '—', statut: 'Observation déclarée à Sentinelle (non vérifiée par un expert) ; pas de statut légal propre. Utile pour le nettoyage des engins de chantier.', src: 'E' }; }
+  };
+  var ABSENT_TXT = { P: 'aucune aire protégée', H: 'aucun habitat faunique répertorié', F: 'aucun habitat floristique légal', S: 'aucune occurrence publiée', M: 'aucun milieu humide cartographié', Z: 'aucune zone inondable cartographiée', E: 'aucune observation déclarée' };
+
+  function themeItems(A, k){
+    if (k === 'M') return (A.T.MD && A.T.MD.items || []).concat(A.T.MP && A.T.MP.items || []);
+    return A.T[k] ? A.T[k].items : [];
+  }
+  function themeState(A, k){ // 'ok' | 'err'
+    if (k === 'M') return (A.T.MD && A.T.MD.ok) || (A.T.MP && A.T.MP.ok) ? ((A.T.MD && A.T.MD.ok) && (A.T.MP && A.T.MP.ok) ? 'ok' : 'part') : 'err';
+    return A.T[k] && A.T[k].ok ? 'ok' : 'err';
+  }
+
+  /* ---------- Rendu ---------- */
+  function render(A){
+    var S = A.S;
+    var chips = '', haut = '';
+    body.innerHTML =
+      '<div class="ev-grid"><div class="ev-map" id="ev-map"></div>' +
+      '<div class="ev-right"><div class="ev-bar"><b style="font-size:.8rem">Rayon</b><span class="seg" id="ev-seg" role="group" aria-label="Rayon de recherche">' +
+      RAYONS.map(function(r){ return '<button type="button" data-r="' + r + '" aria-pressed="' + (r === A.R) + '">' + (r < 1000 ? r + ' m' : (r / 1000) + ' km') + '</button>'; }).join('') + '</span></div>' +
+      '<div class="ev-chips" id="ev-chips"></div><div id="ev-ban"></div><div class="ev-leg" id="ev-leg"></div>' +
+      '<p class="ev-meta">Légende cochable. Cercle pointillé = rayon choisi ; carré = ouvrage ; lettre dans un rond = objet. Zone pointillée sans motif = occurrence dont la précision est de 1,5 km (incertitude, pas une position). Géométries simplifiées (≈ 5 à 20 m). Cliquer un objet : attributs.</p></div></div>' +
+      '<div class="scroll" style="margin-top:12px"><table class="ev" id="ev-tab"></table></div>' +
+      '<p class="ev-src" id="ev-foot"></p>';
+    Array.prototype.forEach.call(document.querySelectorAll('#ev-seg button'), function(b){
+      b.addEventListener('click', function(){ A.R = +b.getAttribute('data-r'); Array.prototype.forEach.call(document.querySelectorAll('#ev-seg button'), function(x){ x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); draw(A, true); });
+    });
+    initMap(A);
+    draw(A, false);
+    $('#ev-foot').innerHTML = 'Mesure : ' + A.nreq + ' requêtes, ' + nf0.format(Math.round(A.bytes / 1024)) + ' Ko, ' + nf1.format(A.secs) + ' s (données en direct du MELCCFP' + (A.hSource === 'cache' ? ' ; habitats fauniques précalculés le ' + esc(CACHE.generated || '') + ' avec géométries simplifiées à ' + esc(CACHE.tolerance_m) + ' m' : '') + '). ' +
+      'Absent = rien de répertorié dans ces jeux de données, pas absence sur le terrain. Ne remplace ni une demande au CDPNQ ni une autorisation ministérielle.';
+  }
+
+  var layers = {};
+  function initMap(A){
+    var S = A.S;
+    if (dMap) { dMap.remove(); dMap = null; }
+    var m = dMap = L.map('ev-map', { zoomControl: true, attributionControl: false, zoomSnap: .5 });
+    var bases = { 'Plan clair': gris(), 'Plan (topographique)': plan(), 'Satellite': sat() };
+    m.setView([S.lat, S.lon], 14); // une vue d'abord : requise avant d'ajouter un cercle ou de changer son rayon
+    bases['Plan clair'].addTo(m);
+    L.control.layers(bases, null, { collapsed: true }).addTo(m);
+    Object.keys(PANE_Z).forEach(function(k){ m.createPane('env-' + k); m.getPane('env-' + k).style.zIndex = PANE_Z[k]; });
+    m.createPane('env-badge'); m.getPane('env-badge').style.zIndex = 450; m.getPane('env-badge').style.pointerEvents = 'none';
+    layers = {}; Object.keys(TH).forEach(function(k){ layers[k] = L.layerGroup().addTo(m); });
+    A.circle = L.circle([S.lat, S.lon], { radius: A.R, color: '#102d41', weight: 1.6, dashArray: '6 6', fill: false, interactive: false }).addTo(m);
+    A.vis = {}; ORDRE.concat(['X']).forEach(function(k){ A.vis[k] = true; });
+    L.marker([S.lat, S.lon], { icon: squareIcon(), zIndexOffset: 1000, pane: 'markerPane' }).bindTooltip('Ouvrage N° ' + esc(S.num) + ' · ' + esc(S.route)).addTo(m);
+    setTimeout(function(){ m.invalidateSize(); }, 80);
+  }
+
+  function popup(o){
+    var h = '<b>' + esc(o.nom || '') + '</b>';
+    var kv = function(k, v){ return v == null || v === '' ? '' : '<br>' + k + ' : ' + esc(v); };
+    h += kv('Type', o.type) + kv('Superficie', o.sup != null && o.th !== 'E' ? nfa(+o.sup) + ' ha' : '') + kv('Distance', txtD(o.d));
+    if (o.th === 'P') h += kv('Responsable', o.resp) + kv('UICN', o.uicn) + kv('Création', o.cree);
+    if (o.th === 'H') h += kv('Espèces', o.especes) + kv('Statut', o.statutH) + kv('Inventaire', o.annee) + kv('Région', o.region);
+    if (o.th === 'S') h += kv('Nom latin', o.latin) + kv('Statut', o.statutLoi) + kv('Dernière observation', o.obs) + kv('Type d’occurrence', o.eo) + kv('Précision', o.prec);
+    if (o.th === 'M') h += kv('Confiance', o.confiance) + kv('Physionomie', o.phys) + kv('Pression', o.pression) + kv('Année des photos', o.annee);
+    if (o.th === 'Z') h += kv('Rapport', o.rapport) + kv('Titre', o.rapportNom);
+    if (o.th === 'E') h += kv('Nom latin', o.latin) + kv('Date', o.date) + kv('Individus', o.nb) + kv('Surface (m²)', o.m2);
+    return h;
+  }
+  function styleOf(o){
+    var t = TH[o.th], pat = o.th, dash = null, w = 2;
+    if (o.th === 'M') { if (!o.detail) { pat = 'M2'; dash = '4 3'; } w = 1.4; }
+    if (o.th === 'H' && o.info) { pat = 'H2'; dash = '5 4'; }
+    if (o.th === 'Z' && !o.grand) { pat = 'Z2'; dash = '5 4'; }
+    if (o.th === 'X') { dash = '2 3'; w = 1.2; }
+    if (o.th === 'S') { w = 1.6; if (/^M/.test(o.prec || '')) return { pane: 'env-Sm', color: t.coul, weight: 1.3, dashArray: '2 5', fillColor: t.coul, fillOpacity: .07, opacity: .9 }; }
+    return { pane: 'env-' + o.th, color: t.coul, weight: w, dashArray: dash, fillColor: 'url(#env-p-' + pat + ')', fillOpacity: 1, opacity: .95 };
+  }
+
+  function draw(A, refit){
+    var S = A.S, R = A.R, m = dMap, bounds = L.latLngBounds([[S.lat, S.lon]]);
+    A.circle.setRadius(R);
+    Object.keys(layers).forEach(function(k){ layers[k].clearLayers(); });
+    var chips = '', rows = '', leg = '', nPres = 0, nErr = 0;
+    var keys = ORDRE.slice();
+    keys.forEach(function(k){
+      var st = themeState(A, k), items = themeItems(A, k), L_ = inR(items, R), n = L_.length;
+      var sousH = k === 'H' && A.T.H && A.T.H.viaRegistre;
+      // chip
+      if (st === 'err') { nErr++; chips += '<span class="ev-chip unk" title="Service indisponible : non vérifié">' + lettre(k) + '<span>' + esc(TH[k].court) + '</span><b>?</b></span>'; }
+      else { if (n) nPres++; chips += '<span class="ev-chip ' + (n ? 'on' : 'off') + '">' + lettre(k) + '<span>' + esc(TH[k].court) + '</span><b>' + n + '</b></span>'; }
+      // légende cochable
+      leg += '<label><input type="checkbox" data-k="' + k + '"' + (A.vis[k] ? ' checked' : '') + (n ? '' : ' disabled') + '>' + swatch(k, null, k === 'H' && false) + lettre(k) + '<span>' + esc(TH[k].court) + '</span><span class="nb' + (n ? '' : ' z') + '">' + (st === 'err' ? '?' : n) + '</span></label>';
+      // carte
+      L_.forEach(function(o, idx){
+        if (o.th === 'E') {
+          var mk_ = L.marker(o.pt, { icon: L.divIcon({ className: '', html: '<div class="env-eee"></div>', iconSize: [14, 13], iconAnchor: [7, 7] }), pane: 'env-E', keyboard: false }).bindTooltip(esc(o.nom) + (o.date ? ' · ' + esc(o.date.slice(0, 4)) : '')).bindPopup(popup(o)); mk_.addTo(layers.E);
+          bounds.extend(o.pt); return;
+        }
+        var pl = L.polygon(o.rings.map(function(r){ return r.map(function(p){ return [p[1], p[0]]; }); }), styleOf(o)).bindTooltip(esc(o.nom) + ' · ' + txtD(o.d)).bindPopup(popup(o));
+        pl.addTo(layers[o.th]);
+        if (o.d < 1500) bounds.extend(pl.getBounds());
+        var nb = k === 'M' ? 3 : k === 'S' ? 12 : 8;
+        if (idx < nb && !(o.th === 'S' && /^M/.test(o.prec || ''))) L.marker(o.c, { icon: L.divIcon({ className: '', html: '<div class="env-badge" style="border-color:' + TH[o.th].coul + '">' + o.th + '</div>', iconSize: [18, 18], iconAnchor: [9, 9] }), pane: 'env-badge', interactive: false, keyboard: false }).addTo(layers[o.th]);
+      });
+      // tableau
+      var head = '<td class="th">' + lettre(k) + '<b>' + esc(TH[k].court) + '</b></td>';
+      if (st === 'err') {
+        rows += '<tr>' + head + '<td><span class="pill warn">? non vérifié</span></td><td class="d">—</td><td colspan="4">Service sans réponse' + (A.T[k] && A.T[k].err ? ' : ' + esc(A.T[k].err) : '') + '. Réessayer plus tard : ne pas lire ceci comme « absent ».</td></tr>';
+      } else if (!n) {
+        var pasTout = st === 'part' ? ' (une des deux sources n’a pas répondu)' : '';
+        rows += '<tr class="absent">' + head + '<td><span class="pill no">○ absent</span></td><td class="d">—</td><td colspan="3">' + ABSENT_TXT[k] + ' dans ' + (R < 1000 ? R + ' m' : (R / 1000) + ' km') + pasTout + (k === 'M' ? '. Cartographie détaillée au sud seulement ; le modèle « potentiel » couvre tout le Québec.' : '') + '</td><td class="src">' + srcLine(k === 'M' ? 'MP' : (sousH ? 'H2' : k)) + '</td></tr>';
+      } else {
+        var r = RES[k](L_, A.T[k] || {});
+        var srcs = srcLine(r.src) + (r.src2 ? '<br>' + srcLine(r.src2) : '');
+        rows += '<tr>' + head + '<td><span class="pill bad">● présent · ' + n + '</span></td><td class="d">' + txtD(L_[0].d) + '</td><td>' + r.objet + '</td><td class="d">' + r.sup + '</td><td>' + r.statut + '</td><td class="src">' + srcs + '</td></tr>';
+      }
+    });
+    // masqués : une ligne à part, sans nom
+    var X = inR(A.T.X ? A.T.X.items : [], R);
+    if (A.T.X && A.T.X.ok) {
+      leg += '<label><input type="checkbox" data-k="X"' + (A.vis.X ? ' checked' : '') + (X.length ? '' : ' disabled') + '>' + swatch('X', null, true) + lettre('X') + '<span>' + esc(TH.X.court) + '</span><span class="nb' + (X.length ? '' : ' z') + '">' + X.length + '</span></label>';
+      X.forEach(function(o){ L.polygon(o.rings.map(function(r){ return r.map(function(p){ return [p[1], p[0]]; }); }), styleOf(o)).bindTooltip('Occurrence masquée (forme généralisée par le CDPNQ)').addTo(layers.X); });
+      var head = '<td class="th">' + lettre('X') + '<b>Masquées</b></td>';
+      rows += X.length ? '<tr>' + head + '<td><span class="pill warn">● présent · ' + X.length + '</span></td><td class="d">' + txtD(X[0].d) + '</td><td>' + RES.X(X).objet + '</td><td class="d">—</td><td>' + RES.X(X).statut + '</td><td class="src">' + srcLine('X') + '</td></tr>'
+        : '<tr class="absent">' + head + '<td><span class="pill no">○ absent</span></td><td class="d">—</td><td colspan="3">aucune forme généralisée dans le rayon</td><td class="src">' + srcLine('X') + '</td></tr>';
+    }
+    $('#ev-leg').innerHTML = leg;
+    Array.prototype.forEach.call(document.querySelectorAll('#ev-leg input'), function(cb){
+      var k = cb.getAttribute('data-k');
+      cb.addEventListener('change', function(){ A.vis[k] = cb.checked; if (cb.checked) layers[k].addTo(m); else m.removeLayer(layers[k]); });
+      if (!A.vis[k]) m.removeLayer(layers[k]);
+    });
+    $('#ev-chips').innerHTML = chips;
+    $('#ev-tab').innerHTML = '<thead><tr><th>Thème</th><th>Présence</th><th>Distance</th><th>Objet (nom, type)</th><th>Superficie</th><th>Statut légal</th><th>Source · licence · date</th></tr></thead><tbody>' + rows + '</tbody>';
+    // bandeaux
+    var ban = '';
+    if (nErr) ban += '<div class="ev-ban warn"><b>' + nErr + ' thème(s) non vérifié(s).</b> Un service du gouvernement n’a pas répondu : la ligne porte « ? », pas « absent ».</div>';
+    else if (!nPres) ban += '<div class="ev-ban ok"><b>Rien de répertorié</b> dans ' + (R < 1000 ? R + ' m' : (R / 1000) + ' km') + ' pour ces sept thèmes. Essayer un rayon plus grand ; cela ne remplace pas une demande au CDPNQ.</div>';
+    if (A.hSource === 'registre') ban += '<div class="ev-ban warn" style="margin-top:6px"><b>Habitats fauniques : version du registre.</b> Le serveur du MRNF refuse les requêtes de navigateur ; seuls les huit ouvrages d’exemple sont précalculés. Ici, on ne voit que les habitats fauniques inscrits au registre des aires protégées, sans espèces.</div>';
+    if (A.T.S && A.T.S.ok && A.T.S.items.some(function(o){ return o.d <= R; })) ban += '<div class="ev-ban warn" style="margin-top:6px"><b>Espèces en situation précaire.</b> Les espèces sensibles à la diffusion sont masquées par le CDPNQ ; l’absence d’occurrence ne prouve pas l’absence d’espèce. Les précisions « < 1,5 km » sont des zones d’incertitude, pas des positions exactes.</div>';
+    $('#ev-ban').innerHTML = ban;
+    if (refit || !A.fitted) { m.fitBounds(A.circle.getBounds().pad(.08), { animate: false }); A.fitted = true; }
+  }
+
+  // Ouverture directe par l'adresse : …prototype-environnement.html#n=14945&r=2000 (rayon facultatif ; pratique pour partager un cas ou prendre une capture)
+  (function(){ var m = /[#&]n=([0-9A-Za-z]+)/.exec(location.hash), r = /[#&]r=(500|1000|2000)/.exec(location.hash); if (r) rInit = +r[1]; if (m && structure(m[1].toUpperCase())) setTimeout(function(){ openEnv(m[1].toUpperCase()); }, 50); })();
+  window.__env = { openEnv: openEnv, analyse: analyse, polyDist: polyDist };
+})();
+</script>
+</body>
+</html>
